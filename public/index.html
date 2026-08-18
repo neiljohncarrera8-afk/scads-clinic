@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCADS - Smart Clinic Analytics and Decision Support System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --primary:#1b7a4d; --primary-dark:#0f3d2e; --bg:#f4f7f6; --card:#ffffff;
+    --text:#1e2a26; --muted:#6b7c76; --border:#e3ebe8;
+    --red:#e05c5c; --yellow:#e8b93f; --blue:#3b82c4; --purple:#8b6bd1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  .layout{display:flex;min-height:100vh;}
+  .sidebar{width:230px;background:var(--primary-dark);color:#fff;display:flex;flex-direction:column;padding:20px 14px;flex-shrink:0;}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:0 6px;}
+  .brand h2{font-size:1.1rem;}
+  .brand span{font-size:0.65rem;color:#9fd7bb;display:block;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#cfe6da;font-size:0.88rem;cursor:pointer;margin-bottom:2px;}
+  .nav-item:hover{background:rgba(255,255,255,0.06);}
+  .nav-item.active{background:var(--primary);color:#fff;font-weight:600;}
+  .privacy-note{margin-top:auto;background:rgba(255,255,255,0.06);border-radius:10px;padding:12px;font-size:0.72rem;color:#b9d6c8;line-height:1.4;}
+  .main{flex:1;padding:26px 32px;overflow-x:hidden;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
+  .topbar h1{font-size:1.5rem;color:var(--primary-dark);}
+  .topbar p{color:var(--muted);font-size:0.85rem;}
+  .datebox{background:var(--card);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:0.82rem;}
+  .tab{display:none;}
+  .tab.active{display:block;}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:10px;color:#fff;}
+  .stat-card .label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;}
+  .stat-card .value{font-size:1.5rem;font-weight:700;margin-top:2px;}
+  .stat-card .sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+  @media(max-width:1000px){.grid2{grid-template-columns:1fr;}}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;}
+  .panel h2{font-size:0.95rem;margin-bottom:14px;color:var(--primary-dark);}
+  canvas{max-height:230px;}
+  .alert-panel{background:#fdeeee;border:1px solid #f3c8c8;border-radius:12px;padding:16px;}
+  .alert-panel h2{color:var(--red);font-size:0.9rem;margin-bottom:8px;}
+  .alert-panel .illness{font-weight:700;margin-top:6px;}
+  .alert-panel p{font-size:0.8rem;color:#7a3d3d;margin-top:4px;line-height:1.4;}
+  .campaign-panel{background:#eaf6ef;border:1px solid #c8e9d5;border-radius:12px;padding:16px;margin-top:16px;}
+  .campaign-panel h2{color:var(--primary);font-size:0.9rem;margin-bottom:8px;}
+  .campaign-panel .title{font-weight:700;margin-top:6px;}
+  .campaign-panel p{font-size:0.8rem;color:#345c48;margin-top:4px;line-height:1.4;}
+  table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-size:0.7rem;text-transform:uppercase;}
+  .badge{padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:600;}
+  .badge-mild{background:#e5f6ec;color:var(--primary);}
+  .badge-moderate{background:#fdf3d8;color:#a97c12;}
+  .badge-severe{background:#fbe3e3;color:var(--red);}
+  .delete-btn{border:none;background:none;color:var(--red);cursor:pointer;}
+  .stock-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
+  .stock-bar-bg{background:#eef2f0;border-radius:6px;height:6px;width:90px;overflow:hidden;}
+  .stock-bar-fill{height:100%;}
+  form.inline{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px;}
+  select,input,textarea{border:1px solid var(--border);padding:9px;border-radius:8px;font-size:0.85rem;}
+  button.primary{background:var(--primary);color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.85rem;}
+  #qrcode{background:#fff;padding:10px;border-radius:10px;display:inline-flex;}
+  .qr-section{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
+  .url-box{margin-top:8px;background:#f4f7f6;border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:0.72rem;word-break:break-all;color:var(--primary);}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <div class="sidebar">
+    <div class="brand">
+      <span style="font-size:1.6rem;">CLINIC</span>
+      <div><h2>SCADS</h2><span>Smart Clinic Analytics and Decision Support System</span></div>
+    </div>
+    <div class="nav-item active" data-tab="dashboard">Dashboard</div>
+    <div class="nav-item" data-tab="visits">Clinic Visits</div>
+    <div class="nav-item" data-tab="trends">Health Trends</div>
+    <div class="nav-item" data-tab="reports">Reports</div>
+    <div class="nav-item" data-tab="inventory">Inventory</div>
+    <div class="nav-item" data-tab="about">About System</div>
+    <div class="privacy-note">SCADS is privacy-safe. Data shown is aggregated by grade level, strand, and illness type only. No student names stored.</div>
+  </div>
+
+  <div class="main">
+
+    <div class="tab active" id="tab-dashboard">
+      <div class="topbar">
+        <div><h1>Clinic Dashboard</h1><p>Overview of clinic utilization and health insights</p></div>
+        <div class="datebox" id="todayDate"></div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" style="background:var(--primary);">V</div>
+          <div class="label">Total Visits (All Time)</div><div class="value" id="statTotal">--</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--blue);">T</div>
+          <div class="label">Today's Visits</div><div class="value" id="statToday">--</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--purple);">I</div>
+          <div class="label">Most Common Illness</div><div class="value" style="font-size:1.1rem;" id="statTopIllness">--</div>
+          <div class="sub" id="statTopIllnessSub">--</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--yellow);">W</div>
+          <div class="label">Weekly Trend</div><div class="value" id="statTrendValue">--</div>
+          <div class="sub" id="statTrendSub">--</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:var(--red);">!</div>
+          <div class="label">Low Stock Alerts</div><div class="value" id="statLowStock">--</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel"><h2>Clinic Visits - Last 14 Days</h2><canvas id="visitsChart"></canvas></div>
+        <div class="panel"><h2>Top Illness Types</h2><canvas id="illnessChart"></canvas></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel"><h2>Clinic Visits by Strand (Last 7 Days)</h2><canvas id="strandChart"></canvas></div>
+        <div class="panel"><h2>Visits by Grade Level (11 vs 12)</h2><canvas id="gradeChart"></canvas></div>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <div class="alert-panel" id="alertPanel"><h2>Health Alert</h2><div id="alertContent">Loading...</div></div>
+          <div class="campaign-panel" id="campaignPanel"><h2>Suggested Health Campaign</h2><div id="campaignContent">Loading...</div></div>
+        </div>
+        <div class="panel qr-section">
+          <div id="qrcode"></div>
+          <div>
+            <h2 style="margin-bottom:4px;">QR Check-In</h2>
+            <p style="font-size:0.82rem;color:var(--muted);max-width:280px;">Post this at the clinic entrance. Scanning it opens the check-in form so staff can log a visit directly from a phone.</p>
+            <div class="url-box" id="qrUrlText">Loading URL...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-visits">
+      <div class="topbar"><div><h1>Clinic Visits</h1><p>Log and manage clinic visit records</p></div></div>
+
+      <div class="panel" style="margin-bottom:18px;">
+        <h2>Log a New Visit</h2>
+        <form class="inline" id="visitForm">
+          <select id="fGrade" required><option value="">Grade level</option><option>Grade 11</option><option>Grade 12</option></select>
+          <select id="fStrand" required><option value="">Strand</option><option>STEM</option><option>ABM</option><option>HUMSS</option><option>TVL</option></select>
+          <select id="fIllness" required><option value="">Illness type</option></select>
+          <select id="fSeverity" required><option value="">Severity</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
+          <input type="text" id="fAction" placeholder="Action taken (optional)">
+          <button class="primary" type="submit">Add Visit</button>
+        </form>
+        <div id="formMsg"></div>
+      </div>
+
+      <div class="panel">
+        <h2>All Recorded Visits</h2>
+        <table>
+          <thead><tr><th>Time</th><th>Grade</th><th>Strand</th><th>Illness</th><th>Severity</th><th>Action Taken</th><th></th></tr></thead>
+          <tbody id="visitsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-trends">
+      <div class="topbar"><div><h1>Health Trends</h1><p>Weekly illness trends and grade-level comparison</p></div></div>
+      <div class="grid2">
+        <div class="panel"><h2>Illness Trends (Last 6 Weeks)</h2><canvas id="trendLineChart"></canvas></div>
+        <div class="panel">
+          <h2>Grade Comparison (This Week vs Last Week)</h2>
+          <div id="gradeTrendCards"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-reports">
+      <div class="topbar">
+        <div><h1>Reports</h1><p>Summary of clinic activity</p></div>
+        <button class="primary" onclick="window.print()">Print / Export</button>
+      </div>
+      <div class="panel">
+        <h2>Monthly Summary</h2>
+        <table id="reportTable">
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-inventory">
+      <div class="topbar"><div><h1>Medicine and Supply Inventory</h1><p>Track and update stock levels</p></div></div>
+      <div class="panel"><div id="stockListFull"></div></div>
+    </div>
+
+    <div class="tab" id="tab-about">
+      <div class="topbar"><div><h1>About SCADS</h1><p>Smart Clinic Analytics and Decision Support System</p></div></div>
+      <div class="panel">
+        <p style="line-height:1.7;font-size:0.9rem;color:var(--muted);">
+        SCADS helps school clinics track visit patterns, common illnesses, and supply levels
+        for Grade 11 and Grade 12 students across STEM, ABM, HUMSS, and TVL strands. It flags
+        unusual increases in specific illness types and suggests relevant health campaigns.
+        No student names are collected, only grade level, strand, and illness category, to
+        keep the system privacy-safe while still useful for planning.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var API = "";
+var visitsChartInstance = null;
+var illnessChartInstance = null;
+var gradeChartInstance = null;
+var strandChartInstance = null;
+var trendLineChartInstance = null;
+
+document.getElementById("todayDate").textContent =
+  new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+var navItems = document.querySelectorAll(".nav-item[data-tab]");
+for (var n = 0; n < navItems.length; n++) {
+  navItems[n].addEventListener("click", function () {
+    var all = document.querySelectorAll(".nav-item");
+    for (var x = 0; x < all.length; x++) { all[x].classList.remove("active"); }
+    var tabs = document.querySelectorAll(".tab");
+    for (var y = 0; y < tabs.length; y++) { tabs[y].classList.remove("active"); }
+    this.classList.add("active");
+    document.getElementById("tab-" + this.getAttribute("data-tab")).classList.add("active");
+  });
+}
+
+function loadMeta() {
+  return fetch(API + "/api/meta")
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var sel = document.getElementById("fIllness");
+      for (var i = 0; i < data.ILLNESSES.length; i++) {
+        sel.innerHTML = sel.innerHTML + "<option>" + data.ILLNESSES[i] + "</option>";
+      }
+    });
+}
+
+function loadAll() {
+  return Promise.all([
+    fetch(API + "/api/visits").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/daily").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/illness").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/grade").then(function (r) { return r.json(); }),
+    fetch(API + "/api/inventory").then(function (r) { return r.json(); }),
+    fetch(API + "/api/alerts").then(function (r) { return r.json(); }),
+    fetch(API + "/api/campaign-suggestion").then(function (r) { return r.json(); })
+  ]).then(function (results) {
+    var visits = results[0];
+    var daily = results[1];
+    var illness = results[2];
+    var grade = results[3];
+    var stock = results[4];
+    var alerts = results[5];
+    var campaign = results[6];
+    renderStats(visits, illness, stock);
+    renderTable(visits);
+    renderStockFull(stock);
+    renderCharts(daily, illness, grade);
+    renderAlerts(alerts);
+    renderCampaign(campaign);
+  });
+}
+
+function loadTrendAndReports() {
+  return Promise.all([
+    fetch(API + "/api/trend").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/strand-daily").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/illness-weekly").then(function (r) { return r.json(); }),
+    fetch(API + "/api/visits").then(function (r) { return r.json(); }),
+    fetch(API + "/api/summary/illness").then(function (r) { return r.json(); }),
+    fetch(API + "/api/inventory").then(function (r) { return r.json(); })
+  ]).then(function (results) {
+    var trend = results[0];
+    var strandDaily = results[1];
+    var illnessWeekly = results[2];
+    var visits = results[3];
+    var illness = results[4];
+    var stock = results[5];
+
+    var arrow = trend.direction === "up" ? "UP" : "DOWN";
+    var color = trend.direction === "up" ? "#e05c5c" : "#1b7a4d";
+    document.getElementById("statTrendValue").textContent = arrow + " " + Math.abs(trend.pct) + "%";
+    document.getElementById("statTrendValue").style.color = color;
+    document.getElementById("statTrendSub").textContent = trend.thisWeek + " this week vs " + trend.lastWeek + " last week";
+
+    var gcHtml = "";
+    for (var g = 0; g < trend.perGrade.length; g++) {
+      var row = trend.perGrade[g];
+      var gArrow = row.pct >= 0 ? "UP" : "DOWN";
+      var gColor = row.pct >= 0 ? "#e05c5c" : "#1b7a4d";
+      gcHtml = gcHtml + '<div class="stock-item"><span>' + row.grade + "</span>" +
+        '<span style="font-weight:700;color:' + gColor + ';">' +
+        gArrow + " " + Math.abs(row.pct) + "% (" + row.thisWeek + " vs " + row.lastWeek + ")</span></div>";
+    }
+    document.getElementById("gradeTrendCards").innerHTML = gcHtml;
+
+    var days = [];
+    for (var s1 = 0; s1 < strandDaily.length; s1++) {
+      if (days.indexOf(strandDaily[s1].day) === -1) { days.push(strandDaily[s1].day); }
+    }
+    days.sort();
+    var strands = ["STEM", "ABM", "HUMSS", "TVL"];
+    var strandColors = { STEM: "#1b7a4d", ABM: "#3b82c4", HUMSS: "#8b6bd1", TVL: "#e8b93f" };
+    var strandDatasets = [];
+    for (var s2 = 0; s2 < strands.length; s2++) {
+      var strandName = strands[s2];
+      var dataArr = [];
+      for (var d1 = 0; d1 < days.length; d1++) {
+        var match = null;
+        for (var s3 = 0; s3 < strandDaily.length; s3++) {
+          if (strandDaily[s3].day === days[d1] && strandDaily[s3].strand === strandName) {
+            match = strandDaily[s3];
+            break;
+          }
+        }
+        dataArr.push(match ? match.count : 0);
+      }
+      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName] });
+    }
+    if (strandChartInstance) { strandChartInstance.destroy(); }
+    var strandLabels = [];
+    for (var d2 = 0; d2 < days.length; d2++) {
+      var dt2 = new Date(days[d2]);
+      strandLabels.push(dt2.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+    }
+    strandChartInstance = new Chart(document.getElementById("strandChart"), {
+      type: "bar",
+      data: { labels: strandLabels, datasets: strandDatasets },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    var weeks = [];
+    for (var w1 = 0; w1 < illnessWeekly.length; w1++) {
+      if (weeks.indexOf(illnessWeekly[w1].week) === -1) { weeks.push(illnessWeekly[w1].week); }
+    }
+    weeks.sort();
+    var topIllnesses = [];
+    for (var t1 = 0; t1 < Math.min(3, illness.length); t1++) { topIllnesses.push(illness[t1].illness); }
+    var illnessLineColors = ["#1b7a4d", "#3b82c4", "#e05c5c"];
+    var lineDatasets = [];
+    for (var t2 = 0; t2 < topIllnesses.length; t2++) {
+      var illName = topIllnesses[t2];
+      var lineData = [];
+      for (var w2 = 0; w2 < weeks.length; w2++) {
+        var match2 = null;
+        for (var w3 = 0; w3 < illnessWeekly.length; w3++) {
+          if (illnessWeekly[w3].week === weeks[w2] && illnessWeekly[w3].illness === illName) {
+            match2 = illnessWeekly[w3];
+            break;
+          }
+        }
+        lineData.push(match2 ? match2.count : 0);
+      }
+      lineDatasets.push({ label: illName, data: lineData, borderColor: illnessLineColors[t2], tension: 0.3, fill: false });
+    }
+    if (trendLineChartInstance) { trendLineChartInstance.destroy(); }
+    trendLineChartInstance = new Chart(document.getElementById("trendLineChart"), {
+      type: "line",
+      data: { labels: weeks, datasets: lineDatasets },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    var today = new Date().toISOString().slice(0, 10);
+    var todayCount = 0;
+    for (var v1 = 0; v1 < visits.length; v1++) {
+      if (visits[v1].visit_time.indexOf(today) === 0) { todayCount++; }
+    }
+    var g11Count = 0;
+    var g12Count = 0;
+    for (var v2 = 0; v2 < visits.length; v2++) {
+      if (visits[v2].grade === "Grade 11") { g11Count++; }
+      if (visits[v2].grade === "Grade 12") { g12Count++; }
+    }
+    var lowStockCount = 0;
+    for (var st1 = 0; st1 < stock.length; st1++) {
+      if (stock[st1].status !== "ok") { lowStockCount++; }
+    }
+    var reportRows = [
+      ["Total Clinic Visits (All Time)", visits.length],
+      ["Today's Visits", todayCount],
+      ["Grade 11 Total Visits", g11Count],
+      ["Grade 12 Total Visits", g12Count],
+      ["Most Common Illness", illness.length ? (illness[0].illness + " (" + illness[0].count + " cases)") : "none"],
+      ["Weekly Trend", (trend.direction === "up" ? "Increasing" : "Decreasing") + " (" + trend.pct + "%)"],
+      ["Low Stock Items", lowStockCount]
+    ];
+    var reportHtml = "";
+    for (var r1 = 0; r1 < reportRows.length; r1++) {
+      reportHtml = reportHtml + "<tr><td>" + reportRows[r1][0] + "</td><td>" + reportRows[r1][1] + "</td></tr>";
+    }
+    document.querySelector("#reportTable tbody").innerHTML = reportHtml;
+  });
+}
+
+function renderStats(visits, illness, stock) {
+  document.getElementById("statTotal").textContent = visits.length;
+  var today = new Date().toISOString().slice(0, 10);
+  var todayCount = 0;
+  for (var i = 0; i < visits.length; i++) {
+    if (visits[i].visit_time.indexOf(today) === 0) { todayCount++; }
+  }
+  document.getElementById("statToday").textContent = todayCount;
+  if (illness.length) {
+    document.getElementById("statTopIllness").textContent = illness[0].illness;
+    document.getElementById("statTopIllnessSub").textContent = illness[0].count + " total cases";
+  }
+  var lowCount = 0;
+  for (var j = 0; j < stock.length; j++) {
+    if (stock[j].status !== "ok") { lowCount++; }
+  }
+  document.getElementById("statLowStock").textContent = lowCount;
+}
+
+function renderTable(visits) {
+  var tbody = document.getElementById("visitsTableBody");
+  var html = "";
+  for (var i = 0; i < visits.length; i++) {
+    var v = visits[i];
+    var dt = new Date(v.visit_time);
+    var timeStr = dt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+    html = html + "<tr>" +
+      "<td>" + timeStr + "</td>" +
+      "<td>" + v.grade + "</td>" +
+      "<td>" + v.strand + "</td>" +
+      "<td>" + v.illness + "</td>" +
+      '<td><span class="badge badge-' + v.severity + '">' + v.severity + "</span></td>" +
+      "<td>" + (v.action_taken ? v.action_taken : "none") + "</td>" +
+      '<td><button class="delete-btn" onclick="deleteVisit(' + v.id + ')">Delete</button></td>' +
+      "</tr>";
+  }
+  tbody.innerHTML = html;
+}
+
+function stockRowHTML(item) {
+  var color = item.status === "critical" ? "var(--red)" : item.status === "low" ? "var(--yellow)" : "var(--primary)";
+  return '<div class="stock-item">' +
+    "<span>" + item.item_name + "</span>" +
+    '<div style="display:flex;align-items:center;gap:8px;">' +
+    '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + item.level + "%;background:" + color + ';"></div></div>' +
+    '<span style="color:' + color + ';font-weight:600;min-width:32px;text-align:right;">' + item.level + "%</span>" +
+    "</div></div>";
+}
+
+function renderStockFull(stock) {
+  var html = "";
+  for (var i = 0; i < stock.length; i++) {
+    html = html + stockRowHTML(stock[i]);
+  }
+  document.getElementById("stockListFull").innerHTML = html;
+}
+
+function renderAlerts(alerts) {
+  var box = document.getElementById("alertContent");
+  if (!alerts.length) {
+    box.innerHTML = "<p>No unusual increases detected in the last 30 days.</p>";
+    return;
+  }
+  var a = alerts[0];
+  box.innerHTML = '<div class="illness">' + a.illness + " cases up " + a.pctIncrease + "%</div>" +
+    "<p>" + a.recent + " cases in the last 30 days vs " + a.prior + " the 30 days before. Consider monitoring and a targeted campaign.</p>";
+}
+
+function renderCampaign(c) {
+  var box = document.getElementById("campaignContent");
+  if (!c) {
+    box.innerHTML = "Not enough data yet.";
+    return;
+  }
+  box.innerHTML = '<div class="title">' + c.title + "</div><p><strong>Reason:</strong> " + c.reason + "</p>";
+}
+
+function renderCharts(daily, illness, grade) {
+  var dayMap = {};
+  for (var i = 0; i < daily.length; i++) { dayMap[daily[i].day] = daily[i].count; }
+  var labels = [];
+  var data = [];
+  for (var k = 13; k >= 0; k--) {
+    var d = new Date();
+    d.setDate(d.getDate() - k);
+    var key = d.toISOString().slice(0, 10);
+    labels.push(d.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
+    data.push(dayMap[key] || 0);
+  }
+
+  if (visitsChartInstance) { visitsChartInstance.destroy(); }
+  visitsChartInstance = new Chart(document.getElementById("visitsChart"), {
+    type: "line",
+    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: "rgba(27,122,77,0.12)", fill: true, tension: 0.35, pointRadius: 2 }] },
+    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } } }
+  });
+
+  var illnessLabels = [];
+  var illnessCounts = [];
+  for (var m = 0; m < illness.length; m++) {
+    illnessLabels.push(illness[m].illness);
+    illnessCounts.push(illness[m].count);
+  }
+  if (illnessChartInstance) { illnessChartInstance.destroy(); }
+  illnessChartInstance = new Chart(document.getElementById("illnessChart"), {
+    type: "doughnut",
+    data: {
+      labels: illnessLabels,
+      datasets: [{ data: illnessCounts, backgroundColor: ["#1b7a4d", "#3b82c4", "#e8b93f", "#8b6bd1", "#e05c5c", "#59b7a3", "#c98b3c", "#94a3a0"] }]
+    },
+    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } }
+  });
+
+  var gradeLabels = [];
+  var gradeCounts = [];
+  for (var n2 = 0; n2 < grade.length; n2++) {
+    gradeLabels.push(grade[n2].grade);
+    gradeCounts.push(grade[n2].count);
+  }
+  if (gradeChartInstance) { gradeChartInstance.destroy(); }
+  gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
+    type: "bar",
+    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 6 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+}
+
+document.getElementById("visitForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var payload = {
+    grade: document.getElementById("fGrade").value,
+    strand: document.getElementById("fStrand").value,
+    illness: document.getElementById("fIllness").value,
+    severity: document.getElementById("fSeverity").value,
+    action_taken: document.getElementById("fAction").value
+  };
+  fetch(API + "/api/visits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).then(function (res) {
+    var msg = document.getElementById("formMsg");
+    if (res.ok) {
+      msg.style.color = "#1b7a4d";
+      msg.textContent = "Visit logged.";
+      document.getElementById("visitForm").reset();
+      loadAll();
+      loadTrendAndReports();
+    } else {
+      res.json().then(function (err) {
+        msg.style.color = "#e05c5c";
+        msg.textContent = "Error: " + (err.error || "Failed.");
+      });
+    }
+  });
+});
+
+function deleteVisit(id) {
+  if (!confirm("Delete this record?")) { return; }
+  fetch(API + "/api/visits/" + id, { method: "DELETE" }).then(function () {
+    loadAll();
+    loadTrendAndReports();
+  });
+}
+
+var checkinUrl = window.location.origin + "/checkin.html";
+document.getElementById("qrUrlText").textContent = checkinUrl;
+new QRCode(document.getElementById("qrcode"), {
+  text: checkinUrl,
+  width: 120,
+  height: 120,
+  colorDark: "#0f3d2e",
+  colorLight: "#ffffff",
+  correctLevel: QRCode.CorrectLevel.H
+});
+
+loadMeta().then(function () {
+  loadAll();
+  loadTrendAndReports();
+});
+</script>
+</body>
+</html>

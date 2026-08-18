@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinic Check-In</title>
+<style>
+  :root{--primary:#1b7a4d;--bg:#f4f7f6;--text:#1e2a26;--muted:#6b7c76;--border:#dbe5e1;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+       display:flex;align-items:center;justify-content:center;padding:20px;}
+  .card{background:#fff;border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+  h1{color:var(--primary);font-size:1.3rem;margin-bottom:4px;}
+  p.sub{color:var(--muted);font-size:0.85rem;margin-bottom:20px;}
+  label{display:block;font-size:0.8rem;font-weight:600;margin:12px 0 6px;}
+  select,input,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;}
+  button{margin-top:20px;width:100%;background:var(--primary);color:#fff;border:none;padding:12px;
+         border-radius:8px;font-weight:700;font-size:0.95rem;cursor:pointer;}
+  button:hover{background:#156140;}
+  #msg{margin-top:12px;font-size:0.85rem;text-align:center;}
+  .badge{display:inline-block;background:#e7f5ee;color:var(--primary);font-size:0.7rem;
+         padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="badge">📱 QR Check-In</span>
+  <h1>Clinic Visit Check-In</h1>
+  <p class="sub">Fill this out at the clinic. No student names are stored — grade level, strand, and illness type only.</p>
+
+  <form id="checkinForm">
+    <label>Grade Level</label>
+    <select id="grade" required>
+      <option value="">Select grade</option>
+      <option>Grade 11</option>
+      <option>Grade 12</option>
+    </select>
+
+    <label>Strand</label>
+    <select id="strand" required>
+      <option value="">Select strand</option>
+      <option>STEM</option>
+      <option>ABM</option>
+      <option>HUMSS</option>
+      <option>TVL</option>
+    </select>
+
+    <label>Type of Illness</label>
+    <select id="illness" required>
+      <option value="">Select illness type</option>
+    </select>
+
+    <label>Severity</label>
+    <select id="severity" required>
+      <option value="">Select severity</option>
+      <option value="mild">Mild</option>
+      <option value="moderate">Moderate</option>
+      <option value="severe">Severe</option>
+    </select>
+
+    <label>Action Taken (optional)</label>
+    <textarea id="action" rows="2" placeholder="e.g. Rested 15 mins, given water"></textarea>
+
+    <button type="submit">Submit Check-In</button>
+  </form>
+  <div id="msg"></div>
+</div>
+
+<script>
+const API = '';
+fetch(`${API}/api/meta`).then(r => r.json()).then(({ILLNESSES}) => {
+  const sel = document.getElementById('illness');
+  ILLNESSES.forEach(i => sel.innerHTML += <option>${i}</option>);
+});
+ document.getElementById('checkinForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const payload = {
+    grade: document.getElementById('grade').value,
+    strand: document.getElementById('strand').value,
+    illness: document.getElementById('illness').value,
+    severity: document.getElementById('severity').value,
+    action_taken: document.getElementById('action').value,
+  };
+  const res = await fetch(`${API}/api/visits`, {
+    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  const msg = document.getElementById('msg');
+  if (res.ok) {
+    msg.style.color = '#1b7a4d';
+    msg.textContent = '✅ Check-in recorded. Thank you!';
+    e.target.reset();
+  } else {
+    const err = await res.json();
+    msg.style.color = '#d9534f';
+    msg.textContent = '❌ ' + (err.error || 'Something went wrong.');
+  }
+});
+</script>
+</body>
+</html>
