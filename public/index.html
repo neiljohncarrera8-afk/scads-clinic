@@ -141,7 +141,7 @@
         <h2>Log a New Visit</h2>
         <form class="inline" id="visitForm">
           <select id="fGrade" required><option value="">Grade level</option><option>Grade 11</option><option>Grade 12</option></select>
-          <select id="fStrand" required><option value="">Strand</option><option>STEM</option><option>ABM</option><option>HUMSS</option><option>TVL</option></select>
+          <select id="fStrand" required><option value="">Strand</option><option>STEM</option><option>ABM</option><option>HUMSS</option></select>
           <select id="fIllness" required><option value="">Illness type</option></select>
           <select id="fSeverity" required><option value="">Severity</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
           <input type="text" id="fAction" placeholder="Action taken (optional)">
@@ -194,7 +194,7 @@
       <div class="panel">
         <p style="line-height:1.7;font-size:0.9rem;color:var(--muted);">
         SCADS helps school clinics track visit patterns, common illnesses, and supply levels
-        for Grade 11 and Grade 12 students across STEM, ABM, HUMSS, and TVL strands. It flags
+        for Grade 11 and Grade 12 students across STEM, ABM, and HUMSS strands. It flags
         unusual increases in specific illness types and suggests relevant health campaigns.
         No student names are collected, only grade level, strand, and illness category, to
         keep the system privacy-safe while still useful for planning.
@@ -303,8 +303,8 @@ function loadTrendAndReports() {
       if (days.indexOf(strandDaily[s1].day) === -1) { days.push(strandDaily[s1].day); }
     }
     days.sort();
-    var strands = ["STEM", "ABM", "HUMSS", "TVL"];
-    var strandColors = { STEM: "#1b7a4d", ABM: "#3b82c4", HUMSS: "#8b6bd1", TVL: "#e8b93f" };
+    var strands = ["STEM", "ABM", "HUMSS"];
+    var strandColors = { STEM: "#1b7a4d", ABM: "#3b82c4", HUMSS: "#8b6bd1" };
     var strandDatasets = [];
     for (var s2 = 0; s2 < strands.length; s2++) {
       var strandName = strands[s2];
@@ -504,7 +504,7 @@ function renderCharts(daily, illness, grade) {
     type: "doughnut",
     data: {
       labels: illnessLabels,
-      datasets: [{ data: illnessCounts, backgroundColor: ["#1b7a4d", "#3b82c4", "#e8b93f", "#8b6bd1", "#e05c5c", "#59b7a3", "#c98b3c", "#94a3a0"] }]
+      datasets: [{ data: illnessCounts, backgroundColor: ["#1b7a4d", "#3b82c4", "#e8b93f", "#8b6bd1", "#e05c5c", "#59b7a3", "#c98b3c", "#94a3a0", "#d97ba8"] }]
     },
     options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } }
   });
@@ -579,3 +579,5 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+
+

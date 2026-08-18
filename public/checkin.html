@@ -24,7 +24,7 @@
 </head>
 <body>
 <div class="card">
-  <span class="badge">📱 QR Check-In</span>
+  <span class="badge">QR Check-In</span>
   <h1>Clinic Visit Check-In</h1>
   <p class="sub">Fill this out at the clinic. No student names are stored — grade level, strand, and illness type only.</p>
 
@@ -42,12 +42,20 @@
       <option>STEM</option>
       <option>ABM</option>
       <option>HUMSS</option>
-      <option>TVL</option>
     </select>
 
     <label>Type of Illness</label>
     <select id="illness" required>
       <option value="">Select illness type</option>
+      <option>Headache</option>
+      <option>Fever</option>
+      <option>Stomachache</option>
+      <option>Minor Injury</option>
+      <option>Cough/Colds</option>
+      <option>Allergy</option>
+      <option>Dizziness</option>
+      <option>Menstrual Cramps</option>
+      <option>Others</option>
     </select>
 
     <label>Severity</label>
@@ -67,33 +75,38 @@
 </div>
 
 <script>
-const API = '';
-fetch(`${API}/api/meta`).then(r => r.json()).then(({ILLNESSES}) => {
-  const sel = document.getElementById('illness');
-  ILLNESSES.forEach(i => sel.innerHTML += <option>${i}</option>);
-});
- document.getElementById('checkinForm').addEventListener('submit', async e => {
+var API = "";
+
+document.getElementById("checkinForm").addEventListener("submit", function(e) {
   e.preventDefault();
-  const payload = {
-    grade: document.getElementById('grade').value,
-    strand: document.getElementById('strand').value,
-    illness: document.getElementById('illness').value,
-    severity: document.getElementById('severity').value,
-    action_taken: document.getElementById('action').value,
+  var payload = {
+    grade: document.getElementById("grade").value,
+    strand: document.getElementById("strand").value,
+    illness: document.getElementById("illness").value,
+    severity: document.getElementById("severity").value,
+    action_taken: document.getElementById("action").value
   };
-  const res = await fetch(`${API}/api/visits`, {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  var msg = document.getElementById("msg");
+
+  fetch(API + "/api/visits", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).then(function(res) {
+    if (res.ok) {
+      msg.style.color = "#1b7a4d";
+      msg.textContent = "Check-in recorded. Thank you!";
+      document.getElementById("checkinForm").reset();
+    } else {
+      res.json().then(function(err) {
+        msg.style.color = "#d9534f";
+        msg.textContent = "Error: " + (err.error || "Something went wrong.");
+      });
+    }
+  }).catch(function() {
+    msg.style.color = "#d9534f";
+    msg.textContent = "Network error. Please try again.";
   });
-  const msg = document.getElementById('msg');
-  if (res.ok) {
-    msg.style.color = '#1b7a4d';
-    msg.textContent = '✅ Check-in recorded. Thank you!';
-    e.target.reset();
-  } else {
-    const err = await res.json();
-    msg.style.color = '#d9534f';
-    msg.textContent = '❌ ' + (err.error || 'Something went wrong.');
-  }
 });
 </script>
 </body>

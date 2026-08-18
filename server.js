@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const db = new Database('clinic.db');
 
 const GRADES = ['Grade 11', 'Grade 12'];
-const STRANDS = ['STEM', 'ABM', 'HUMSS', 'TVL'];
+const STRANDS = ['STEM', 'ABM', 'HUMSS'];
 const ILLNESSES = [
   'Headache',
   'Fever',
@@ -22,6 +22,7 @@ const ILLNESSES = [
   'Cough/Colds',
   'Allergy',
   'Dizziness',
+  'Menstrual Cramps',
   'Others'
 ];
 
@@ -31,7 +32,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS visits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     grade TEXT NOT NULL CHECK(grade IN ('Grade 11','Grade 12')),
-    strand TEXT NOT NULL CHECK(strand IN ('STEM','ABM','HUMSS','TVL')),
+    strand TEXT NOT NULL CHECK(strand IN ('STEM','ABM','HUMSS')),
     illness TEXT NOT NULL,
     severity TEXT NOT NULL CHECK(severity IN ('mild','moderate','severe')),
     action_taken TEXT,
@@ -91,16 +92,13 @@ if (db.prepare('SELECT COUNT(*) c FROM visits').get().c === 0) {
     ['Grade 12', 'ABM', 'Fever', 'moderate', 'Temp checked, sent home', 6],
     ['Grade 11', 'HUMSS', 'Minor Injury', 'mild', 'Cleaned & bandaged', 9],
     ['Grade 12', 'STEM', 'Stomachache', 'moderate', 'Given rest, monitored', 20],
-    ['Grade 11', 'TVL', 'Dizziness', 'severe', 'Parent called', 30],
     ['Grade 12', 'HUMSS', 'Headache', 'mild', 'Rested 15 mins', 50],
     ['Grade 11', 'STEM', 'Cough/Colds', 'mild', 'Advised rest', 70],
     ['Grade 12', 'ABM', 'Headache', 'mild', 'Rested', 100],
     ['Grade 11', 'STEM', 'Fever', 'moderate', 'Sent home', 150],
-    ['Grade 12', 'TVL', 'Minor Injury', 'mild', 'Bandaged', 200],
     ['Grade 11', 'ABM', 'Headache', 'mild', 'Rested', 250],
     ['Grade 12', 'STEM', 'Fever', 'moderate', 'Sent home', 300],
-    ['Grade 11', 'HUMSS', 'Allergy', 'mild', 'Antihistamine given', 340],
-    ['Grade 12', 'TVL', 'Stomachache', 'mild', 'Given rest', 400]
+    ['Grade 11', 'HUMSS', 'Allergy', 'mild', 'Antihistamine given', 340]
   ]);
 }
 
@@ -398,6 +396,11 @@ app.get('/api/campaign-suggestion', (req, res) => {
     'Dizziness': {
       title: 'Nutrition & Skipped-Meals Campaign',
       reason: 'Dizziness cases may relate to skipped meals.'
+    },
+
+    'Menstrual Cramps': {
+      title: 'Menstrual Health Awareness Campaign',
+      reason: 'Frequent menstrual cramp cases suggest a need for menstrual health education and support.'
     },
 
     'Others': {
