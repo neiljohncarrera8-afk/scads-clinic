@@ -464,6 +464,18 @@ app.get('/api/meta', (req, res) => {
     ILLNESSES
   });
 });
+/* ============== RESET (temporary, remove after use) ============== */
+
+app.get('/api/reset-db', (req, res) => {
+  db.close();
+  const fs = require('fs');
+  if (fs.existsSync('clinic.db')) {
+    fs.unlinkSync('clinic.db');
+  }
+  res.json({ message: 'Database deleted. Restarting service will recreate it with fresh schema.' });
+  setTimeout(() => process.exit(0), 500);
+});
+
 
 /* ============== CHECK-IN ============== */
 
