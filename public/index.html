@@ -4,68 +4,202 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SCADS - Smart Clinic Analytics and Decision Support System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
-    --primary:#1b7a4d; --primary-dark:#0f3d2e; --bg:#f4f7f6; --card:#ffffff;
+    --primary:#1b7a4d; --primary-dark:#0f3d2e; --primary-light:#e8f5ee;
+    --bg:#f4f7f6; --card:#ffffff;
     --text:#1e2a26; --muted:#6b7c76; --border:#e3ebe8;
-    --red:#e05c5c; --yellow:#e8b93f; --blue:#3b82c4; --purple:#8b6bd1;
+    --red:#e05c5c; --yellow:#e8b93f; --blue:#3b82c4; --purple:#8b6bd1; --pink:#d97ba8;
+    --neon:#39e88f;
+    --shadow-sm: 0 1px 3px rgba(15,61,46,0.06);
+    --shadow-md: 0 4px 16px rgba(15,61,46,0.08);
+    --shadow-lg: 0 12px 32px rgba(15,61,46,0.14);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#c9d6d1;border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:#a8bcb5;}
+
+  @keyframes fadeInUp{
+    from{opacity:0;transform:translateY(14px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  @keyframes fadeIn{
+    from{opacity:0;}
+    to{opacity:1;}
+  }
+  @keyframes livePulse{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:0.4;transform:scale(0.8);}
+  }
+
   .layout{display:flex;min-height:100vh;}
-  .sidebar{width:230px;background:var(--primary-dark);color:#fff;display:flex;flex-direction:column;padding:20px 14px;flex-shrink:0;}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding:0 6px;}
-  .brand h2{font-size:1.1rem;}
-  .brand span{font-size:0.65rem;color:#9fd7bb;display:block;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#cfe6da;font-size:0.88rem;cursor:pointer;margin-bottom:2px;}
-  .nav-item:hover{background:rgba(255,255,255,0.06);}
-  .nav-item.active{background:var(--primary);color:#fff;font-weight:600;}
-  .privacy-note{margin-top:auto;background:rgba(255,255,255,0.06);border-radius:10px;padding:12px;font-size:0.72rem;color:#b9d6c8;line-height:1.4;}
-  .main{flex:1;padding:26px 32px;overflow-x:hidden;}
-  .topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
-  .topbar h1{font-size:1.5rem;color:var(--primary-dark);}
-  .topbar p{color:var(--muted);font-size:0.85rem;}
-  .datebox{background:var(--card);border:1px solid var(--border);padding:8px 14px;border-radius:10px;font-size:0.82rem;}
+
+  .sidebar{
+    width:240px;background:linear-gradient(160deg,var(--primary-dark),#0a2a20);
+    color:#fff;display:flex;flex-direction:column;padding:24px 16px;flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px;padding:0 8px;}
+  .brand .icon{
+    width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),#0e5a38);
+    display:flex;align-items:center;justify-content:center;font-size:1.3rem;
+    box-shadow:var(--shadow-md);
+  }
+  .brand h2{font-size:1.15rem;font-weight:800;letter-spacing:0.3px;}
+  .brand span{font-size:0.66rem;color:#a9d4c0;display:block;font-weight:500;line-height:1.3;margin-top:1px;}
+
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px 12px 16px;border-radius:12px;
+    color:#cfe6da;font-size:0.9rem;font-weight:500;cursor:pointer;margin-bottom:4px;
+    transition:background 0.25s ease, transform 0.25s ease, color 0.25s ease, box-shadow 0.3s ease;
+    position:relative;overflow:hidden;
+  }
+  .nav-item::before{
+    content:'';position:absolute;left:0;top:50%;width:3px;height:60%;background:var(--neon);border-radius:3px;
+    transform:translateY(-50%) scaleY(0);transition:transform 0.25s ease;transform-origin:center;
+    box-shadow:0 0 8px var(--neon);
+  }
+  .nav-item .emoji{font-size:1.05rem;transition:transform 0.2s ease;}
+  .nav-item:hover{
+    background:rgba(57,232,143,0.08);
+    color:#fff;
+    transform:translateX(3px);
+    box-shadow:0 0 12px rgba(57,232,143,0.45), 0 0 26px rgba(57,232,143,0.25), inset 0 0 10px rgba(57,232,143,0.1);
+  }
+  .nav-item:hover .emoji{transform:scale(1.15) rotate(-4deg);filter:drop-shadow(0 0 4px rgba(57,232,143,0.7));}
+  .nav-item.active{
+    background:var(--primary);color:#fff;font-weight:700;
+    box-shadow:0 6px 16px rgba(27,122,77,0.35);
+  }
+  .nav-item.active::before{transform:translateY(-50%) scaleY(1);}
+  .nav-item.active:hover{
+    box-shadow:0 6px 16px rgba(27,122,77,0.35), 0 0 14px rgba(57,232,143,0.5);
+  }
+
+  .privacy-note{
+    margin-top:auto;background:rgba(255,255,255,0.06);border-radius:14px;padding:14px;
+    font-size:0.72rem;color:#a9d4c0;line-height:1.5;border:1px solid rgba(255,255,255,0.06);
+  }
+
+  .main{flex:1;padding:30px 36px;overflow-x:hidden;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:26px;
+          animation:fadeInUp 0.5s ease both;}
+  .topbar h1{font-size:1.65rem;color:var(--primary-dark);font-weight:800;letter-spacing:-0.3px;}
+  .topbar p{color:var(--muted);font-size:0.88rem;margin-top:2px;}
+  .datebox{
+    background:var(--card);border:1px solid var(--border);padding:10px 16px;border-radius:12px;
+    font-size:0.82rem;font-weight:500;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:8px;
+  }
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:livePulse 1.8s ease-in-out infinite;flex-shrink:0;}
+
   .tab{display:none;}
-  .tab.active{display:block;}
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px;}
-  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
-  .stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:10px;color:#fff;}
-  .stat-card .label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;}
-  .stat-card .value{font-size:1.5rem;font-weight:700;margin-top:2px;}
-  .stat-card .sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
-  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;}
+  .tab.active{display:block;animation:fadeIn 0.4s ease both;}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
+  .stat-card{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px;
+    box-shadow:var(--shadow-sm);transition:all 0.25s ease;animation:fadeInUp 0.5s ease both;
+  }
+  .stat-card:nth-child(1){animation-delay:0.05s;}
+  .stat-card:nth-child(2){animation-delay:0.1s;}
+  .stat-card:nth-child(3){animation-delay:0.15s;}
+  .stat-card:nth-child(4){animation-delay:0.2s;}
+  .stat-card:nth-child(5){animation-delay:0.25s;}
+  .stat-card:hover{transform:translateY(-6px) scale(1.02);box-shadow:var(--shadow-lg);}
+  .stat-icon{
+    width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+    font-size:1.15rem;margin-bottom:12px;color:#fff;box-shadow:var(--shadow-sm);
+    transition:transform 0.3s ease;
+  }
+  .stat-card:hover .stat-icon{transform:rotate(-6deg) scale(1.08);}
+  .stat-card .label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+  .stat-card .value{font-size:1.7rem;font-weight:800;margin-top:4px;letter-spacing:-0.5px;}
+  .stat-card .sub{font-size:0.74rem;color:var(--muted);margin-top:4px;font-weight:500;}
+
+  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px;}
   @media(max-width:1000px){.grid2{grid-template-columns:1fr;}}
-  .panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;}
-  .panel h2{font-size:0.95rem;margin-bottom:14px;color:var(--primary-dark);}
+
+  .panel{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;
+    box-shadow:var(--shadow-sm);transition:box-shadow 0.25s ease;animation:fadeInUp 0.5s ease both;
+  }
+  .panel:hover{box-shadow:var(--shadow-md);}
+  .panel h2{font-size:0.98rem;margin-bottom:16px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;}
+  .panel h2::before{content:'';display:inline-block;width:4px;height:14px;background:var(--primary);border-radius:2px;margin-right:9px;}
   canvas{max-height:230px;}
-  .alert-panel{background:#fdeeee;border:1px solid #f3c8c8;border-radius:12px;padding:16px;}
-  .alert-panel h2{color:var(--red);font-size:0.9rem;margin-bottom:8px;}
+
+  .alert-panel{
+    background:linear-gradient(135deg,#fdeeee,#fff5f5);border:1px solid #f3c8c8;border-radius:18px;padding:18px;
+    animation:fadeInUp 0.5s ease both;
+  }
+  .alert-panel h2{color:var(--red);font-size:0.92rem;margin-bottom:8px;font-weight:700;}
   .alert-panel .illness{font-weight:700;margin-top:6px;}
   .alert-panel p{font-size:0.8rem;color:#7a3d3d;margin-top:4px;line-height:1.4;}
-  .campaign-panel{background:#eaf6ef;border:1px solid #c8e9d5;border-radius:12px;padding:16px;margin-top:16px;}
-  .campaign-panel h2{color:var(--primary);font-size:0.9rem;margin-bottom:8px;}
+
+  .campaign-panel{
+    background:linear-gradient(135deg,var(--primary-light),#f2fbf6);border:1px solid #c8e9d5;border-radius:18px;
+    padding:18px;margin-top:16px;animation:fadeInUp 0.5s ease both;animation-delay:0.1s;
+  }
+  .campaign-panel h2{color:var(--primary);font-size:0.92rem;margin-bottom:8px;font-weight:700;}
   .campaign-panel .title{font-weight:700;margin-top:6px;}
   .campaign-panel p{font-size:0.8rem;color:#345c48;margin-top:4px;line-height:1.4;}
-  table{width:100%;border-collapse:collapse;font-size:0.82rem;}
-  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--border);}
-  th{color:var(--muted);font-size:0.7rem;text-transform:uppercase;}
-  .badge{padding:3px 9px;border-radius:20px;font-size:0.68rem;font-weight:600;}
+
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  th,td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--border);}
+  th{color:var(--muted);font-size:0.7rem;text-transform:uppercase;font-weight:700;letter-spacing:0.4px;}
+  tbody tr{transition:background 0.15s ease;animation:fadeIn 0.35s ease both;}
+  tbody tr:hover{background:#f8fbfa;}
+
+  .badge{padding:4px 11px;border-radius:20px;font-size:0.68rem;font-weight:700;letter-spacing:0.2px;}
   .badge-mild{background:#e5f6ec;color:var(--primary);}
   .badge-moderate{background:#fdf3d8;color:#a97c12;}
   .badge-severe{background:#fbe3e3;color:var(--red);}
-  .delete-btn{border:none;background:none;color:var(--red);cursor:pointer;}
-  .stock-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
-  .stock-bar-bg{background:#eef2f0;border-radius:6px;height:6px;width:90px;overflow:hidden;}
-  .stock-bar-fill{height:100%;}
-  form.inline{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px;}
-  select,input,textarea{border:1px solid var(--border);padding:9px;border-radius:8px;font-size:0.85rem;}
-  button.primary{background:var(--primary);color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.85rem;}
-  #qrcode{background:#fff;padding:10px;border-radius:10px;display:inline-flex;}
-  .qr-section{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
-  .url-box{margin-top:8px;background:#f4f7f6;border:1px solid var(--border);padding:6px 10px;border-radius:8px;font-size:0.72rem;word-break:break-all;color:var(--primary);}
+  .delete-btn{
+    border:none;background:#fbe3e3;color:var(--red);cursor:pointer;padding:6px 10px;
+    border-radius:8px;font-weight:600;font-size:0.75rem;
+    transition:all 0.2s cubic-bezier(.34,1.56,.64,1);
+  }
+  .delete-btn:hover{background:var(--red);color:#fff;transform:scale(1.1);}
+  .delete-btn:active{transform:scale(0.92);}
+
+  .stock-item{
+    display:flex;justify-content:space-between;align-items:center;padding:12px 0;
+    border-bottom:1px solid var(--border);font-size:0.85rem;
+  }
+  .stock-item:last-child{border-bottom:none;}
+  .stock-bar-bg{background:#eef2f0;border-radius:8px;height:8px;width:100px;overflow:hidden;}
+  .stock-bar-fill{height:100%;border-radius:8px;transition:width 0.6s ease;}
+
+  form.inline{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;}
+  select,input,textarea{
+    border:1.5px solid var(--border);padding:11px 12px;border-radius:12px;font-size:0.87rem;
+    font-family:inherit;transition:border-color 0.2s ease;background:#fff;
+  }
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--primary);}
+
+  button.primary{
+    background:linear-gradient(135deg,var(--primary),#156140);color:#fff;border:none;padding:12px 20px;
+    border-radius:12px;font-weight:700;cursor:pointer;font-size:0.87rem;
+    transition:transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.25s ease, filter 0.2s ease;
+    box-shadow:0 4px 12px rgba(27,122,77,0.3);
+  }
+  button.primary:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 8px 22px rgba(27,122,77,0.45);filter:brightness(1.06);}
+  button.primary:active{transform:translateY(0) scale(0.96);box-shadow:0 2px 8px rgba(27,122,77,0.35);}
+
+  #qrcode{background:#fff;padding:12px;border-radius:16px;display:inline-flex;box-shadow:var(--shadow-sm);}
+  .qr-section{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+  .url-box{
+    margin-top:10px;background:var(--bg);border:1px solid var(--border);padding:8px 12px;
+    border-radius:10px;font-size:0.72rem;word-break:break-all;color:var(--primary);font-weight:500;
+  }
 </style>
 </head>
 <body>
@@ -73,16 +207,16 @@
 
   <div class="sidebar">
     <div class="brand">
-      <span style="font-size:1.6rem;">CLINIC</span>
-      <div><h2>SCADS</h2><span>Smart Clinic Analytics and Decision Support System</span></div>
+      <div class="icon">🩺</div>
+      <div><h2>SCADS</h2><span>Smart Clinic Analytics<br>and Decision Support</span></div>
     </div>
-    <div class="nav-item active" data-tab="dashboard">Dashboard</div>
-    <div class="nav-item" data-tab="visits">Clinic Visits</div>
-    <div class="nav-item" data-tab="trends">Health Trends</div>
-    <div class="nav-item" data-tab="reports">Reports</div>
-    <div class="nav-item" data-tab="inventory">Inventory</div>
-    <div class="nav-item" data-tab="about">About System</div>
-    <div class="privacy-note">SCADS is privacy-safe. Data shown is aggregated by grade level, strand, and illness type only. No student names stored.</div>
+    <div class="nav-item active" data-tab="dashboard"><span class="emoji">🏠</span> Dashboard</div>
+    <div class="nav-item" data-tab="visits"><span class="emoji">📋</span> Clinic Visits</div>
+    <div class="nav-item" data-tab="trends"><span class="emoji">📈</span> Health Trends</div>
+    <div class="nav-item" data-tab="reports"><span class="emoji">📄</span> Reports</div>
+    <div class="nav-item" data-tab="inventory"><span class="emoji">📦</span> Inventory</div>
+    <div class="nav-item" data-tab="about"><span class="emoji">ℹ️</span> About System</div>
+    <div class="privacy-note">🔒 SCADS is privacy-safe. Data shown is aggregated by grade level, strand, and illness type only. No student names stored.</div>
   </div>
 
   <div class="main">
@@ -90,26 +224,26 @@
     <div class="tab active" id="tab-dashboard">
       <div class="topbar">
         <div><h1>Clinic Dashboard</h1><p>Overview of clinic utilization and health insights</p></div>
-        <div class="datebox" id="todayDate"></div>
+        <div class="datebox"><span class="live-dot"></span><span id="todayDate"></span></div>
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon" style="background:var(--primary);">V</div>
-          <div class="label">Total Visits (All Time)</div><div class="value" id="statTotal">--</div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:var(--blue);">T</div>
-          <div class="label">Today's Visits</div><div class="value" id="statToday">--</div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:var(--purple);">I</div>
-          <div class="label">Most Common Illness</div><div class="value" style="font-size:1.1rem;" id="statTopIllness">--</div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#1b7a4d,#0e5a38);">👥</div>
+          <div class="label">Total Visits (All Time)</div><div class="value" id="statTotal">0</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82c4,#2a63a0);">📅</div>
+          <div class="label">Today's Visits</div><div class="value" id="statToday">0</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#8b6bd1,#6d4fb0);">💡</div>
+          <div class="label">Most Common Illness</div><div class="value" style="font-size:1.15rem;" id="statTopIllness">--</div>
           <div class="sub" id="statTopIllnessSub">--</div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:var(--yellow);">W</div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#e8b93f,#cf9e22);">📊</div>
           <div class="label">Weekly Trend</div><div class="value" id="statTrendValue">--</div>
           <div class="sub" id="statTrendSub">--</div></div>
-        <div class="stat-card"><div class="stat-icon" style="background:var(--red);">!</div>
-          <div class="label">Low Stock Alerts</div><div class="value" id="statLowStock">--</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#e05c5c,#c73f3f);">⚠️</div>
+          <div class="label">Low Stock Alerts</div><div class="value" id="statLowStock">0</div></div>
       </div>
 
       <div class="grid2">
-        <div class="panel"><h2>Clinic Visits - Last 14 Days</h2><canvas id="visitsChart"></canvas></div>
+        <div class="panel"><h2>Clinic Visits — Last 14 Days</h2><canvas id="visitsChart"></canvas></div>
         <div class="panel"><h2>Top Illness Types</h2><canvas id="illnessChart"></canvas></div>
       </div>
 
@@ -120,13 +254,13 @@
 
       <div class="grid2">
         <div>
-          <div class="alert-panel" id="alertPanel"><h2>Health Alert</h2><div id="alertContent">Loading...</div></div>
-          <div class="campaign-panel" id="campaignPanel"><h2>Suggested Health Campaign</h2><div id="campaignContent">Loading...</div></div>
+          <div class="alert-panel" id="alertPanel"><h2>⚠️ Health Alert</h2><div id="alertContent">Loading...</div></div>
+          <div class="campaign-panel" id="campaignPanel"><h2>💡 Suggested Health Campaign</h2><div id="campaignContent">Loading...</div></div>
         </div>
         <div class="panel qr-section">
           <div id="qrcode"></div>
           <div>
-            <h2 style="margin-bottom:4px;">QR Check-In</h2>
+            <h2 style="margin-bottom:4px;">📱 QR Check-In</h2>
             <p style="font-size:0.82rem;color:var(--muted);max-width:280px;">Post this at the clinic entrance. Scanning it opens the check-in form so staff can log a visit directly from a phone.</p>
             <div class="url-box" id="qrUrlText">Loading URL...</div>
           </div>
@@ -145,7 +279,7 @@
           <select id="fIllness" required><option value="">Illness type</option></select>
           <select id="fSeverity" required><option value="">Severity</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
           <input type="text" id="fAction" placeholder="Action taken (optional)">
-          <button class="primary" type="submit">Add Visit</button>
+          <button class="primary" type="submit">+ Add Visit</button>
         </form>
         <div id="formMsg"></div>
       </div>
@@ -168,12 +302,16 @@
           <div id="gradeTrendCards"></div>
         </div>
       </div>
+      <div class="grid2">
+        <div class="panel"><h2>Peak Hours (All Time)</h2><canvas id="peakHoursChart"></canvas></div>
+        <div class="panel"><h2>Severity Breakdown</h2><canvas id="severityChart"></canvas></div>
+      </div>
     </div>
 
     <div class="tab" id="tab-reports">
       <div class="topbar">
         <div><h1>Reports</h1><p>Summary of clinic activity</p></div>
-        <button class="primary" onclick="window.print()">Print / Export</button>
+        <button class="primary" onclick="window.print()">🖨 Print / Export</button>
       </div>
       <div class="panel">
         <h2>Monthly Summary</h2>
@@ -192,7 +330,7 @@
     <div class="tab" id="tab-about">
       <div class="topbar"><div><h1>About SCADS</h1><p>Smart Clinic Analytics and Decision Support System</p></div></div>
       <div class="panel">
-        <p style="line-height:1.7;font-size:0.9rem;color:var(--muted);">
+        <p style="line-height:1.8;font-size:0.92rem;color:var(--muted);">
         SCADS helps school clinics track visit patterns, common illnesses, and supply levels
         for Grade 11 and Grade 12 students across STEM, ABM, and HUMSS strands. It flags
         unusual increases in specific illness types and suggests relevant health campaigns.
@@ -212,6 +350,35 @@ var illnessChartInstance = null;
 var gradeChartInstance = null;
 var strandChartInstance = null;
 var trendLineChartInstance = null;
+var peakHoursChartInstance = null;
+var severityChartInstance = null;
+
+var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9e68", "#6a6fc4", "#c2578f"];
+
+Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.titleFont = { weight: "700", size: 12 };
+Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
+
+function animateCounter(el, target, duration) {
+  duration = duration || 900;
+  var startTime = null;
+  function step(timestamp) {
+    if (!startTime) { startTime = timestamp; }
+    var progress = Math.min((timestamp - startTime) / duration, 1);
+    var eased = 1 - Math.pow(1 - progress, 3);
+    var current = Math.round(eased * target);
+    el.textContent = current;
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      el.textContent = target;
+    }
+  }
+  requestAnimationFrame(step);
+}
 
 document.getElementById("todayDate").textContent =
   new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -262,6 +429,8 @@ function loadAll() {
     renderCharts(daily, illness, grade);
     renderAlerts(alerts);
     renderCampaign(campaign);
+    renderPeakHours(visits);
+    renderSeverityBreakdown(visits);
   });
 }
 
@@ -281,7 +450,7 @@ function loadTrendAndReports() {
     var illness = results[4];
     var stock = results[5];
 
-    var arrow = trend.direction === "up" ? "UP" : "DOWN";
+    var arrow = trend.direction === "up" ? "▲" : "▼";
     var color = trend.direction === "up" ? "#e05c5c" : "#1b7a4d";
     document.getElementById("statTrendValue").textContent = arrow + " " + Math.abs(trend.pct) + "%";
     document.getElementById("statTrendValue").style.color = color;
@@ -290,7 +459,7 @@ function loadTrendAndReports() {
     var gcHtml = "";
     for (var g = 0; g < trend.perGrade.length; g++) {
       var row = trend.perGrade[g];
-      var gArrow = row.pct >= 0 ? "UP" : "DOWN";
+      var gArrow = row.pct >= 0 ? "▲" : "▼";
       var gColor = row.pct >= 0 ? "#e05c5c" : "#1b7a4d";
       gcHtml = gcHtml + '<div class="stock-item"><span>' + row.grade + "</span>" +
         '<span style="font-weight:700;color:' + gColor + ';">' +
@@ -319,7 +488,7 @@ function loadTrendAndReports() {
         }
         dataArr.push(match ? match.count : 0);
       }
-      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName] });
+      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName], borderRadius: 6 });
     }
     if (strandChartInstance) { strandChartInstance.destroy(); }
     var strandLabels = [];
@@ -330,7 +499,7 @@ function loadTrendAndReports() {
     strandChartInstance = new Chart(document.getElementById("strandChart"), {
       type: "bar",
       data: { labels: strandLabels, datasets: strandDatasets },
-      options: { scales: { y: { beginAtZero: true } } }
+      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 700, easing: "easeOutQuart" } }
     });
 
     var weeks = [];
@@ -355,13 +524,13 @@ function loadTrendAndReports() {
         }
         lineData.push(match2 ? match2.count : 0);
       }
-      lineDatasets.push({ label: illName, data: lineData, borderColor: illnessLineColors[t2], tension: 0.3, fill: false });
+      lineDatasets.push({ label: illName, data: lineData, borderColor: illnessLineColors[t2], tension: 0.35, fill: false });
     }
     if (trendLineChartInstance) { trendLineChartInstance.destroy(); }
     trendLineChartInstance = new Chart(document.getElementById("trendLineChart"), {
       type: "line",
       data: { labels: weeks, datasets: lineDatasets },
-      options: { scales: { y: { beginAtZero: true } } }
+      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 700, easing: "easeOutQuart" } }
     });
 
     var today = new Date().toISOString().slice(0, 10);
@@ -397,13 +566,13 @@ function loadTrendAndReports() {
 }
 
 function renderStats(visits, illness, stock) {
-  document.getElementById("statTotal").textContent = visits.length;
+  animateCounter(document.getElementById("statTotal"), visits.length);
   var today = new Date().toISOString().slice(0, 10);
   var todayCount = 0;
   for (var i = 0; i < visits.length; i++) {
     if (visits[i].visit_time.indexOf(today) === 0) { todayCount++; }
   }
-  document.getElementById("statToday").textContent = todayCount;
+  animateCounter(document.getElementById("statToday"), todayCount);
   if (illness.length) {
     document.getElementById("statTopIllness").textContent = illness[0].illness;
     document.getElementById("statTopIllnessSub").textContent = illness[0].count + " total cases";
@@ -412,7 +581,7 @@ function renderStats(visits, illness, stock) {
   for (var j = 0; j < stock.length; j++) {
     if (stock[j].status !== "ok") { lowCount++; }
   }
-  document.getElementById("statLowStock").textContent = lowCount;
+  animateCounter(document.getElementById("statLowStock"), lowCount);
 }
 
 function renderTable(visits) {
@@ -441,7 +610,7 @@ function stockRowHTML(item) {
     "<span>" + item.item_name + "</span>" +
     '<div style="display:flex;align-items:center;gap:8px;">' +
     '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + item.level + "%;background:" + color + ';"></div></div>' +
-    '<span style="color:' + color + ';font-weight:600;min-width:32px;text-align:right;">' + item.level + "%</span>" +
+    '<span style="color:' + color + ';font-weight:700;min-width:32px;text-align:right;">' + item.level + "%</span>" +
     "</div></div>";
 }
 
@@ -473,6 +642,69 @@ function renderCampaign(c) {
   box.innerHTML = '<div class="title">' + c.title + "</div><p><strong>Reason:</strong> " + c.reason + "</p>";
 }
 
+function renderPeakHours(visits) {
+  var hourCounts = [];
+  for (var h = 0; h < 24; h++) { hourCounts.push(0); }
+  for (var i = 0; i < visits.length; i++) {
+    var hour = new Date(visits[i].visit_time).getHours();
+    hourCounts[hour] = hourCounts[hour] + 1;
+  }
+  var labels = [];
+  for (var h2 = 0; h2 < 24; h2++) {
+    var label = h2 === 0 ? "12AM" : h2 < 12 ? h2 + "AM" : h2 === 12 ? "12PM" : (h2 - 12) + "PM";
+    labels.push(label);
+  }
+  var canvas = document.getElementById("peakHoursChart");
+  var ctx = canvas.getContext("2d");
+  var gradient = ctx.createLinearGradient(0, 0, 0, 220);
+  gradient.addColorStop(0, "rgba(59,130,196,0.35)");
+  gradient.addColorStop(1, "rgba(59,130,196,0.02)");
+  if (peakHoursChartInstance) { peakHoursChartInstance.destroy(); }
+  peakHoursChartInstance = new Chart(canvas, {
+    type: "line",
+    data: { labels: labels, datasets: [{ data: hourCounts, borderColor: "#3b82c4", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2 }] },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } },
+      animation: { duration: 700, easing: "easeOutQuart" }
+    }
+  });
+}
+
+function renderSeverityBreakdown(visits) {
+  var counts = { mild: 0, moderate: 0, severe: 0 };
+  for (var i = 0; i < visits.length; i++) {
+    if (counts[visits[i].severity] !== undefined) {
+      counts[visits[i].severity] = counts[visits[i].severity] + 1;
+    }
+  }
+  if (severityChartInstance) { severityChartInstance.destroy(); }
+  severityChartInstance = new Chart(document.getElementById("severityChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["Mild", "Moderate", "Severe"],
+      datasets: [{ data: [counts.mild, counts.moderate, counts.severe], backgroundColor: ["#1b7a4d", "#e8b93f", "#e05c5c"], borderWidth: 0 }]
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              var total = 0;
+              for (var k = 0; k < ctx.dataset.data.length; k++) { total = total + ctx.dataset.data[k]; }
+              var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+              return ctx.label + ": " + ctx.parsed + " (" + pct + "%)";
+            }
+          }
+        }
+      },
+      cutout: "62%",
+      animation: { duration: 700, easing: "easeOutQuart" }
+    }
+  });
+}
+
 function renderCharts(daily, illness, grade) {
   var dayMap = {};
   for (var i = 0; i < daily.length; i++) { dayMap[daily[i].day] = daily[i].count; }
@@ -486,11 +718,21 @@ function renderCharts(daily, illness, grade) {
     data.push(dayMap[key] || 0);
   }
 
+  var visitsCanvas = document.getElementById("visitsChart");
+  var visitsCtx = visitsCanvas.getContext("2d");
+  var gradient = visitsCtx.createLinearGradient(0, 0, 0, 220);
+  gradient.addColorStop(0, "rgba(27,122,77,0.35)");
+  gradient.addColorStop(1, "rgba(27,122,77,0.02)");
+
   if (visitsChartInstance) { visitsChartInstance.destroy(); }
-  visitsChartInstance = new Chart(document.getElementById("visitsChart"), {
+  visitsChartInstance = new Chart(visitsCanvas, {
     type: "line",
-    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: "rgba(27,122,77,0.12)", fill: true, tension: 0.35, pointRadius: 2 }] },
-    options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } } }
+    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#1b7a4d", borderWidth: 2.5 }] },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } },
+      animation: { duration: 800, easing: "easeOutQuart" }
+    }
   });
 
   var illnessLabels = [];
@@ -499,14 +741,34 @@ function renderCharts(daily, illness, grade) {
     illnessLabels.push(illness[m].illness);
     illnessCounts.push(illness[m].count);
   }
+  var illnessColors = [];
+  for (var pc = 0; pc < illnessLabels.length; pc++) {
+    illnessColors.push(brandPalette[pc % brandPalette.length]);
+  }
   if (illnessChartInstance) { illnessChartInstance.destroy(); }
   illnessChartInstance = new Chart(document.getElementById("illnessChart"), {
     type: "doughnut",
     data: {
       labels: illnessLabels,
-      datasets: [{ data: illnessCounts, backgroundColor: ["#1b7a4d", "#3b82c4", "#e8b93f", "#8b6bd1", "#e05c5c", "#59b7a3", "#c98b3c", "#94a3a0", "#d97ba8"] }]
+      datasets: [{ data: illnessCounts, backgroundColor: illnessColors, borderWidth: 0 }]
     },
-    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } } } }
+    options: {
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              var total = 0;
+              for (var k2 = 0; k2 < ctx.dataset.data.length; k2++) { total = total + ctx.dataset.data[k2]; }
+              var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+              return ctx.label + ": " + ctx.parsed + " (" + pct + "%)";
+            }
+          }
+        }
+      },
+      animation: { duration: 800, easing: "easeOutQuart" },
+      cutout: "62%"
+    }
   });
 
   var gradeLabels = [];
@@ -518,8 +780,8 @@ function renderCharts(daily, illness, grade) {
   if (gradeChartInstance) { gradeChartInstance.destroy(); }
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
-    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 6 }] },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 800, easing: "easeOutQuart" } }
   });
 }
 
@@ -579,5 +841,3 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
-
-
