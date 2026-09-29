@@ -2,112 +2,455 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Clinic Check-In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{--primary:#1b7a4d;--bg:#f4f7f6;--text:#1e2a26;--muted:#6b7c76;--border:#dbe5e1;}
+  :root{
+    --ink:#12241d; --paper:#f5f7f3; --card:#ffffff; --line:#e2e9e4; --muted:#66766d;
+    --forest:#0f5c3d; --forest-dark:#0b4530; --mint:#dcf3e6;
+    --amber:#a3690f; --amber-bg:#fbf1de; --red:#b8433f; --red-bg:#fbe9e8;
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-       display:flex;align-items:center;justify-content:center;padding:20px;}
-  .card{background:#fff;border-radius:16px;padding:28px;max-width:420px;width:100%;box-shadow:0 8px 24px rgba(0,0,0,0.08);}
-  h1{color:var(--primary);font-size:1.3rem;margin-bottom:4px;}
-  p.sub{color:var(--muted);font-size:0.85rem;margin-bottom:20px;}
-  label{display:block;font-size:0.8rem;font-weight:600;margin:12px 0 6px;}
-  select,input,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;}
-  button{margin-top:20px;width:100%;background:var(--primary);color:#fff;border:none;padding:12px;
-         border-radius:8px;font-weight:700;font-size:0.95rem;cursor:pointer;}
-  button:hover{background:#156140;}
-  #msg{margin-top:12px;font-size:0.85rem;text-align:center;}
-  .badge{display:inline-block;background:#e7f5ee;color:var(--primary);font-size:0.7rem;
-         padding:3px 10px;border-radius:20px;margin-bottom:10px;}
+  html,body{height:100%;}
+  body{
+    font-family:'Manrope',sans-serif;color:var(--ink);background:var(--paper);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    overflow:hidden;position:relative;
+  }
+  .glow{position:fixed;border-radius:50%;filter:blur(60px);opacity:.55;z-index:0;
+    animation:drift 14s ease-in-out infinite alternate;}
+  .glow.a{width:420px;height:420px;background:var(--mint);top:-140px;left:-120px;}
+  .glow.b{width:360px;height:360px;background:#cfe9dc;bottom:-160px;right:-100px;animation-delay:2s;}
+  @keyframes drift{from{transform:translate(0,0) scale(1);}to{transform:translate(30px,-20px) scale(1.08);}}
+
+  .kiosk{position:relative;z-index:1;width:100%;max-width:540px;}
+  .progress{display:flex;gap:8px;justify-content:center;margin-bottom:22px;}
+  .dot{height:5px;flex:1;max-width:44px;border-radius:3px;background:var(--line);transition:background .4s var(--ease);}
+  .dot.done,.dot.now{background:var(--forest);}
+
+  .stage{background:var(--card);border-radius:28px;padding:36px 30px;
+    box-shadow:0 24px 60px -18px rgba(15,92,61,.28), 0 2px 8px rgba(15,36,29,.04);
+    min-height:420px;display:flex;flex-direction:column;}
+  .stage.enter{animation:stageIn .46s var(--ease) both;}
+  @keyframes stageIn{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
+
+  .eyebrow{font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px;}
+  h1{font-family:'Fraunces',serif;font-optical-sizing:auto;font-weight:600;font-size:clamp(1.7rem,4vw,2.1rem);line-height:1.18;letter-spacing:-.025em;}
+  h1 em{font-style:italic;font-weight:500;color:var(--forest);}
+  .sub{color:var(--muted);font-size:.88rem;margin-top:6px;line-height:1.5;}
+
+  .options{margin-top:24px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .options.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .opt{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:16px;border:1.5px solid var(--line);
+    background:#fff;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:.98rem;color:var(--ink);
+    transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);text-align:left;}
+  .opt .ic{font-size:1.3rem;flex-shrink:0;}
+  .opt:active{transform:scale(.97);}
+  .opt:hover{border-color:var(--forest);}
+  .opt.picked{background:var(--mint);border-color:var(--forest);color:var(--forest-dark);}
+  .opt.tone-mild.picked{background:var(--mint);border-color:var(--forest);}
+  .opt.tone-moderate.picked{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
+  .opt.tone-severe.picked{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+
+  textarea{width:100%;margin-top:22px;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;
+    font-family:'Manrope',sans-serif;font-size:.95rem;resize:none;min-height:110px;transition:border-color .2s;}
+  textarea:focus{outline:none;border-color:var(--forest);}
+
+  .actions{margin-top:auto;padding-top:22px;display:flex;gap:10px;}
+  .btn{flex:1;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-weight:800;
+    font-size:.95rem;cursor:pointer;transition:transform .15s var(--ease), filter .2s;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--forest);color:#fff;box-shadow:0 10px 24px -8px rgba(15,92,61,.55);}
+  .btn-primary:hover{filter:brightness(1.06);}
+  .btn-ghost{background:var(--paper);color:var(--muted);}
+  .back{align-self:flex-start;border:none;background:none;color:var(--muted);font-weight:700;font-size:.85rem;
+    cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:4px;}
+
+  /* Welcome */
+  .welcome{align-items:center;text-align:center;justify-content:center;gap:6px;}
+  .badge{width:64px;height:64px;border-radius:20px;background:linear-gradient(150deg,var(--forest),var(--forest-dark));
+    display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 18px;
+    box-shadow:0 14px 28px -10px rgba(15,92,61,.55);animation:pulse 2.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+  .welcome h1{font-size:1.7rem;}
+  .welcome .sub{max-width:320px;margin-left:auto;margin-right:auto;}
+  .tap-btn{margin-top:28px;width:100%;padding:20px;border:none;border-radius:18px;background:var(--forest);
+    color:#fff;font-family:'Manrope';font-weight:800;font-size:1.05rem;cursor:pointer;
+    box-shadow:0 14px 30px -10px rgba(15,92,61,.55);animation:breathe 2.2s ease-in-out infinite;}
+  @keyframes breathe{0%,100%{box-shadow:0 14px 30px -10px rgba(15,92,61,.55);}50%{box-shadow:0 18px 38px -8px rgba(15,92,61,.7);}}
+  .privacy{margin-top:16px;font-size:.72rem;color:var(--muted);}
+
+  /* Receipt */
+  .check{width:70px;height:70px;margin:0 auto 16px;}
+  .check circle{stroke:var(--forest);stroke-width:3;fill:none;stroke-dasharray:180;stroke-dashoffset:180;
+    animation:circleDraw .5s var(--ease) forwards;}
+  .check path{stroke:var(--forest);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:40;stroke-dashoffset:40;animation:checkDraw .35s var(--ease) .45s forwards;}
+  @keyframes circleDraw{to{stroke-dashoffset:0;}}
+  @keyframes checkDraw{to{stroke-dashoffset:0;}}
+
+  .ticket{position:relative;background:var(--paper);border-radius:18px;padding:20px 22px;margin-top:18px;}
+  .ticket::before,.ticket::after{content:'';position:absolute;width:22px;height:22px;background:var(--card);
+    border-radius:50%;top:50%;transform:translateY(-50%);}
+  .ticket::before{left:-11px;} .ticket::after{right:-11px;}
+  .trow{display:flex;justify-content:space-between;font-size:.85rem;padding:7px 0;border-bottom:1px dashed var(--line);}
+  .trow:last-child{border:none;}
+  .trow span:first-child{color:var(--muted);}
+  .trow span:last-child{font-weight:700;text-align:right;max-width:60%;}
+  .refcode{text-align:center;font-family:'Fraunces',serif;font-weight:600;font-size:1.3rem;letter-spacing:1px;
+    color:var(--forest-dark);margin-top:14px;}
+  .timer{text-align:center;font-size:.75rem;color:var(--muted);margin-top:16px;}
+
+  @media(max-width:400px){.options.grid{grid-template-columns:1fr;}}
+
+  /* Idle attract screen (video loop) */
+  #idleScreen{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:flex-end;
+    justify-content:center;overflow:hidden;}
+  #idleVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .idle-scrim{position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,0) 65%);}
+  .idle-content{position:relative;z-index:1;text-align:center;color:#fff;padding-bottom:56px;width:100%;}
+  .idle-content h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.4rem;}
+  .idle-content p{font-size:.85rem;opacity:.85;margin-top:4px;}
+  .chevrons{margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:-6px;}
+  .chevrons span{display:block;width:26px;height:26px;border-top:3px solid #fff;border-right:3px solid #fff;
+    transform:rotate(-45deg);opacity:.25;animation:chevUp 1.6s ease-in-out infinite;}
+  .chevrons span:nth-child(2){animation-delay:.15s;margin-top:-14px;}
+  .chevrons span:nth-child(3){animation-delay:.3s;margin-top:-14px;}
+  @keyframes chevUp{0%{opacity:.15;transform:rotate(-45deg) translateY(6px);}50%{opacity:1;transform:rotate(-45deg) translateY(-2px);}100%{opacity:.15;transform:rotate(-45deg) translateY(6px);}}
+  .idle-screen-out{animation:idleOut .4s var(--ease) forwards;}
+  @keyframes idleOut{to{transform:translateY(-100%);opacity:0;}}
+
+  /* ===== Effects layer ===== */
+  .stage.enter{animation:stageFwd .6s var(--ease) both;}
+  .stage.enter.back{animation-name:stageBack;}
+  @keyframes stageFwd{from{opacity:0;transform:translateX(30px) scale(.98);}to{opacity:1;transform:none;}}
+  @keyframes stageBack{from{opacity:0;transform:translateX(-30px) scale(.98);}to{opacity:1;transform:none;}}
+  .eyebrow{display:inline-block;align-self:flex-start;background:var(--mint);color:var(--forest-dark);padding:4px 11px;border-radius:20px;font-weight:700;}
+  .dot.now{transform-origin:left;animation:dotGrow .6s var(--ease);}
+  @keyframes dotGrow{from{transform:scaleX(.2);}to{transform:none;}}
+  .opt,.btn{position:relative;overflow:hidden;}
+  .opt{animation:optIn .6s var(--ease) backwards;font-size:1.05rem;}
+  @keyframes optIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+  .opt.picked{animation:none;box-shadow:0 0 0 4px rgba(15,92,61,.12);}
+  .opt.picked::after{content:'✓';margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:.85rem;animation:pop .45s cubic-bezier(.34,1.56,.64,1);}
+  .opt.tone-moderate.picked::after{background:var(--amber);} .opt.tone-severe.picked::after{background:var(--red);}
+  @keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+  .ripple{position:absolute;border-radius:50%;background:rgba(15,92,61,.22);transform:scale(0);animation:rip .65s ease-out forwards;pointer-events:none;}
+  .btn-primary .ripple{background:rgba(255,255,255,.35);}
+  @keyframes rip{to{transform:scale(2.6);opacity:0;}}
+  textarea:focus{box-shadow:0 0 0 4px rgba(15,92,61,.12);}
+
+  #idleScreen{background:linear-gradient(-45deg,#0b4530,#0f5c3d,#12395e,#0b4530);background-size:400% 400%;animation:bgShift 14s ease infinite;}
+  @keyframes bgShift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+  #idleVideo{animation:kb 26s ease-in-out infinite alternate;}
+  @keyframes kb{from{transform:scale(1);}to{transform:scale(1.07);}}
+  .idle-top{position:absolute;top:9vh;left:0;right:0;text-align:center;color:#fff;z-index:1;animation:stageBack 1s var(--ease) both;}
+  .clock{font-family:'Fraunces',serif;font-optical-sizing:auto;font-weight:600;font-size:clamp(3.6rem,13vw,6.5rem);letter-spacing:-.04em;line-height:1;text-shadow:0 6px 34px rgba(0,0,0,.4);}
+  .cdate{font-size:1.05rem;font-weight:600;opacity:.88;margin-top:8px;text-shadow:0 2px 12px rgba(0,0,0,.4);}
+  .idle-content h2{font-size:1.7rem;}
+
+  .checkwrap{position:relative;width:70px;height:70px;margin:0 auto 16px;}
+  .checkwrap .check{margin:0;}
+  .spark{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;opacity:0;animation:spark .9s ease-out forwards;}
+  @keyframes spark{0%{opacity:1;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(.3);}}
+  .ticket{animation:printOut 1s var(--ease) .55s backwards;}
+  @keyframes printOut{from{clip-path:inset(0 -20px 100% -20px);transform:translateY(-16px);}to{clip-path:inset(0 -20px -20px -20px);transform:none;}}
+  .trow{animation:rowIn .5s var(--ease) backwards;}
+  .trow:nth-child(1){animation-delay:.9s;}.trow:nth-child(2){animation-delay:.98s;}.trow:nth-child(3){animation-delay:1.06s;}
+  .trow:nth-child(4){animation-delay:1.14s;}.trow:nth-child(5){animation-delay:1.22s;}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:none;}}
+  .refcode{animation:rowIn .6s var(--ease) 1.3s backwards;}
+  .drain{height:3px;background:var(--line);border-radius:2px;margin-top:14px;overflow:hidden;}
+  .drain i{display:block;height:100%;background:var(--forest);animation:drain 15s linear forwards;}
+  @keyframes drain{from{width:100%;}to{width:0;}}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;}}
 </style>
 </head>
 <body>
-<div class="card">
-  <span class="badge">QR Check-In</span>
-  <h1>Clinic Visit Check-In</h1>
-  <p class="sub">Fill this out at the clinic. No student names are stored — grade level, strand, and illness type only.</p>
+<!--
+  IDLE VIDEO: replace the src below with your own clinic video file.
+  Put the video file in the same folder as this HTML on the kiosk device
+  (or upload it somewhere and paste the URL). MP4, muted-friendly, ideally under ~30MB.
+-->
+<div id="idleScreen">
+  <video id="idleVideo" autoplay muted loop playsinline>
+    <source src="clinic-video.mp4" type="video/mp4">
+  </video>
+  <div class="idle-scrim"></div>
+  <div class="idle-top"><div class="clock" id="clock"></div><div class="cdate" id="cdate"></div></div>
+  <div class="idle-content">
+    <h2>Alangilan SHS Clinic</h2>
+    <p>Tap or swipe up to check in</p>
+    <div class="chevrons"><span></span><span></span><span></span></div>
+  </div>
+</div>
 
-  <form id="checkinForm">
-    <label>Grade Level</label>
-    <select id="grade" required>
-      <option value="">Select grade</option>
-      <option>Grade 11</option>
-      <option>Grade 12</option>
-    </select>
+<div class="glow a"></div><div class="glow b"></div>
 
-    <label>Strand</label>
-    <select id="strand" required>
-      <option value="">Select strand</option>
-      <option>STEM</option>
-      <option>ABM</option>
-      <option>HUMSS</option>
-    </select>
-
-    <label>Type of Illness</label>
-    <select id="illness" required>
-      <option value="">Select illness type</option>
-      <option>Headache</option>
-      <option>Fever</option>
-      <option>Stomachache</option>
-      <option>Minor Injury</option>
-      <option>Cough/Colds</option>
-      <option>Allergy</option>
-      <option>Dizziness</option>
-      <option>Menstrual Cramps</option>
-      <option>Others</option>
-    </select>
-
-    <label>Severity</label>
-    <select id="severity" required>
-      <option value="">Select severity</option>
-      <option value="mild">Mild</option>
-      <option value="moderate">Moderate</option>
-      <option value="severe">Severe</option>
-    </select>
-
-    <label>Action Taken (optional)</label>
-    <textarea id="action" rows="2" placeholder="e.g. Rested 15 mins, given water"></textarea>
-
-    <button type="submit">Submit Check-In</button>
-  </form>
-  <div id="msg"></div>
+<div class="kiosk" style="display:none;">
+  <div class="progress" id="progress"></div>
+  <div class="stage" id="stage"></div>
 </div>
 
 <script>
 var API = "";
 
-document.getElementById("checkinForm").addEventListener("submit", function(e) {
-  e.preventDefault();
+var STEPS = [
+  { key:'grade', eyebrow:'Step 1 of 5', title:'What <em>grade</em> are you in?',
+    options:[{v:'Grade 11',ic:'🎓'},{v:'Grade 12',ic:'🎓'}] },
+  { key:'strand', eyebrow:'Step 2 of 5', title:'Which <em>strand</em> are you under?',
+    options:[{v:'STEM',ic:'🧪'},{v:'ABM',ic:'💼'},{v:'HUMSS',ic:'📚'}] },
+  { key:'illness', eyebrow:'Step 3 of 5', title:"What's <em>bothering</em> you today?", grid:true,
+    options:[{v:'Headache',ic:'🤕'},{v:'Fever',ic:'🤒'},{v:'Stomachache',ic:'🤢'},{v:'Minor Injury',ic:'🩹'},
+      {v:'Cough/Colds',ic:'🤧'},{v:'Allergy',ic:'🌿'},{v:'Dizziness',ic:'💫'},{v:'Menstrual Cramps',ic:'🩸'},{v:'Others',ic:'➕'}] },
+  { key:'severity', eyebrow:'Step 4 of 5', title:'How <em>severe</em> does it feel?',
+    options:[{v:'mild',label:'Mild',tone:'mild'},{v:'moderate',label:'Moderate',tone:'moderate'},{v:'severe',label:'Severe',tone:'severe'}] },
+  { key:'action', eyebrow:'Step 5 of 5', title:'Anything <em>done</em> already?', text:true }
+];
+
+var current = -1;
+var answers = {};
+var resetTimer = null;
+var dir = 1;
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function renderProgress(){
+  var p = document.getElementById('progress');
+  if (current < 0 || current > STEPS.length - 1) { p.style.display='none'; return; }
+  p.style.display='flex';
+  var html = '';
+  for (var i = 0; i < STEPS.length; i++) {
+    var cls = i < current ? 'dot done' : (i === current ? 'dot now' : 'dot');
+    html += '<div class="' + cls + '"></div>';
+  }
+  p.innerHTML = html;
+}
+
+function optHTML(step, o, i){
+  var picked = answers[step.key] === o.v ? ' picked' : '';
+  var tone = o.tone ? ' tone-' + o.tone : '';
+  var icon = o.ic ? '<span class="ic">' + o.ic + '</span>' : '';
+  return '<button class="opt' + picked + tone + '" style="animation-delay:' + (0.1 + (i || 0) * 0.05) + 's" onclick="pick(\'' + step.key + '\',\'' + o.v + '\',this)">' + icon + (o.label || o.v) + '</button>';
+}
+
+function render(){
+  var stage = document.getElementById('stage');
+  stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('enter');
+  renderProgress();
+
+  if (current === STEPS.length) {
+    stage.className = 'stage enter' + (dir < 0 ? ' back' : '');
+    var r = answers;
+    stage.innerHTML =
+      '<div class="checkwrap" id="burst"><svg class="check" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28"/><path d="M22 36l9 9 17-19"/></svg></div>' +
+      '<h1 style="text-align:center;">Check-in <em>recorded</em></h1>' +
+      '<p class="sub" style="text-align:center;">Please proceed to the clinic staff.</p>' +
+      '<div class="ticket">' +
+        '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>' +
+        '<div class="trow"><span>Strand</span><span>' + esc(r.strand) + '</span></div>' +
+        '<div class="trow"><span>Concern</span><span>' + esc(r.illness) + '</span></div>' +
+        '<div class="trow"><span>Severity</span><span>' + esc(r.severity) + '</span></div>' +
+        '<div class="trow"><span>Time</span><span>' + esc(r.time) + '</span></div>' +
+      '</div>' +
+      '<div class="refcode">' + esc(r.ref) + '</div>' +
+      '<div class="actions">' +
+        '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print Again</button>' +
+        '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
+      '</div>' +
+      '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
+    printReceipt();
+    burst();
+    startAutoReset();
+    return;
+  }
+
+  var step = STEPS[current];
+  stage.className = 'stage enter' + (dir < 0 ? ' back' : '');
+  var back = current > 0 ? '<button class="back" onclick="goStep(current-1)">&larr; Back</button>' : '';
+  var head = '<p class="eyebrow">' + step.eyebrow + '</p><h1>' + step.title + '</h1>';
+
+  if (step.text) {
+    stage.innerHTML = back + head +
+      '<textarea id="actionInput" placeholder="e.g. Rested 15 mins, given water">' + esc(answers.action || '') + '</textarea>' +
+      '<div class="actions">' +
+        '<button class="btn btn-ghost" onclick="answers.action=\'\'; submitForm();">Skip</button>' +
+        '<button class="btn btn-primary" onclick="answers.action=document.getElementById(\'actionInput\').value; submitForm();">Submit</button>' +
+      '</div>';
+    return;
+  }
+
+  var optsHTML = '';
+  for (var i = 0; i < step.options.length; i++) optsHTML += optHTML(step, step.options[i], i);
+  stage.innerHTML = back + head + '<div class="options' + (step.grid ? ' grid' : '') + '">' + optsHTML + '</div>';
+}
+
+function goStep(i){ dir = i < current ? -1 : 1; current = i; render(); }
+
+/*
+  BLUETOOTH RECEIPT PRINTING (via the free "RawBT Print Service" app)
+  ---------------------------------------------------------------------
+  Browsers can't talk to Bluetooth thermal printers directly, but RawBT
+  acts as a bridge: install it once on the tablet, pair your printer in
+  Android's Bluetooth settings, then open RawBT and set that printer as
+  default (also set paper width to 58mm there). After that, this page
+  can trigger a print just by opening a special "rawbt:" link — no app
+  building required.
+  Play Store: search "RawBT Print Service"
+*/
+function safeForPrinter(str){
+  // Strip characters thermal printers/base64 can't handle (emoji, ₱, etc.)
+  return String(str || '').replace(/[^\x00-\xFF]/g, '');
+}
+
+function buildReceiptText(r){
+  var line = '--------------------------------\n';
+  var t = '';
+  t += '    ALANGILAN SHS CLINIC\n';
+  t += '      Visit Check-In Slip\n';
+  t += line;
+  t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
+  t += 'Strand:   ' + safeForPrinter(r.strand) + '\n';
+  t += 'Concern:  ' + safeForPrinter(r.illness) + '\n';
+  t += 'Severity: ' + safeForPrinter(r.severity) + '\n';
+  t += 'Time:     ' + safeForPrinter(r.time) + '\n';
+  t += line;
+  t += '   Ref: ' + safeForPrinter(r.ref) + '\n';
+  t += '\nPlease proceed to the clinic staff.\n\n\n';
+  return t;
+}
+
+function printReceipt(){
+  try {
+    var text = buildReceiptText(answers);
+    var b64 = window.btoa(text);
+    window.location.href = 'rawbt:base64,' + b64;
+  } catch (e) {
+    console.log('Print skipped (RawBT not installed or blocked):', e);
+  }
+}
+
+function pick(key, value, btn){
+  answers[key] = value;
+  if (navigator.vibrate) { navigator.vibrate(18); }
+  var all = document.querySelectorAll('.opt');
+  for (var i = 0; i < all.length; i++) { all[i].style.pointerEvents = 'none'; }
+  if (btn) { btn.classList.add('picked'); }
+  setTimeout(function(){ goStep(current + 1); }, 420);
+}
+
+document.addEventListener('pointerdown', function(e){
+  var t = e.target.closest('.opt, .btn');
+  if (!t) { return; }
+  var r = t.getBoundingClientRect(), d = Math.max(r.width, r.height), sp = document.createElement('span');
+  sp.className = 'ripple';
+  sp.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
+  t.appendChild(sp);
+  setTimeout(function(){ sp.remove(); }, 650);
+});
+
+function burst(){
+  var w = document.getElementById('burst');
+  if (!w) { return; }
+  var cols = ['#0f5c3d', '#2f9e68', '#9ad9b8', '#e8b93f'];
+  for (var i = 0; i < 16; i++) {
+    var a = (Math.PI * 2 / 16) * i + Math.random() * 0.3, dist = 48 + Math.random() * 30, sp = document.createElement('i');
+    sp.className = 'spark';
+    sp.style.cssText = '--x:' + Math.cos(a) * dist + 'px;--y:' + Math.sin(a) * dist + 'px;background:' + cols[i % 4] + ';animation-delay:' + (0.55 + Math.random() * 0.1) + 's';
+    w.appendChild(sp);
+  }
+}
+
+function submitForm(){
+  var stage = document.getElementById('stage');
+  stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><p class="sub">Submitting...</p></div>';
+
   var payload = {
-    grade: document.getElementById("grade").value,
-    strand: document.getElementById("strand").value,
-    illness: document.getElementById("illness").value,
-    severity: document.getElementById("severity").value,
-    action_taken: document.getElementById("action").value
+    grade: answers.grade, strand: answers.strand, illness: answers.illness,
+    severity: answers.severity, action_taken: answers.action || ''
   };
-  var msg = document.getElementById("msg");
 
   fetch(API + "/api/visits", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  }).then(function(res) {
-    if (res.ok) {
-      msg.style.color = "#1b7a4d";
-      msg.textContent = "Check-in recorded. Thank you!";
-      document.getElementById("checkinForm").reset();
-    } else {
-      res.json().then(function(err) {
-        msg.style.color = "#d9534f";
-        msg.textContent = "Error: " + (err.error || "Something went wrong.");
-      });
-    }
-  }).catch(function() {
-    msg.style.color = "#d9534f";
-    msg.textContent = "Network error. Please try again.";
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+  }).then(function(res){
+    if (!res.ok) throw new Error('failed');
+    var now = new Date();
+    answers.time = now.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
+    answers.ref = 'AC-' + now.getTime().toString().slice(-6);
+    goStep(STEPS.length);
+  }).catch(function(){
+    var stage2 = document.getElementById('stage');
+    stage2.innerHTML = '<h1>Something went wrong</h1><p class="sub">Please try again or ask the clinic staff for help.</p>' +
+      '<div class="actions"><button class="btn btn-primary" onclick="goStep(STEPS.length-1)">Try Again</button></div>';
   });
-});
+}
+
+function startAutoReset(){
+  var seconds = 15;
+  var el = document.getElementById('timerText');
+  clearTimeout(resetTimer);
+  function tick(){
+    if (!el) return;
+    el.textContent = 'Returning to start in ' + seconds + 's';
+    if (seconds <= 0) { showIdle(); return; }
+    seconds--;
+    resetTimer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+function showIdle(){
+  clearTimeout(resetTimer);
+  answers = {};
+  var idle = document.getElementById('idleScreen');
+  var kiosk = document.querySelector('.kiosk');
+  idle.classList.remove('idle-screen-out');
+  idle.style.display = 'flex';
+  kiosk.style.display = 'none';
+  var v = document.getElementById('idleVideo');
+  try { v.currentTime = 0; v.play(); } catch (e) {}
+}
+
+function hideIdleAndStart(){
+  var idle = document.getElementById('idleScreen');
+  var kiosk = document.querySelector('.kiosk');
+  idle.classList.add('idle-screen-out');
+  setTimeout(function(){
+    idle.style.display = 'none';
+    idle.classList.remove('idle-screen-out');
+    kiosk.style.display = 'block';
+    current = -1; dir = 1;
+    goStep(0);
+  }, 380);
+}
+
+(function setupSwipe(){
+  var idle = document.getElementById('idleScreen');
+  var startY = null;
+  idle.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; }, { passive:true });
+  idle.addEventListener('touchend', function(e){
+    if (startY === null) return;
+    var endY = e.changedTouches[0].clientY;
+    if (startY - endY > 50) { hideIdleAndStart(); }
+    startY = null;
+  }, { passive:true });
+  idle.addEventListener('click', function(){ hideIdleAndStart(); });
+})();
+
+function tickClock(){
+  var n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  document.getElementById('cdate').textContent = n.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+tickClock();
+setInterval(tickClock, 1000);
+showIdle();
+
 </script>
 </body>
 </html>
