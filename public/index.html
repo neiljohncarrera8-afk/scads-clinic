@@ -11,8 +11,8 @@
 <style>
   :root{
     --primary:#1b7a4d; --primary-dark:#0f3d2e; --primary-light:#e8f5ee;
-    --bg:#f4f7f6; --card:#ffffff;
-    --text:#1e2a26; --muted:#6b7c76; --border:#e3ebe8;
+    --bg:#fdf6e3; --card:#fffdf6;
+    --text:#1e2a26; --muted:#6b7c76; --border:#ece2c4;
     --red:#e05c5c; --yellow:#e8b93f; --blue:#3b82c4; --purple:#8b6bd1; --pink:#d97ba8;
     --neon:#39e88f;
     --shadow-sm: 0 1px 3px rgba(15,61,46,0.06);
@@ -20,9 +20,9 @@
     --shadow-lg: 0 12px 32px rgba(15,61,46,0.14);
 
     /* Sidebar-only palette (kept blue per request) */
-    --sb-dark:#12395e; --sb-darker:#081f36;
-    --sb-accent:#1e6fbf; --sb-accent-dark:#145a94;
-    --sb-neon:#39b0e8;
+    --sb-dark:#1b2f8c; --sb-darker:#0c1650;
+    --sb-accent:#2a3fc9; --sb-accent-dark:#1b2a99;
+    --sb-neon:#5a6cff;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
@@ -75,19 +75,19 @@
   }
   .nav-item .emoji{font-size:1.05rem;transition:transform 0.2s ease;}
   .nav-item:hover{
-    background:rgba(57,176,232,0.1);
+    background:rgba(90,108,255,0.1);
     color:#fff;
     transform:translateX(3px);
-    box-shadow:0 0 12px rgba(57,176,232,0.45), 0 0 26px rgba(57,176,232,0.25), inset 0 0 10px rgba(57,176,232,0.1);
+    box-shadow:0 0 12px rgba(90,108,255,0.45), 0 0 26px rgba(90,108,255,0.25), inset 0 0 10px rgba(90,108,255,0.1);
   }
-  .nav-item:hover .emoji{transform:scale(1.15) rotate(-4deg);filter:drop-shadow(0 0 4px rgba(57,176,232,0.7));}
+  .nav-item:hover .emoji{transform:scale(1.15) rotate(-4deg);filter:drop-shadow(0 0 4px rgba(90,108,255,0.7));}
   .nav-item.active{
     background:var(--sb-accent);color:#fff;font-weight:700;
-    box-shadow:0 6px 16px rgba(30,111,191,0.4);
+    box-shadow:0 6px 16px rgba(42,63,201,0.4);
   }
   .nav-item.active::before{transform:translateY(-50%) scaleY(1);}
   .nav-item.active:hover{
-    box-shadow:0 6px 16px rgba(30,111,191,0.4), 0 0 14px rgba(57,176,232,0.5);
+    box-shadow:0 6px 16px rgba(42,63,201,0.4), 0 0 14px rgba(90,108,255,0.5);
   }
 
   .sidebar-divider{
@@ -103,7 +103,7 @@
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);
     transition:background 0.2s ease;
   }
-  .staff-card:hover{background:rgba(57,176,232,0.12);}
+  .staff-card:hover{background:rgba(90,108,255,0.12);}
   .staff-photo{
     width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;
     border:2px solid var(--sb-accent);background:#0e2a48;
@@ -163,6 +163,8 @@
   .panel h2{font-size:0.98rem;margin-bottom:16px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;}
   .panel h2::before{content:'';display:inline-block;width:4px;height:14px;background:var(--primary);border-radius:2px;margin-right:9px;}
   canvas{max-height:230px;}
+  #illnessChart,#severityChart{transform:perspective(900px) rotateX(22deg);transform-origin:50% 65%;
+    filter:drop-shadow(0 16px 10px rgba(15,61,46,.22));}
 
   .alert-panel{
     background:linear-gradient(135deg,#fdeeee,#fff5f5);border:1px solid #f3c8c8;border-radius:18px;padding:18px;
@@ -481,8 +483,8 @@
              Replace the photo src, name, role, and info lines with real details. -->
         <div class="personnel-card">
           <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
-          <div class="personnel-name">Jamor C. Paduit</div>
-          <div class="personnel-role">Clinic Personnel</div>
+          <div class="personnel-name">PANGALAN DITO 1</div>
+          <div class="personnel-role">School Nurse</div>
           <div class="personnel-info">
             <div>📧 email@example.com</div>
             <div>📞 0917-000-0000</div>
@@ -493,7 +495,7 @@
         <div class="personnel-card">
           <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
           <div class="personnel-name">PANGALAN DITO 2</div>
-          <div class="personnel-role">Clinic Personnel</div>
+          <div class="personnel-role">Clinic Aide</div>
           <div class="personnel-info">
             <div>📧 email@example.com</div>
             <div>📞 0917-000-0001</div>
@@ -504,7 +506,7 @@
         <div class="personnel-card">
           <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
           <div class="personnel-name">PANGALAN DITO 3</div>
-          <div class="personnel-role">Clinic Personnel</div>
+          <div class="personnel-role">School Physician</div>
           <div class="personnel-info">
             <div>📧 email@example.com</div>
             <div>📞 0917-000-0002</div>
@@ -515,7 +517,7 @@
         <div class="personnel-card">
           <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
           <div class="personnel-name">PANGALAN DITO 4</div>
-          <div class="personnel-role">Clinic Personnel</div>
+          <div class="personnel-role">Clinic Aide</div>
           <div class="personnel-info">
             <div>📧 email@example.com</div>
             <div>📞 0917-000-0003</div>
@@ -572,6 +574,45 @@ Chart.register({ id: 'centerTotal', afterDraw: function (c) {
   k.fillStyle = '#6b7c76'; k.font = "700 10px Manrope, sans-serif"; k.fillText('TOTAL', x, y + 16);
   k.restore();
 } });
+
+// ---- Pseudo-3D bar extrusion (draws a top + side face on each bar) ----
+function shadeColor(hex, pct) {
+  if (!hex || hex[0] !== '#') { return hex; }
+  var f = parseInt(hex.slice(1), 16), t = pct < 0 ? 0 : 255, p = Math.abs(pct) / 100;
+  var R = f >> 16, G = (f >> 8) & 0x00FF, B = f & 0x0000FF;
+  return '#' + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 +
+    (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
+}
+Chart.register({
+  id: 'bar3d',
+  afterDatasetsDraw: function (chart) {
+    if (chart.config.type !== 'bar') { return; }
+    var ctx = chart.ctx, depth = 7;
+    chart.data.datasets.forEach(function (ds, di) {
+      var meta = chart.getDatasetMeta(di);
+      if (meta.hidden) { return; }
+      meta.data.forEach(function (bar) {
+        var p = bar.getProps(['x', 'y', 'base', 'width'], true);
+        var col = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[meta.data.indexOf(bar)] : ds.backgroundColor;
+        if (!col || col[0] !== '#' || p.y === p.base) { return; }
+        var x0 = p.x - p.width / 2, x1 = p.x + p.width / 2;
+        ctx.save();
+        ctx.fillStyle = shadeColor(col, 28);
+        ctx.beginPath();
+        ctx.moveTo(x0, p.y); ctx.lineTo(x0 + depth, p.y - depth);
+        ctx.lineTo(x1 + depth, p.y - depth); ctx.lineTo(x1, p.y);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = shadeColor(col, -22);
+        ctx.beginPath();
+        ctx.moveTo(x1, p.y); ctx.lineTo(x1 + depth, p.y - depth);
+        ctx.lineTo(x1 + depth, p.base - depth); ctx.lineTo(x1, p.base);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+      });
+    });
+  }
+});
+
 var allVisits = [], rangeDays = 14, strandIllnessInstance = null;
 
 function animateCounter(el, target, duration) {
@@ -716,7 +757,7 @@ function loadTrendAndReports() {
     strandChartInstance = new Chart(document.getElementById("strandChart"), {
       type: "bar",
       data: { labels: strandLabels, datasets: strandDatasets },
-      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
+      options: { layout: { padding: { top: 10, right: 10 } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
     });
 
     var weeks = [];
@@ -997,8 +1038,8 @@ function renderCharts(daily, illness, grade) {
   if (gradeChartInstance) { gradeChartInstance.destroy(); }
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
-    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1200, easing: "easeOutQuart" } }
+    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"] }] },
+    options: { layout: { padding: { top: 10, right: 10 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1200, easing: "easeOutQuart" } }
   });
 }
 
@@ -1089,13 +1130,14 @@ function renderStrandIllness(v) {
   });
   var names = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }).slice(0, 6);
   var ds = names.map(function (n, i) {
-    return { label: n, backgroundColor: brandPalette[i % brandPalette.length], borderRadius: 4, borderSkipped: false,
+    return { label: n, backgroundColor: brandPalette[i % brandPalette.length],
       data: strands.map(function (st) { return counts[n][st] || 0; }) };
   });
   if (strandIllnessInstance) { strandIllnessInstance.destroy(); }
   strandIllnessInstance = new Chart(document.getElementById("strandIllnessChart"), {
     type: "bar", data: { labels: strands, datasets: ds },
-    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 8, font: { size: 10 } } } },
+    options: { layout: { padding: { top: 10, right: 10 } },
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 8, font: { size: 10 } } } },
       scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
