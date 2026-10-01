@@ -1221,6 +1221,11 @@ new QRCode(document.getElementById("qrcode"), {
     (function (panel) {
       if (!panel.querySelector('canvas')) { return; }
       panel.classList.add('tiltable');
+      // The entrance animation's fill-mode keeps holding "transform:none" even after
+      // it finishes, which silently overrides any transform we set from JS. Clear it
+      // once it's done playing so dragging/hovering can actually rotate the panel.
+      panel.addEventListener('animationend', function () { panel.style.animation = 'none'; }, { once: true });
+      setTimeout(function () { panel.style.animation = 'none'; }, 700);
       var hint = document.createElement('span');
       hint.className = 'tilt-hint'; hint.textContent = 'drag to tilt';
       panel.appendChild(hint);
