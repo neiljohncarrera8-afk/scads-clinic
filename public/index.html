@@ -152,7 +152,7 @@
   .stat-card .value{font-size:1.7rem;font-weight:800;margin-top:4px;letter-spacing:-0.5px;}
   .stat-card .sub{font-size:0.74rem;color:var(--muted);margin-top:4px;font-weight:500;}
 
-  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px;perspective:1400px;}
+  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px;}
   @media(max-width:1000px){.grid2{grid-template-columns:1fr;}}
 
   .panel{
@@ -164,13 +164,6 @@
   .panel h2::before{content:'';display:inline-block;width:4px;height:14px;background:var(--primary);border-radius:2px;margin-right:9px;}
   canvas{max-height:230px;}
   #illnessChart,#severityChart{filter:drop-shadow(0 16px 10px rgba(15,61,46,.22));}
-  .panel.tiltable{transform-style:preserve-3d;transition:transform .12s ease-out,box-shadow .25s ease;
-    will-change:transform;cursor:grab;}
-  .panel.tiltable:active{cursor:grabbing;}
-  .panel.tiltable canvas{transform:translateZ(18px);}
-  .panel.tiltable h2{transform:translateZ(26px);}
-  .tilt-hint{position:absolute;top:14px;right:16px;font-size:.62rem;color:var(--muted);opacity:.55;
-    font-weight:700;letter-spacing:.3px;pointer-events:none;}
 
   .alert-panel{
     background:linear-gradient(135deg,#fdeeee,#fff5f5);border:1px solid #f3c8c8;border-radius:18px;padding:18px;
@@ -590,35 +583,27 @@ function shadeColor(hex, pct) {
     (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
 }
 Chart.register({
-  id: 'bar3d',
-  afterDatasetsDraw: function (chart) {
-    if (chart.config.type !== 'bar') { return; }
-    var ctx = chart.ctx, depth = 7;
-    chart.data.datasets.forEach(function (ds, di) {
-      var meta = chart.getDatasetMeta(di);
-      if (meta.hidden) { return; }
-      meta.data.forEach(function (bar) {
-        var p = bar.getProps(['x', 'y', 'base', 'width'], true);
-        var col = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[meta.data.indexOf(bar)] : ds.backgroundColor;
-        if (!col || col[0] !== '#' || p.y === p.base) { return; }
-        var x0 = p.x - p.width / 2, x1 = p.x + p.width / 2;
-        ctx.save();
-        ctx.fillStyle = shadeColor(col, 28);
+  id: 'doughnut3d',
+  beforeDatasetsDraw: function (chart) {
+    if (chart.config.type !== 'doughnut') { return; }
+    var meta = chart.getDatasetMeta(0), ctx = chart.ctx, layers = 10, depth = 12;
+    ctx.save();
+    for (var L = layers; L >= 1; L--) {
+      var off = (depth / layers) * L;
+      meta.data.forEach(function (arc) {
+        var p = arc.getProps(['x', 'y', 'startAngle', 'endAngle', 'innerRadius', 'outerRadius'], true);
+        var col = arc.options.backgroundColor;
         ctx.beginPath();
-        ctx.moveTo(x0, p.y); ctx.lineTo(x0 + depth, p.y - depth);
-        ctx.lineTo(x1 + depth, p.y - depth); ctx.lineTo(x1, p.y);
-        ctx.closePath(); ctx.fill();
-        ctx.fillStyle = shadeColor(col, -22);
-        ctx.beginPath();
-        ctx.moveTo(x1, p.y); ctx.lineTo(x1 + depth, p.y - depth);
-        ctx.lineTo(x1 + depth, p.base - depth); ctx.lineTo(x1, p.base);
-        ctx.closePath(); ctx.fill();
-        ctx.restore();
+        ctx.fillStyle = shadeColor(col, -38);
+        ctx.arc(p.x, p.y + off, p.outerRadius, p.startAngle, p.endAngle);
+        ctx.arc(p.x, p.y + off, p.innerRadius, p.endAngle, p.startAngle, true);
+        ctx.closePath();
+        ctx.fill();
       });
-    });
+    }
+    ctx.restore();
   }
 });
-
 var allVisits = [], rangeDays = 14, strandIllnessInstance = null;
 
 function animateCounter(el, target, duration) {
@@ -763,7 +748,7 @@ function loadTrendAndReports() {
     strandChartInstance = new Chart(document.getElementById("strandChart"), {
       type: "bar",
       data: { labels: strandLabels, datasets: strandDatasets },
-      options: { layout: { padding: { top: 10, right: 10 } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
+      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
     });
 
     var weeks = [];
@@ -1044,8 +1029,8 @@ function renderCharts(daily, illness, grade) {
   if (gradeChartInstance) { gradeChartInstance.destroy(); }
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
-    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"] }] },
-    options: { layout: { padding: { top: 10, right: 10 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1200, easing: "easeOutQuart" } }
+    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1200, easing: "easeOutQuart" } }
   });
 }
 
@@ -1136,14 +1121,13 @@ function renderStrandIllness(v) {
   });
   var names = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }).slice(0, 6);
   var ds = names.map(function (n, i) {
-    return { label: n, backgroundColor: brandPalette[i % brandPalette.length],
+    return { label: n, backgroundColor: brandPalette[i % brandPalette.length], borderRadius: 4, borderSkipped: false,
       data: strands.map(function (st) { return counts[n][st] || 0; }) };
   });
   if (strandIllnessInstance) { strandIllnessInstance.destroy(); }
   strandIllnessInstance = new Chart(document.getElementById("strandIllnessChart"), {
     type: "bar", data: { labels: strands, datasets: ds },
-    options: { layout: { padding: { top: 10, right: 10 } },
-      plugins: { legend: { position: "bottom", labels: { boxWidth: 8, font: { size: 10 } } } },
+    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 8, font: { size: 10 } } } },
       scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } }
   });
 }
@@ -1211,52 +1195,6 @@ new QRCode(document.getElementById("qrcode"), {
 (function staggerSidebar(){
   var items=document.querySelectorAll('.sidebar .nav-item, .sidebar .staff-card');
   for(var i=0;i<items.length;i++){items[i].style.animationDelay=(0.25+i*0.07)+'s';}
-})();
-
-// ---- Interactive 3D tilt on chart panels (drag/hover to rotate) ----
-(function initChartTilt(){
-  var MAX_DEG = 12;
-  var panels = document.querySelectorAll('.panel');
-  for (var i = 0; i < panels.length; i++) {
-    (function (panel) {
-      if (!panel.querySelector('canvas')) { return; }
-      panel.classList.add('tiltable');
-      // The entrance animation's fill-mode keeps holding "transform:none" even after
-      // it finishes, which silently overrides any transform we set from JS. Clear it
-      // once it's done playing so dragging/hovering can actually rotate the panel.
-      panel.addEventListener('animationend', function () { panel.style.animation = 'none'; }, { once: true });
-      setTimeout(function () { panel.style.animation = 'none'; }, 700);
-      var hint = document.createElement('span');
-      hint.className = 'tilt-hint'; hint.textContent = 'drag to tilt';
-      panel.appendChild(hint);
-
-      var rect = null, dragging = false;
-
-      function apply(clientX, clientY) {
-        if (!rect) { rect = panel.getBoundingClientRect(); }
-        var px = (clientX - rect.left) / rect.width;
-        var py = (clientY - rect.top) / rect.height;
-        var rx = (0.5 - py) * MAX_DEG * 2;
-        var ry = (px - 0.5) * MAX_DEG * 2;
-        panel.style.transform = 'perspective(1200px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
-      }
-      function reset() { rect = null; dragging = false; panel.style.transform = ''; }
-
-      panel.addEventListener('mouseenter', function () { rect = panel.getBoundingClientRect(); });
-      panel.addEventListener('mousemove', function (e) { apply(e.clientX, e.clientY); });
-      panel.addEventListener('mouseleave', reset);
-
-      panel.addEventListener('touchstart', function (e) {
-        dragging = true; rect = panel.getBoundingClientRect();
-        apply(e.touches[0].clientX, e.touches[0].clientY);
-      }, { passive: true });
-      panel.addEventListener('touchmove', function (e) {
-        if (!dragging) { return; }
-        apply(e.touches[0].clientX, e.touches[0].clientY);
-      }, { passive: true });
-      panel.addEventListener('touchend', reset);
-    })(panels[i]);
-  }
 })();
 
 loadMeta().then(function () {
