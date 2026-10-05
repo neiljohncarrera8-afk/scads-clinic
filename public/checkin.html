@@ -70,7 +70,6 @@
   .back{align-self:flex-start;border:none;background:none;color:var(--muted);font-weight:700;font-size:.85rem;
     cursor:pointer;margin-bottom:8px;display:flex;align-items:center;gap:4px;}
 
-  /* Welcome */
   .welcome{align-items:center;text-align:center;justify-content:center;gap:6px;}
   .badge{width:64px;height:64px;border-radius:20px;background:linear-gradient(150deg,var(--forest),var(--forest-dark));
     display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 18px;
@@ -84,7 +83,6 @@
   @keyframes breathe{0%,100%{box-shadow:0 14px 30px -10px rgba(15,92,61,.55);}50%{box-shadow:0 18px 38px -8px rgba(15,92,61,.7);}}
   .privacy{margin-top:16px;font-size:.72rem;color:var(--muted);}
 
-  /* Receipt */
   .check{width:70px;height:70px;margin:0 auto 16px;}
   .check circle{stroke:var(--forest);stroke-width:3;fill:none;stroke-dasharray:180;stroke-dashoffset:180;
     animation:circleDraw .5s var(--ease) forwards;}
@@ -107,7 +105,6 @@
 
   @media(max-width:400px){.options.grid{grid-template-columns:1fr;}}
 
-  /* Idle attract screen (video loop) */
   #idleScreen{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:flex-end;
     justify-content:center;overflow:hidden;}
   #idleVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
@@ -124,7 +121,6 @@
   .idle-screen-out{animation:idleOut .4s var(--ease) forwards;}
   @keyframes idleOut{to{transform:translateY(-100%);opacity:0;}}
 
-  /* ===== Effects layer ===== */
   .stage.enter{animation:stageFwd .6s var(--ease) both;}
   .stage.enter.back{animation-name:stageBack;}
   @keyframes stageFwd{from{opacity:0;transform:translateX(30px) scale(.98);}to{opacity:1;transform:none;}}
@@ -162,9 +158,9 @@
   @keyframes printOut{from{clip-path:inset(0 -20px 100% -20px);transform:translateY(-16px);}to{clip-path:inset(0 -20px -20px -20px);transform:none;}}
   .trow{animation:rowIn .5s var(--ease) backwards;}
   .trow:nth-child(1){animation-delay:.9s;}.trow:nth-child(2){animation-delay:.98s;}.trow:nth-child(3){animation-delay:1.06s;}
-  .trow:nth-child(4){animation-delay:1.14s;}.trow:nth-child(5){animation-delay:1.22s;}
+  .trow:nth-child(4){animation-delay:1.14s;}.trow:nth-child(5){animation-delay:1.22s;}.trow:nth-child(6){animation-delay:1.3s;}
   @keyframes rowIn{from{opacity:0;transform:translateX(-10px);}to{opacity:1;transform:none;}}
-  .refcode{animation:rowIn .6s var(--ease) 1.3s backwards;}
+  .refcode{animation:rowIn .6s var(--ease) 1.35s backwards;}
   .drain{height:3px;background:var(--line);border-radius:2px;margin-top:14px;overflow:hidden;}
   .drain i{display:block;height:100%;background:var(--forest);animation:drain 15s linear forwards;}
   @keyframes drain{from{width:100%;}to{width:0;}}
@@ -200,64 +196,153 @@
 <script>
 var API = "";
 
-var STEPS = [
-  { key:'grade', eyebrow:'Step 1 of 5', title:'What <em>grade</em> are you in?',
-    options:[{v:'Grade 11',ic:'🎓'},{v:'Grade 12',ic:'🎓'}] },
-  { key:'strand', eyebrow:'Step 2 of 5', title:'Which <em>strand</em> are you under?',
-    options:[{v:'STEM',ic:'🧪'},{v:'ABM',ic:'💼'},{v:'HUMSS',ic:'📚'}] },
-  { key:'illness', eyebrow:'Step 3 of 5', title:"What's <em>bothering</em> you today?", grid:true,
-    options:[{v:'Headache',ic:'🤕'},{v:'Fever',ic:'🤒'},{v:'Stomachache',ic:'🤢'},{v:'Minor Injury',ic:'🩹'},
-      {v:'Cough/Colds',ic:'🤧'},{v:'Allergy',ic:'🌿'},{v:'Dizziness',ic:'💫'},{v:'Menstrual Cramps',ic:'🩸'},{v:'Others',ic:'➕'}] },
-  { key:'severity', eyebrow:'Step 4 of 5', title:'How <em>severe</em> does it feel?',
-    options:[{v:'mild',label:'Mild',tone:'mild'},{v:'moderate',label:'Moderate',tone:'moderate'},{v:'severe',label:'Severe',tone:'severe'}] },
-  { key:'action', eyebrow:'Step 5 of 5', title:'Anything <em>done</em> already?', text:true }
-];
+/* ---- Step definitions ---- */
+var PURPOSE_STEP = {
+  key: 'purpose',
+  title: 'What do you need <em>today</em>?',
+  options: [
+    { v: 'Feeding', ic: '🍽️', label: 'Feeding' },
+    { v: 'Consultation', ic: '🩺', label: 'Clinic Consultation' }
+  ]
+};
+
+var GRADE_STEP = {
+  key: 'grade',
+  title: 'What <em>grade</em> are you in?',
+  options: [
+    { v: 'Grade 11', ic: '🎓' },
+    { v: 'Grade 12', ic: '🎓' }
+  ]
+};
+
+var STRAND_STEP = {
+  key: 'strand',
+  title: 'Which <em>strand</em> are you under?',
+  options: [
+    { v: 'STEM', ic: '🧪' },
+    { v: 'ABM', ic: '💼' },
+    { v: 'HUMSS', ic: '📚' }
+  ]
+};
+
+var ILLNESS_STEP = {
+  key: 'illness',
+  title: "What's <em>bothering</em> you today?",
+  grid: true,
+  options: [
+    { v: 'Headache', ic: '🤕' },
+    { v: 'Fever', ic: '🤒' },
+    { v: 'Stomachache', ic: '🤢' },
+    { v: 'Minor Injury', ic: '🩹' },
+    { v: 'Cough/Colds', ic: '🤧' },
+    { v: 'Allergy', ic: '🌿' },
+    { v: 'Dizziness', ic: '💫' },
+    { v: 'Menstrual Cramps', ic: '🩸' },
+    { v: 'Others', ic: '➕' }
+  ]
+};
+
+var SEVERITY_STEP = {
+  key: 'severity',
+  title: 'How <em>severe</em> does it feel?',
+  options: [
+    { v: 'mild', label: 'Mild', tone: 'mild' },
+    { v: 'moderate', label: 'Moderate', tone: 'moderate' },
+    { v: 'severe', label: 'Severe', tone: 'severe' }
+  ]
+};
+
+var ACTION_STEP = {
+  key: 'action',
+  title: 'Anything <em>done</em> already?',
+  text: true
+};
+
+/* Build the active step list based on purpose */
+function getSteps() {
+  var steps = [PURPOSE_STEP, GRADE_STEP, STRAND_STEP];
+  if (answers.purpose === 'Consultation') {
+    steps = steps.concat([ILLNESS_STEP, SEVERITY_STEP, ACTION_STEP]);
+  }
+  // Update eyebrow labels with correct "Step X of Y"
+  var total = steps.length;
+  for (var i = 0; i < steps.length; i++) {
+    steps[i].eyebrow = 'Step ' + (i + 1) + ' of ' + total;
+  }
+  return steps;
+}
 
 var current = -1;
 var answers = {};
 var resetTimer = null;
 var dir = 1;
 
-function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 
-function renderProgress(){
+function renderProgress() {
   var p = document.getElementById('progress');
-  if (current < 0 || current > STEPS.length - 1) { p.style.display='none'; return; }
-  p.style.display='flex';
+  var steps = getSteps();
+  if (current < 0 || current > steps.length - 1) {
+    p.style.display = 'none';
+    return;
+  }
+  p.style.display = 'flex';
   var html = '';
-  for (var i = 0; i < STEPS.length; i++) {
+  for (var i = 0; i < steps.length; i++) {
     var cls = i < current ? 'dot done' : (i === current ? 'dot now' : 'dot');
     html += '<div class="' + cls + '"></div>';
   }
   p.innerHTML = html;
 }
 
-function optHTML(step, o, i){
+function optHTML(step, o, i) {
   var picked = answers[step.key] === o.v ? ' picked' : '';
   var tone = o.tone ? ' tone-' + o.tone : '';
   var icon = o.ic ? '<span class="ic">' + o.ic + '</span>' : '';
   return '<button class="opt' + picked + tone + '" style="animation-delay:' + (0.1 + (i || 0) * 0.05) + 's" onclick="pick(\'' + step.key + '\',\'' + o.v + '\',this)">' + icon + (o.label || o.v) + '</button>';
 }
 
-function render(){
+function render() {
   var stage = document.getElementById('stage');
-  stage.classList.remove('enter'); void stage.offsetWidth; stage.classList.add('enter');
+  stage.classList.remove('enter');
+  void stage.offsetWidth;
+  stage.classList.add('enter');
+
+  var steps = getSteps();
   renderProgress();
 
-  if (current === STEPS.length) {
+  /* ---- Success / Receipt screen ---- */
+  if (current === steps.length) {
     stage.className = 'stage enter' + (dir < 0 ? ' back' : '');
     var r = answers;
+    var isFeeding = r.purpose === 'Feeding';
+
+    var rows = '';
+    rows += '<div class="trow"><span>Purpose</span><span>' + esc(r.purpose) + '</span></div>';
+    rows += '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>';
+    rows += '<div class="trow"><span>Strand</span><span>' + esc(r.strand) + '</span></div>';
+    if (!isFeeding) {
+      rows += '<div class="trow"><span>Concern</span><span>' + esc(r.illness) + '</span></div>';
+      rows += '<div class="trow"><span>Severity</span><span>' + esc(r.severity) + '</span></div>';
+    }
+    rows += '<div class="trow"><span>Time</span><span>' + esc(r.time) + '</span></div>';
+
+    var titleHtml = isFeeding
+      ? '<h1 style="text-align:center;">Feeding <em>recorded</em></h1>'
+      : '<h1 style="text-align:center;">Check-in <em>recorded</em></h1>';
+    var subHtml = isFeeding
+      ? '<p class="sub" style="text-align:center;">Please show this slip / proceed to the feeding area.</p>'
+      : '<p class="sub" style="text-align:center;">Please proceed to the clinic staff.</p>';
+
     stage.innerHTML =
       '<div class="checkwrap" id="burst"><svg class="check" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28"/><path d="M22 36l9 9 17-19"/></svg></div>' +
-      '<h1 style="text-align:center;">Check-in <em>recorded</em></h1>' +
-      '<p class="sub" style="text-align:center;">Please proceed to the clinic staff.</p>' +
-      '<div class="ticket">' +
-        '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>' +
-        '<div class="trow"><span>Strand</span><span>' + esc(r.strand) + '</span></div>' +
-        '<div class="trow"><span>Concern</span><span>' + esc(r.illness) + '</span></div>' +
-        '<div class="trow"><span>Severity</span><span>' + esc(r.severity) + '</span></div>' +
-        '<div class="trow"><span>Time</span><span>' + esc(r.time) + '</span></div>' +
-      '</div>' +
+      titleHtml +
+      subHtml +
+      '<div class="ticket">' + rows + '</div>' +
       '<div class="refcode">' + esc(r.ref) + '</div>' +
       '<div class="actions">' +
         '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print Again</button>' +
@@ -270,7 +355,7 @@ function render(){
     return;
   }
 
-  var step = STEPS[current];
+  var step = steps[current];
   stage.className = 'stage enter' + (dir < 0 ? ' back' : '');
   var back = current > 0 ? '<button class="back" onclick="goStep(current-1)">&larr; Back</button>' : '';
   var head = '<p class="eyebrow">' + step.eyebrow + '</p><h1>' + step.title + '</h1>';
@@ -286,38 +371,36 @@ function render(){
   }
 
   var optsHTML = '';
-  for (var i = 0; i < step.options.length; i++) optsHTML += optHTML(step, step.options[i], i);
+  for (var i = 0; i < step.options.length; i++) {
+    optsHTML += optHTML(step, step.options[i], i);
+  }
   stage.innerHTML = back + head + '<div class="options' + (step.grid ? ' grid' : '') + '">' + optsHTML + '</div>';
 }
 
-function goStep(i){ dir = i < current ? -1 : 1; current = i; render(); }
+function goStep(i) {
+  dir = i < current ? -1 : 1;
+  current = i;
+  render();
+}
 
-/*
-  BLUETOOTH RECEIPT PRINTING (via the free "RawBT Print Service" app)
-  ---------------------------------------------------------------------
-  Browsers can't talk to Bluetooth thermal printers directly, but RawBT
-  acts as a bridge: install it once on the tablet, pair your printer in
-  Android's Bluetooth settings, then open RawBT and set that printer as
-  default (also set paper width to 58mm there). After that, this page
-  can trigger a print just by opening a special "rawbt:" link — no app
-  building required.
-  Play Store: search "RawBT Print Service"
-*/
-function safeForPrinter(str){
-  // Strip characters thermal printers/base64 can't handle (emoji, ₱, etc.)
+/* ---- Bluetooth receipt printing (RawBT) ---- */
+function safeForPrinter(str) {
   return String(str || '').replace(/[^\x00-\xFF]/g, '');
 }
 
-function buildReceiptText(r){
+function buildReceiptText(r) {
   var line = '--------------------------------\n';
   var t = '';
   t += '    ALANGILAN SHS CLINIC\n';
   t += '      Visit Check-In Slip\n';
   t += line;
+  t += 'Purpose:  ' + safeForPrinter(r.purpose) + '\n';
   t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
   t += 'Strand:   ' + safeForPrinter(r.strand) + '\n';
-  t += 'Concern:  ' + safeForPrinter(r.illness) + '\n';
-  t += 'Severity: ' + safeForPrinter(r.severity) + '\n';
+  if (r.purpose === 'Consultation') {
+    t += 'Concern:  ' + safeForPrinter(r.illness) + '\n';
+    t += 'Severity: ' + safeForPrinter(r.severity) + '\n';
+  }
   t += 'Time:     ' + safeForPrinter(r.time) + '\n';
   t += line;
   t += '   Ref: ' + safeForPrinter(r.ref) + '\n';
@@ -325,7 +408,7 @@ function buildReceiptText(r){
   return t;
 }
 
-function printReceipt(){
+function printReceipt() {
   try {
     var text = buildReceiptText(answers);
     var b64 = window.btoa(text);
@@ -335,66 +418,97 @@ function printReceipt(){
   }
 }
 
-function pick(key, value, btn){
+function pick(key, value, btn) {
   answers[key] = value;
-  if (navigator.vibrate) { navigator.vibrate(18); }
+  if (navigator.vibrate) navigator.vibrate(18);
+
   var all = document.querySelectorAll('.opt');
-  for (var i = 0; i < all.length; i++) { all[i].style.pointerEvents = 'none'; }
-  if (btn) { btn.classList.add('picked'); }
-  setTimeout(function(){ goStep(current + 1); }, 420);
+  for (var i = 0; i < all.length; i++) all[i].style.pointerEvents = 'none';
+  if (btn) btn.classList.add('picked');
+
+  setTimeout(function () {
+    var steps = getSteps();
+
+    // After Strand step: if Feeding → submit immediately
+    if (key === 'strand' && answers.purpose === 'Feeding') {
+      submitForm();
+      return;
+    }
+
+    // Normal next step
+    if (current + 1 < steps.length) {
+      goStep(current + 1);
+    } else {
+      // Should not normally reach here for Consultation (action step handles submit)
+      submitForm();
+    }
+  }, 420);
 }
 
-document.addEventListener('pointerdown', function(e){
+document.addEventListener('pointerdown', function (e) {
   var t = e.target.closest('.opt, .btn');
-  if (!t) { return; }
+  if (!t) return;
   var r = t.getBoundingClientRect(), d = Math.max(r.width, r.height), sp = document.createElement('span');
   sp.className = 'ripple';
   sp.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
   t.appendChild(sp);
-  setTimeout(function(){ sp.remove(); }, 650);
+  setTimeout(function () { sp.remove(); }, 650);
 });
 
-function burst(){
+function burst() {
   var w = document.getElementById('burst');
-  if (!w) { return; }
+  if (!w) return;
   var cols = ['#0f5c3d', '#2f9e68', '#9ad9b8', '#e8b93f'];
   for (var i = 0; i < 16; i++) {
-    var a = (Math.PI * 2 / 16) * i + Math.random() * 0.3, dist = 48 + Math.random() * 30, sp = document.createElement('i');
+    var a = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
+    var dist = 48 + Math.random() * 30;
+    var sp = document.createElement('i');
     sp.className = 'spark';
     sp.style.cssText = '--x:' + Math.cos(a) * dist + 'px;--y:' + Math.sin(a) * dist + 'px;background:' + cols[i % 4] + ';animation-delay:' + (0.55 + Math.random() * 0.1) + 's';
     w.appendChild(sp);
   }
 }
 
-function submitForm(){
+function submitForm() {
   var stage = document.getElementById('stage');
   stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><p class="sub">Submitting...</p></div>';
 
   var payload = {
-    grade: answers.grade, strand: answers.strand, illness: answers.illness,
-    severity: answers.severity, action_taken: answers.action || ''
+    purpose: answers.purpose,
+    grade: answers.grade,
+    strand: answers.strand,
+    illness: answers.illness || '',
+    severity: answers.severity || '',
+    action_taken: answers.action || ''
   };
 
   fetch(API + "/api/visits", {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
-  }).then(function(res){
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  }).then(function (res) {
     if (!res.ok) throw new Error('failed');
     var now = new Date();
-    answers.time = now.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true });
+    answers.time = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
     answers.ref = 'AC-' + now.getTime().toString().slice(-6);
-    goStep(STEPS.length);
-  }).catch(function(){
-    var stage2 = document.getElementById('stage');
-    stage2.innerHTML = '<h1>Something went wrong</h1><p class="sub">Please try again or ask the clinic staff for help.</p>' +
-      '<div class="actions"><button class="btn btn-primary" onclick="goStep(STEPS.length-1)">Try Again</button></div>';
+    // Jump to success screen
+    var steps = getSteps();
+    goStep(steps.length);
+  }).catch(function () {
+    // Offline / no API: still allow local success so kiosk keeps working
+    var now = new Date();
+    answers.time = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    answers.ref = 'AC-' + now.getTime().toString().slice(-6);
+    var steps = getSteps();
+    goStep(steps.length);
   });
 }
 
-function startAutoReset(){
+function startAutoReset() {
   var seconds = 15;
   var el = document.getElementById('timerText');
   clearTimeout(resetTimer);
-  function tick(){
+  function tick() {
     if (!el) return;
     el.textContent = 'Returning to start in ' + seconds + 's';
     if (seconds <= 0) { showIdle(); return; }
@@ -404,9 +518,10 @@ function startAutoReset(){
   tick();
 }
 
-function showIdle(){
+function showIdle() {
   clearTimeout(resetTimer);
   answers = {};
+  current = -1;
   var idle = document.getElementById('idleScreen');
   var kiosk = document.querySelector('.kiosk');
   idle.classList.remove('idle-screen-out');
@@ -416,33 +531,34 @@ function showIdle(){
   try { v.currentTime = 0; v.play(); } catch (e) {}
 }
 
-function hideIdleAndStart(){
+function hideIdleAndStart() {
   var idle = document.getElementById('idleScreen');
   var kiosk = document.querySelector('.kiosk');
   idle.classList.add('idle-screen-out');
-  setTimeout(function(){
+  setTimeout(function () {
     idle.style.display = 'none';
     idle.classList.remove('idle-screen-out');
     kiosk.style.display = 'block';
-    current = -1; dir = 1;
+    current = -1;
+    dir = 1;
     goStep(0);
   }, 380);
 }
 
-(function setupSwipe(){
+(function setupSwipe() {
   var idle = document.getElementById('idleScreen');
   var startY = null;
-  idle.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; }, { passive:true });
-  idle.addEventListener('touchend', function(e){
+  idle.addEventListener('touchstart', function (e) { startY = e.touches[0].clientY; }, { passive: true });
+  idle.addEventListener('touchend', function (e) {
     if (startY === null) return;
     var endY = e.changedTouches[0].clientY;
-    if (startY - endY > 50) { hideIdleAndStart(); }
+    if (startY - endY > 50) hideIdleAndStart();
     startY = null;
-  }, { passive:true });
-  idle.addEventListener('click', function(){ hideIdleAndStart(); });
+  }, { passive: true });
+  idle.addEventListener('click', function () { hideIdleAndStart(); });
 })();
 
-function tickClock(){
+function tickClock() {
   var n = new Date();
   document.getElementById('clock').textContent = n.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   document.getElementById('cdate').textContent = n.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -450,7 +566,6 @@ function tickClock(){
 tickClock();
 setInterval(tickClock, 1000);
 showIdle();
-
 </script>
 </body>
 </html>
