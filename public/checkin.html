@@ -43,10 +43,10 @@
   h1 em{font-style:italic;font-weight:500;color:var(--forest);}
   .sub{color:var(--muted);font-size:.88rem;margin-top:6px;line-height:1.5;}
 
-  .options{margin-top:24px;display:flex;flex-direction:column;gap:10px;flex:1;}
-  .options.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .opt{display:flex;align-items:center;gap:12px;padding:16px 18px;border-radius:16px;border:1.5px solid var(--line);
-    background:#fff;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:.98rem;color:var(--ink);
+  .options{margin-top:24px;display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;max-height:52vh;-webkit-overflow-scrolling:touch;}
+  .options.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);
+    background:#fff;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:.95rem;color:var(--ink);
     transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);text-align:left;}
   .opt .ic{font-size:1.3rem;flex-shrink:0;}
   .opt:active{transform:scale(.97);}
@@ -215,15 +215,33 @@ var GRADE_STEP = {
   ]
 };
 
-var STRAND_STEP = {
-  key: 'strand',
-  title: 'Which <em>strand</em> are you under?',
-  options: [
-    { v: 'STEM', ic: '🧪' },
-    { v: 'ABM', ic: '💼' },
-    { v: 'HUMSS', ic: '📚' }
+/* Sections per grade (shown after Grade is chosen) */
+var SECTIONS = {
+  'Grade 11': [
+    'Advocates', 'Ambassadors', 'Analysts', 'Aspirers', 'Builders',
+    'Catalysists', 'Conquerors', 'Designers', 'Developers', 'Diplomats',
+    'Empericists', 'Innovators', 'Luminaries', 'Pathfinders', 'Practitioners',
+    'Strategists', 'Thinkers', 'Voyagers'
+  ],
+  'Grade 12': [
+    'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
+    'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
+    'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+    'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
   ]
 };
+
+function getSectionStep() {
+  var list = SECTIONS[answers.grade] || [];
+  return {
+    key: 'section',
+    title: 'Which <em>section</em> are you in?',
+    grid: true,
+    options: list.map(function (name) {
+      return { v: name, label: name };
+    })
+  };
+}
 
 var ILLNESS_STEP = {
   key: 'illness',
@@ -258,13 +276,16 @@ var ACTION_STEP = {
   text: true
 };
 
-/* Build the active step list based on purpose */
+/* Build the active step list based on purpose + grade */
 function getSteps() {
-  var steps = [PURPOSE_STEP, GRADE_STEP, STRAND_STEP];
-  if (answers.purpose === 'Consultation') {
-    steps = steps.concat([ILLNESS_STEP, SEVERITY_STEP, ACTION_STEP]);
+  var steps = [PURPOSE_STEP, GRADE_STEP];
+  // Section only after grade is chosen (so options match that grade)
+  if (answers.grade) {
+    steps.push(getSectionStep());
+    if (answers.purpose === 'Consultation') {
+      steps = steps.concat([ILLNESS_STEP, SEVERITY_STEP, ACTION_STEP]);
+    }
   }
-  // Update eyebrow labels with correct "Step X of Y"
   var total = steps.length;
   for (var i = 0; i < steps.length; i++) {
     steps[i].eyebrow = 'Step ' + (i + 1) + ' of ' + total;
@@ -324,7 +345,7 @@ function render() {
     var rows = '';
     rows += '<div class="trow"><span>Purpose</span><span>' + esc(r.purpose) + '</span></div>';
     rows += '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>';
-    rows += '<div class="trow"><span>Strand</span><span>' + esc(r.strand) + '</span></div>';
+    rows += '<div class="trow"><span>Section</span><span>' + esc(r.section) + '</span></div>';
     if (!isFeeding) {
       rows += '<div class="trow"><span>Concern</span><span>' + esc(r.illness) + '</span></div>';
       rows += '<div class="trow"><span>Severity</span><span>' + esc(r.severity) + '</span></div>';
@@ -390,21 +411,24 @@ function safeForPrinter(str) {
 
 function buildReceiptText(r) {
   var line = '--------------------------------\n';
+  var isFeeding = r.purpose === 'Feeding';
   var t = '';
   t += '    ALANGILAN SHS CLINIC\n';
-  t += '      Visit Check-In Slip\n';
+  t += isFeeding ? '       Feeding Check-In\n' : '      Visit Check-In Slip\n';
   t += line;
   t += 'Purpose:  ' + safeForPrinter(r.purpose) + '\n';
   t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
-  t += 'Strand:   ' + safeForPrinter(r.strand) + '\n';
-  if (r.purpose === 'Consultation') {
+  t += 'Section:  ' + safeForPrinter(r.section) + '\n';
+  if (!isFeeding) {
     t += 'Concern:  ' + safeForPrinter(r.illness) + '\n';
     t += 'Severity: ' + safeForPrinter(r.severity) + '\n';
   }
   t += 'Time:     ' + safeForPrinter(r.time) + '\n';
   t += line;
   t += '   Ref: ' + safeForPrinter(r.ref) + '\n';
-  t += '\nPlease proceed to the clinic staff.\n\n\n';
+  t += isFeeding
+    ? '\nPlease proceed to the feeding area.\n\n\n'
+    : '\nPlease proceed to the clinic staff.\n\n\n';
   return t;
 }
 
@@ -420,6 +444,10 @@ function printReceipt() {
 
 function pick(key, value, btn) {
   answers[key] = value;
+  // Changing grade clears previous section choice
+  if (key === 'grade') {
+    delete answers.section;
+  }
   if (navigator.vibrate) navigator.vibrate(18);
 
   var all = document.querySelectorAll('.opt');
@@ -429,17 +457,15 @@ function pick(key, value, btn) {
   setTimeout(function () {
     var steps = getSteps();
 
-    // After Strand step: if Feeding → submit immediately
-    if (key === 'strand' && answers.purpose === 'Feeding') {
+    // After Section step: if Feeding → submit + print receipt
+    if (key === 'section' && answers.purpose === 'Feeding') {
       submitForm();
       return;
     }
 
-    // Normal next step
     if (current + 1 < steps.length) {
       goStep(current + 1);
     } else {
-      // Should not normally reach here for Consultation (action step handles submit)
       submitForm();
     }
   }, 420);
@@ -476,7 +502,8 @@ function submitForm() {
   var payload = {
     purpose: answers.purpose,
     grade: answers.grade,
-    strand: answers.strand,
+    section: answers.section,
+    strand: answers.section || '',
     illness: answers.illness || '',
     severity: answers.severity || '',
     action_taken: answers.action || ''
