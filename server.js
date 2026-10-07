@@ -14,6 +14,7 @@ const db = new Database('clinic.db');
 
 const GRADES = ['Grade 11', 'Grade 12'];
 const STRANDS = ['STEM', 'ABM', 'HUMSS'];
+const PURPOSES = ['Feeding', 'Consultation'];
 const ILLNESSES = [
   'Headache',
   'Fever',
@@ -26,15 +27,32 @@ const ILLNESSES = [
   'Others'
 ];
 
+const SECTIONS = {
+  'Grade 11': [
+    'Advocates', 'Ambassadors', 'Analysts', 'Aspirers', 'Builders',
+    'Catalysists', 'Conquerors', 'Designers', 'Developers', 'Diplomats',
+    'Empericists', 'Innovators', 'Luminaries', 'Pathfinders', 'Practitioners',
+    'Strategists', 'Thinkers', 'Voyagers'
+  ],
+  'Grade 12': [
+    'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
+    'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
+    'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+    'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
+  ]
+};
+
 /* ============== SCHEMA ============== */
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS visits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    grade TEXT NOT NULL CHECK(grade IN ('Grade 11','Grade 12')),
-    strand TEXT NOT NULL CHECK(strand IN ('STEM','ABM','HUMSS')),
-    illness TEXT NOT NULL,
-    severity TEXT NOT NULL CHECK(severity IN ('mild','moderate','severe')),
+    purpose TEXT NOT NULL DEFAULT 'Consultation',
+    grade TEXT NOT NULL,
+    section TEXT DEFAULT '',
+    strand TEXT DEFAULT '',
+    illness TEXT DEFAULT '',
+    severity TEXT DEFAULT '',
     action_taken TEXT,
     visit_time TEXT DEFAULT (datetime('now','localtime'))
   );
@@ -52,6 +70,48 @@ db.exec(`
     ) VIRTUAL
   );
 `);
+
+/* ============== MIGRATE OLD DB ============== */
+/* Existing clinic.db may have old CHECK constraints on strand/illness/severity.
+   Rebuild the visits table once if purpose/section columns are missing. */
+
+(function migrateVisits() {
+  const cols = db.prepare('PRAGMA table_info(visits)').all().map(c => c.name);
+
+  if (!cols.includes('purpose') || !cols.includes('section')) {
+    db.exec(`
+      BEGIN;
+      CREATE TABLE IF NOT EXISTS visits_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        purpose TEXT NOT NULL DEFAULT 'Consultation',
+        grade TEXT NOT NULL,
+        section TEXT DEFAULT '',
+        strand TEXT DEFAULT '',
+        illness TEXT DEFAULT '',
+        severity TEXT DEFAULT '',
+        action_taken TEXT,
+        visit_time TEXT DEFAULT (datetime('now','localtime'))
+      );
+      INSERT INTO visits_new
+        (id, purpose, grade, section, strand, illness, severity, action_taken, visit_time)
+      SELECT
+        id,
+        'Consultation',
+        grade,
+        '',
+        strand,
+        illness,
+        severity,
+        action_taken,
+        visit_time
+      FROM visits;
+      DROP TABLE visits;
+      ALTER TABLE visits_new RENAME TO visits;
+      COMMIT;
+    `);
+    console.log('✅ Migrated visits table: added purpose + section');
+  }
+})();
 
 /* ============== SEED INVENTORY ============== */
 
@@ -79,8 +139,8 @@ if (db.prepare('SELECT COUNT(*) c FROM inventory').get().c === 0) {
 if (db.prepare('SELECT COUNT(*) c FROM visits').get().c === 0) {
   const ins = db.prepare(`
     INSERT INTO visits
-    (grade, strand, illness, severity, action_taken, visit_time)
-    VALUES (?, ?, ?, ?, ?, datetime('now','localtime','-' || ? || ' hours'))
+    (purpose, grade, section, strand, illness, severity, action_taken, visit_time)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now','localtime','-' || ? || ' hours'))
   `);
 
   const tx = db.transaction(rows => {
@@ -88,18 +148,28 @@ if (db.prepare('SELECT COUNT(*) c FROM visits').get().c === 0) {
   });
 
   tx([
-    ['Grade 11', 'STEM', 'Headache', 'mild', 'Rested, given water', 3],
-    ['Grade 12', 'ABM', 'Fever', 'moderate', 'Temp checked, sent home', 6],
-    ['Grade 11', 'HUMSS', 'Minor Injury', 'mild', 'Cleaned & bandaged', 9],
-    ['Grade 12', 'STEM', 'Stomachache', 'moderate', 'Given rest, monitored', 20],
-    ['Grade 12', 'HUMSS', 'Headache', 'mild', 'Rested 15 mins', 50],
-    ['Grade 11', 'STEM', 'Cough/Colds', 'mild', 'Advised rest', 70],
-    ['Grade 12', 'ABM', 'Headache', 'mild', 'Rested', 100],
-    ['Grade 11', 'STEM', 'Fever', 'moderate', 'Sent home', 150],
-    ['Grade 11', 'ABM', 'Headache', 'mild', 'Rested', 250],
-    ['Grade 12', 'STEM', 'Fever', 'moderate', 'Sent home', 300],
-    ['Grade 11', 'HUMSS', 'Allergy', 'mild', 'Antihistamine given', 340]
+    ['Consultation', 'Grade 11', 'Innovators', 'STEM', 'Headache', 'mild', 'Rested, given water', 3],
+    ['Consultation', 'Grade 12', 'Einstein', 'STEM', 'Fever', 'moderate', 'Temp checked, sent home', 6],
+    ['Consultation', 'Grade 11', 'Thinkers', 'HUMSS', 'Minor Injury', 'mild', 'Cleaned & bandaged', 9],
+    ['Consultation', 'Grade 12', 'Pacioli', 'ABM', 'Stomachache', 'moderate', 'Given rest, monitored', 20],
+    ['Feeding', 'Grade 11', 'Builders', '', '', '', '', 25],
+    ['Feeding', 'Grade 12', 'Newton', '', '', '', '', 30],
+    ['Consultation', 'Grade 12', 'Shakespeare', 'HUMSS', 'Headache', 'mild', 'Rested 15 mins', 50],
+    ['Consultation', 'Grade 11', 'Developers', 'STEM', 'Cough/Colds', 'mild', 'Advised rest', 70],
+    ['Consultation', 'Grade 12', 'Mayo', 'ABM', 'Headache', 'mild', 'Rested', 100],
+    ['Consultation', 'Grade 11', 'Pathfinders', 'STEM', 'Fever', 'moderate', 'Sent home', 150],
+    ['Feeding', 'Grade 11', 'Advocates', '', '', '', '', 200],
+    ['Consultation', 'Grade 11', 'Ambassadors', 'ABM', 'Headache', 'mild', 'Rested', 250],
+    ['Consultation', 'Grade 12', 'Descartes', 'STEM', 'Fever', 'moderate', 'Sent home', 300],
+    ['Consultation', 'Grade 11', 'Diplomats', 'HUMSS', 'Allergy', 'mild', 'Antihistamine given', 340]
   ]);
+}
+
+/* ============== HELPERS ============== */
+
+function isValidSection(grade, section) {
+  const list = SECTIONS[grade] || [];
+  return list.includes(section);
 }
 
 /* ============== VISITS ============== */
@@ -113,13 +183,24 @@ app.get('/api/visits', (req, res) => {
 });
 
 app.post('/api/visits', (req, res) => {
-  const {
+  let {
+    purpose,
     grade,
+    section,
     strand,
     illness,
     severity,
     action_taken
   } = req.body;
+
+  // Default purpose for older clients
+  purpose = purpose || 'Consultation';
+
+  if (!PURPOSES.includes(purpose)) {
+    return res.status(400).json({
+      error: 'purpose must be Feeding or Consultation.'
+    });
+  }
 
   if (!GRADES.includes(grade)) {
     return res.status(400).json({
@@ -127,33 +208,49 @@ app.post('/api/visits', (req, res) => {
     });
   }
 
-  if (!STRANDS.includes(strand)) {
+  section = section || '';
+  if (section && !isValidSection(grade, section)) {
+    return res.status(400).json({
+      error: 'invalid section for the selected grade.'
+    });
+  }
+
+  // Strand is optional (kept for older dashboard form / charts)
+  strand = strand || '';
+  if (strand && !STRANDS.includes(strand)) {
     return res.status(400).json({
       error: 'invalid strand.'
     });
   }
 
-  if (!ILLNESSES.includes(illness)) {
-    return res.status(400).json({
-      error: 'invalid illness type.'
-    });
-  }
-
-  if (!['mild', 'moderate', 'severe'].includes(severity)) {
-    return res.status(400).json({
-      error: 'invalid severity.'
-    });
+  if (purpose === 'Feeding') {
+    // Feeding: no illness/severity required
+    illness = '';
+    severity = '';
+  } else {
+    if (!ILLNESSES.includes(illness)) {
+      return res.status(400).json({
+        error: 'invalid illness type.'
+      });
+    }
+    if (!['mild', 'moderate', 'severe'].includes(severity)) {
+      return res.status(400).json({
+        error: 'invalid severity.'
+      });
+    }
   }
 
   const info = db.prepare(`
     INSERT INTO visits
-    (grade, strand, illness, severity, action_taken)
-    VALUES (?, ?, ?, ?, ?)
+    (purpose, grade, section, strand, illness, severity, action_taken)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
+    purpose,
     grade,
+    section,
     strand,
-    illness,
-    severity,
+    illness || '',
+    severity || '',
     action_taken || ''
   );
 
@@ -189,12 +286,16 @@ app.get('/api/summary/daily', (req, res) => {
 });
 
 app.get('/api/summary/illness', (req, res) => {
+  // Only consultation visits with an illness
   res.json(
     db.prepare(`
       SELECT
         illness,
         COUNT(*) AS count
       FROM visits
+      WHERE purpose = 'Consultation'
+        AND illness IS NOT NULL
+        AND illness != ''
       GROUP BY illness
       ORDER BY count DESC
     `).all()
@@ -214,6 +315,34 @@ app.get('/api/summary/grade', (req, res) => {
   );
 });
 
+app.get('/api/summary/purpose', (req, res) => {
+  res.json(
+    db.prepare(`
+      SELECT
+        purpose,
+        COUNT(*) AS count
+      FROM visits
+      GROUP BY purpose
+      ORDER BY count DESC
+    `).all()
+  );
+});
+
+app.get('/api/summary/section', (req, res) => {
+  res.json(
+    db.prepare(`
+      SELECT
+        grade,
+        section,
+        COUNT(*) AS count
+      FROM visits
+      WHERE section IS NOT NULL AND section != ''
+      GROUP BY grade, section
+      ORDER BY count DESC
+    `).all()
+  );
+});
+
 /* ============== STRAND DAILY ============== */
 
 app.get('/api/summary/strand-daily', (req, res) => {
@@ -225,6 +354,8 @@ app.get('/api/summary/strand-daily', (req, res) => {
         COUNT(*) AS count
       FROM visits
       WHERE visit_time >= datetime('now','-7 days')
+        AND strand IS NOT NULL
+        AND strand != ''
       GROUP BY day, strand
       ORDER BY day ASC
     `).all()
@@ -242,6 +373,9 @@ app.get('/api/summary/illness-weekly', (req, res) => {
         COUNT(*) AS count
       FROM visits
       WHERE visit_time >= datetime('now','-42 days')
+        AND purpose = 'Consultation'
+        AND illness IS NOT NULL
+        AND illness != ''
       GROUP BY week, illness
       ORDER BY week ASC
     `).all()
@@ -330,6 +464,9 @@ app.get('/api/alerts', (req, res) => {
         END
       ) AS prior
     FROM visits
+    WHERE purpose = 'Consultation'
+      AND illness IS NOT NULL
+      AND illness != ''
     GROUP BY illness
   `).all();
 
@@ -357,6 +494,9 @@ app.get('/api/campaign-suggestion', (req, res) => {
       illness,
       COUNT(*) AS count
     FROM visits
+    WHERE purpose = 'Consultation'
+      AND illness IS NOT NULL
+      AND illness != ''
     GROUP BY illness
     ORDER BY count DESC
     LIMIT 1
@@ -367,42 +507,34 @@ app.get('/api/campaign-suggestion', (req, res) => {
       title: 'Hydration Awareness Campaign',
       reason: 'High number of headache cases, often linked to dehydration.'
     },
-
     'Fever': {
       title: 'Flu & Fever Prevention Drive',
       reason: 'Rising fever cases suggest a possible viral spread on campus.'
     },
-
     'Stomachache': {
       title: 'Food Safety & Canteen Hygiene Campaign',
       reason: 'Frequent stomachaches may point to canteen food/water quality.'
     },
-
     'Minor Injury': {
       title: 'Campus Safety Awareness Week',
       reason: 'Repeated minor injuries suggest hazards in walkways or PE areas.'
     },
-
     'Cough/Colds': {
       title: 'Respiratory Hygiene Campaign',
       reason: 'Increase in cough/colds suggests airborne spread in classrooms.'
     },
-
     'Allergy': {
       title: 'Allergen Awareness Campaign',
       reason: 'Recurring allergy cases may need environmental/food allergen review.'
     },
-
     'Dizziness': {
       title: 'Nutrition & Skipped-Meals Campaign',
       reason: 'Dizziness cases may relate to skipped meals.'
     },
-
     'Menstrual Cramps': {
       title: 'Menstrual Health Awareness Campaign',
       reason: 'Frequent menstrual cramp cases suggest a need for menstrual health education and support.'
     },
-
     'Others': {
       title: 'General Wellness Check Campaign',
       reason: 'Varied cases suggest a broad wellness check may help.'
@@ -461,7 +593,9 @@ app.get('/api/meta', (req, res) => {
   res.json({
     GRADES,
     STRANDS,
-    ILLNESSES
+    PURPOSES,
+    ILLNESSES,
+    SECTIONS
   });
 });
 
