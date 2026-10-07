@@ -372,6 +372,9 @@
           <div class="label">Total Visits (All Time)</div><div class="value" id="statTotal">0</div></div>
         <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#3b82c4,#2a63a0);">📅</div>
           <div class="label">Today's Visits</div><div class="value" id="statToday">0</div></div>
+        <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#e8a317,#c98a0a);">🍽️</div>
+          <div class="label">Today's Feeding</div><div class="value" id="statFeeding">0</div>
+          <div class="sub" id="statFeedingSub">feeding check-ins</div></div>
         <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#8b6bd1,#6d4fb0);">💡</div>
           <div class="label">Most Common Illness</div><div class="value" style="font-size:1.15rem;" id="statTopIllness">--</div>
           <div class="sub" id="statTopIllnessSub">--</div></div>
@@ -416,10 +419,16 @@
       <div class="panel" style="margin-bottom:18px;">
         <h2>Log a New Visit</h2>
         <form class="inline" id="visitForm">
+          <select id="fPurpose" required>
+            <option value="">Purpose</option>
+            <option value="Consultation">Clinic Consultation</option>
+            <option value="Feeding">Feeding</option>
+          </select>
           <select id="fGrade" required><option value="">Grade level</option><option>Grade 11</option><option>Grade 12</option></select>
-          <select id="fStrand" required><option value="">Strand</option><option>STEM</option><option>ABM</option><option>HUMSS</option></select>
-          <select id="fIllness" required><option value="">Illness type</option></select>
-          <select id="fSeverity" required><option value="">Severity</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
+          <select id="fSection" required><option value="">Section</option></select>
+          <select id="fStrand"><option value="">Strand (optional)</option><option>STEM</option><option>ABM</option><option>HUMSS</option></select>
+          <select id="fIllness"><option value="">Illness type</option></select>
+          <select id="fSeverity"><option value="">Severity</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select>
           <input type="text" id="fAction" placeholder="Action taken (optional)">
           <button class="primary" type="submit">+ Add Visit</button>
         </form>
@@ -429,7 +438,7 @@
       <div class="panel">
         <h2>All Recorded Visits</h2>
         <table>
-          <thead><tr><th>Time</th><th>Grade</th><th>Strand</th><th>Illness</th><th>Severity</th><th>Action Taken</th><th></th></tr></thead>
+          <thead><tr><th>Time</th><th>Purpose</th><th>Grade</th><th>Section</th><th>Illness</th><th>Severity</th><th>Action</th><th></th></tr></thead>
           <tbody id="visitsTableBody"></tbody>
         </table>
       </div>
@@ -630,15 +639,42 @@ for (var n = 0; n < navItems.length; n++) {
   });
 }
 
+var metaSections = {};
+
 function loadMeta() {
   return fetch(API + "/api/meta")
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      metaSections = data.SECTIONS || {};
       var sel = document.getElementById("fIllness");
+      sel.innerHTML = '<option value="">Illness type</option>';
       for (var i = 0; i < data.ILLNESSES.length; i++) {
         sel.innerHTML = sel.innerHTML + "<option>" + data.ILLNESSES[i] + "</option>";
       }
     });
+}
+
+function fillSections() {
+  var grade = document.getElementById("fGrade").value;
+  var sel = document.getElementById("fSection");
+  var list = metaSections[grade] || [];
+  var html = '<option value="">Section</option>';
+  for (var i = 0; i < list.length; i++) {
+    html += "<option>" + list[i] + "</option>";
+  }
+  sel.innerHTML = html;
+}
+
+function toggleConsultFields() {
+  var isFeed = document.getElementById("fPurpose").value === "Feeding";
+  document.getElementById("fIllness").required = !isFeed;
+  document.getElementById("fSeverity").required = !isFeed;
+  document.getElementById("fIllness").disabled = isFeed;
+  document.getElementById("fSeverity").disabled = isFeed;
+  if (isFeed) {
+    document.getElementById("fIllness").value = "";
+    document.getElementById("fSeverity").value = "";
+  }
 }
 
 function loadAll() {
@@ -809,13 +845,22 @@ function renderStats(visits, illness, stock) {
   animateCounter(document.getElementById("statTotal"), visits.length);
   var today = new Date().toISOString().slice(0, 10);
   var todayCount = 0;
+  var feedingToday = 0;
   for (var i = 0; i < visits.length; i++) {
-    if (visits[i].visit_time.indexOf(today) === 0) { todayCount++; }
+    if (visits[i].visit_time.indexOf(today) === 0) {
+      todayCount++;
+      if (visits[i].purpose === "Feeding") { feedingToday++; }
+    }
   }
   animateCounter(document.getElementById("statToday"), todayCount);
+  var feedEl = document.getElementById("statFeeding");
+  if (feedEl) { animateCounter(feedEl, feedingToday); }
   if (illness.length) {
     document.getElementById("statTopIllness").textContent = illness[0].illness;
     document.getElementById("statTopIllnessSub").textContent = illness[0].count + " total cases";
+  } else {
+    document.getElementById("statTopIllness").textContent = "--";
+    document.getElementById("statTopIllnessSub").textContent = "no consultation data";
   }
   var lowCount = 0;
   for (var j = 0; j < stock.length; j++) {
@@ -831,13 +876,22 @@ function renderTable(visits) {
     var v = visits[i];
     var dt = new Date(v.visit_time);
     var timeStr = dt.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+    var purpose = v.purpose || "Consultation";
+    var isFeed = purpose === "Feeding";
+    var purposeBadge = isFeed
+      ? '<span class="badge" style="background:#fdf3d8;color:#a97c12;">Feeding</span>'
+      : '<span class="badge" style="background:#e5f6ec;color:#1b7a4d;">Consultation</span>';
+    var sevCell = isFeed || !v.severity
+      ? "—"
+      : '<span class="badge badge-' + v.severity + '">' + v.severity + "</span>";
     html = html + '<tr style="animation-delay:' + Math.min(i * 35, 600) + 'ms">' +
       "<td>" + timeStr + "</td>" +
-      "<td>" + v.grade + "</td>" +
-      "<td>" + v.strand + "</td>" +
-      "<td>" + v.illness + "</td>" +
-      '<td><span class="badge badge-' + v.severity + '">' + v.severity + "</span></td>" +
-      "<td>" + (v.action_taken ? v.action_taken : "none") + "</td>" +
+      "<td>" + purposeBadge + "</td>" +
+      "<td>" + (v.grade || "—") + "</td>" +
+      "<td>" + (v.section || "—") + "</td>" +
+      "<td>" + (isFeed ? "—" : (v.illness || "—")) + "</td>" +
+      "<td>" + sevCell + "</td>" +
+      "<td>" + (v.action_taken ? v.action_taken : "—") + "</td>" +
       '<td><button class="delete-btn" onclick="deleteVisit(' + v.id + ')">Delete</button></td>' +
       "</tr>";
   }
@@ -914,6 +968,7 @@ function renderPeakHours(visits) {
 function renderSeverityBreakdown(visits) {
   var counts = { mild: 0, moderate: 0, severe: 0 };
   for (var i = 0; i < visits.length; i++) {
+    if (visits[i].purpose === "Feeding") { continue; }
     if (counts[visits[i].severity] !== undefined) {
       counts[visits[i].severity] = counts[visits[i].severity] + 1;
     }
@@ -1052,19 +1107,21 @@ function topKey(o) { var b = null; for (var k in o) { if (b === null || o[k] > o
 function renderInsights(v) {
   var box = document.getElementById("insights");
   if (!v.length) { box.innerHTML = ""; return; }
-  var h = {}, w = {}, s = {}, sev = 0, now = Date.now();
+  var h = {}, w = {}, s = {}, feed = 0, sev = 0, now = Date.now();
   v.forEach(function (x) {
     var d = new Date(x.visit_time);
     h[d.getHours()] = (h[d.getHours()] || 0) + 1;
     w[d.getDay()] = (w[d.getDay()] || 0) + 1;
-    s[x.strand] = (s[x.strand] || 0) + 1;
-    if (x.severity === "severe" && now - d < 6048e5) { sev++; }
+    var key = x.section || x.strand;
+    if (key) { s[key] = (s[key] || 0) + 1; }
+    if (x.purpose === "Feeding") { feed++; }
+    if (x.severity === "severe" && now - d.getTime() < 6048e5) { sev++; }
   });
   var th = topKey(h), tw = topKey(w), ts = topKey(s);
   var cards = [
-    ["⏰", "Busiest hour", hourLabel(+th), h[th] + " visits overall"],
-    ["📆", "Busiest day", DAY_NAMES[tw], w[tw] + " visits overall"],
-    ["🎓", "Most visits by strand", ts, s[ts] + " visits"],
+    ["⏰", "Busiest hour", th != null ? hourLabel(+th) : "—", th != null ? h[th] + " visits overall" : ""],
+    ["📆", "Busiest day", tw != null ? DAY_NAMES[tw] : "—", tw != null ? w[tw] + " visits overall" : ""],
+    ["🍽️", "Total feeding", feed, "all-time check-ins"],
     ["🚨", "Severe cases (7 days)", sev, sev ? "Needs attention" : "All clear"]
   ];
   var html = "";
@@ -1125,8 +1182,10 @@ function renderHeatmap(v) {
 function renderStrandIllness(v) {
   var strands = ["STEM", "ABM", "HUMSS"], counts = {}, tot = {};
   v.forEach(function (x) {
+    if (x.purpose === "Feeding" || !x.illness) { return; }
+    var st = x.strand || "—";
     counts[x.illness] = counts[x.illness] || {};
-    counts[x.illness][x.strand] = (counts[x.illness][x.strand] || 0) + 1;
+    counts[x.illness][st] = (counts[x.illness][st] || 0) + 1;
     tot[x.illness] = (tot[x.illness] || 0) + 1;
   });
   var names = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }).slice(0, 6);
@@ -1143,8 +1202,19 @@ function renderStrandIllness(v) {
 }
 
 function exportCSV() {
-  var rows = [["Time", "Grade", "Strand", "Illness", "Severity", "Action Taken"]];
-  allVisits.forEach(function (v) { rows.push([v.visit_time, v.grade, v.strand, v.illness, v.severity, v.action_taken || ""]); });
+  var rows = [["Time", "Purpose", "Grade", "Section", "Strand", "Illness", "Severity", "Action Taken"]];
+  allVisits.forEach(function (v) {
+    rows.push([
+      v.visit_time,
+      v.purpose || "Consultation",
+      v.grade || "",
+      v.section || "",
+      v.strand || "",
+      v.illness || "",
+      v.severity || "",
+      v.action_taken || ""
+    ]);
+  });
   var csv = rows.map(function (r) { return r.map(function (c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\n");
   var a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -1152,13 +1222,19 @@ function exportCSV() {
   a.click();
 }
 
+document.getElementById("fGrade").addEventListener("change", fillSections);
+document.getElementById("fPurpose").addEventListener("change", toggleConsultFields);
+
 document.getElementById("visitForm").addEventListener("submit", function (e) {
   e.preventDefault();
+  var purpose = document.getElementById("fPurpose").value;
   var payload = {
+    purpose: purpose,
     grade: document.getElementById("fGrade").value,
-    strand: document.getElementById("fStrand").value,
-    illness: document.getElementById("fIllness").value,
-    severity: document.getElementById("fSeverity").value,
+    section: document.getElementById("fSection").value,
+    strand: document.getElementById("fStrand").value || "",
+    illness: purpose === "Feeding" ? "" : document.getElementById("fIllness").value,
+    severity: purpose === "Feeding" ? "" : document.getElementById("fSeverity").value,
     action_taken: document.getElementById("fAction").value
   };
   fetch(API + "/api/visits", {
@@ -1171,6 +1247,8 @@ document.getElementById("visitForm").addEventListener("submit", function (e) {
       msg.style.color = "#1b7a4d";
       msg.textContent = "Visit logged.";
       document.getElementById("visitForm").reset();
+      toggleConsultFields();
+      fillSections();
       loadAll();
       loadTrendAndReports();
     } else {
