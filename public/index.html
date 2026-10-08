@@ -244,6 +244,18 @@
   .personnel-role{font-size:0.78rem;color:var(--primary);font-weight:600;margin-top:2px;}
   .personnel-info{font-size:0.78rem;color:var(--muted);margin-top:10px;line-height:1.5;text-align:left;}
   .personnel-info div{margin-bottom:3px;}
+  .personnel-info .background-label{font-weight:700;color:var(--primary-dark);margin-top:9px;}
+  .personnel-info a{color:var(--primary);text-decoration:none;overflow-wrap:anywhere;}
+  .personnel-info a:hover{text-decoration:underline;}
+  .personnel-card-empty{
+    min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:2px dashed var(--border);background:transparent;box-shadow:none;
+  }
+  .empty-profile-avatar{
+    width:96px;height:96px;border-radius:50%;display:grid;place-items:center;
+    margin-bottom:14px;background:var(--bg);border:2px dashed var(--border);
+    color:var(--muted);font-size:2rem;
+  }
 
   /* ===== Premium motion + typography layer ===== */
   :root{--ease:cubic-bezier(.22,1,.36,1);}
@@ -324,36 +336,31 @@
     <div class="sidebar-divider"></div>
     <div class="sidebar-label">Clinic Personnel</div>
 
-    <!-- To edit: replace the src="..." with your own photo URL or a base64 image,
-         and change the name/role text for each staff member. Copy/paste the
-         .staff-card block below to add more personnel. -->
+    <!-- Clinic personnel quick list -->
     <div class="staff-card">
-      <img class="staff-photo" src="https://via.placeholder.com/76" alt="Staff photo">
+      <img class="staff-photo" src="/images/clinic-personnel/christie-ramirez.jpg" alt="Christie P. Ramirez">
       <div class="staff-info">
-        <div class="staff-name">PANGALAN DITO 1</div>
-        <div class="staff-role">School Nurse</div>
+        <div class="staff-name">Christie P. Ramirez</div>
+        <div class="staff-role">Caregiving • Professional Teacher</div>
       </div>
     </div>
     <div class="staff-card">
-      <img class="staff-photo" src="https://via.placeholder.com/76" alt="Staff photo">
+      <img class="staff-photo" src="/images/clinic-personnel/jamor-paduit.jpg" alt="Jamor C. Paduit">
       <div class="staff-info">
-        <div class="staff-name">PANGALAN DITO 2</div>
-        <div class="staff-role">Clinic Aide</div>
+        <div class="staff-name">Jamor C. Paduit</div>
+        <div class="staff-role">Registered Nurse</div>
       </div>
     </div>
     <div class="staff-card">
-      <img class="staff-photo" src="https://via.placeholder.com/76" alt="Staff photo">
+      <img class="staff-photo" src="/images/clinic-personnel/delailah-salas.jpg" alt="Delailah Rose M. Salas">
       <div class="staff-info">
-        <div class="staff-name">PANGALAN DITO 3</div>
-        <div class="staff-role">School Physician</div>
+        <div class="staff-name">Delailah Rose M. Salas</div>
+        <div class="staff-role">Licensed Professional Teacher</div>
       </div>
     </div>
-    <div class="staff-card">
-      <img class="staff-photo" src="https://via.placeholder.com/76" alt="Staff photo">
-      <div class="staff-info">
-        <div class="staff-name">PANGALAN DITO 4</div>
-        <div class="staff-role">Clinic Aide</div>
-      </div>
+    <div class="staff-card" aria-label="Blank personnel profile slot">
+      <div class="staff-photo" aria-hidden="true" style="display:grid;place-items:center;color:#9cc3e2;">＋</div>
+      <div class="staff-info"><div class="staff-name">&nbsp;</div><div class="staff-role">&nbsp;</div></div>
     </div>
 
     <div class="privacy-note">🔒 This system is privacy-safe. Data shown is aggregated by grade level, strand, and illness type only. No student names stored.</div>
@@ -490,52 +497,52 @@
     <div class="tab" id="tab-personnel">
       <div class="topbar"><div><h1>Clinic Personnel</h1><p>Meet the staff running the school clinic</p></div></div>
       <div class="personnel-grid">
-
-        <!-- Sample personnel card. Copy/paste this block to add more staff.
-             Replace the photo src, name, role, and info lines with real details. -->
-        <div class="personnel-card">
-          <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
-          <div class="personnel-name">PANGALAN DITO 1</div>
-          <div class="personnel-role">School Nurse</div>
+        <article class="personnel-card">
+          <img class="personnel-photo" src="/images/clinic-personnel/christie-ramirez.jpg" alt="Christie P. Ramirez">
+          <div class="personnel-name">Christie P. Ramirez</div>
+          <div class="personnel-role">Caregiving NC II • Professional Teacher</div>
           <div class="personnel-info">
-            <div>📧 email@example.com</div>
-            <div>📞 0917-000-0000</div>
-            <div>🕒 Mon–Fri, 7:00 AM – 4:00 PM</div>
+            <div>📧 <a href="mailto:christieramirez01@gmail.com">christieramirez01@gmail.com</a></div>
+            <div>📞 <a href="tel:+639764537039">09764537039</a></div>
+            <div class="background-label">Professional Background</div>
+            <div>• Caregiving NC II</div>
+            <div>• Professional Teacher</div>
           </div>
-        </div>
+        </article>
 
-        <div class="personnel-card">
-          <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
-          <div class="personnel-name">PANGALAN DITO 2</div>
-          <div class="personnel-role">Clinic Aide</div>
+        <article class="personnel-card">
+          <img class="personnel-photo" src="/images/clinic-personnel/jamor-paduit.jpg" alt="Jamor C. Paduit">
+          <div class="personnel-name">Jamor C. Paduit</div>
+          <div class="personnel-role">Registered Nurse</div>
           <div class="personnel-info">
-            <div>📧 email@example.com</div>
-            <div>📞 0917-000-0001</div>
-            <div>🕒 Mon–Fri, 7:00 AM – 4:00 PM</div>
+            <div>📧 <a href="mailto:jamor.paduit@deped.gov.ph">jamor.paduit@deped.gov.ph</a></div>
+            <div>📞 <a href="tel:+639269011934">09269011934</a></div>
+            <div class="background-label">Professional Background</div>
+            <div>• Registered Nurse</div>
+            <div>• Licensed Professional Teacher</div>
+            <div>• NC II in Caregiving</div>
+            <div>• Certified IV Therapy Nurse</div>
+            <div>• Master of Arts in Nursing</div>
           </div>
-        </div>
+        </article>
 
-        <div class="personnel-card">
-          <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
-          <div class="personnel-name">PANGALAN DITO 3</div>
-          <div class="personnel-role">School Physician</div>
+        <article class="personnel-card">
+          <img class="personnel-photo" src="/images/clinic-personnel/delailah-salas.jpg" alt="Delailah Rose M. Salas">
+          <div class="personnel-name">Delailah Rose M. Salas</div>
+          <div class="personnel-role">Licensed Professional Teacher</div>
           <div class="personnel-info">
-            <div>📧 email@example.com</div>
-            <div>📞 0917-000-0002</div>
-            <div>🕒 Tue &amp; Thu, 9:00 AM – 12:00 PM</div>
+            <div>📧 <a href="mailto:dmsalas2@gmail.com">dmsalas2@gmail.com</a></div>
+            <div>📞 <a href="tel:+639285012740">09285012740</a></div>
+            <div class="background-label">Professional Background</div>
+            <div>• Licensed Professional Teacher</div>
+            <div>• Master in Business Administration</div>
+            <div>• NC III in Bookkeeping</div>
           </div>
-        </div>
+        </article>
 
-        <div class="personnel-card">
-          <img class="personnel-photo" src="https://via.placeholder.com/150" alt="Staff photo">
-          <div class="personnel-name">PANGALAN DITO 4</div>
-          <div class="personnel-role">Clinic Aide</div>
-          <div class="personnel-info">
-            <div>📧 email@example.com</div>
-            <div>📞 0917-000-0003</div>
-            <div>🕒 Mon–Fri, 7:00 AM – 4:00 PM</div>
-          </div>
-        </div>
+        <article class="personnel-card personnel-card-empty" aria-label="Reserved blank personnel profile card">
+          <div class="empty-profile-avatar" aria-hidden="true">＋</div>
+        </article>
 
       </div>
     </div>
