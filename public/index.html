@@ -1386,10 +1386,6 @@ new QRCode(document.getElementById("qrcode"), {
 
 loadMeta().then(function () {
   refreshDashboard();
-  window.setInterval(function () {
-    if (!document.hidden) refreshDashboard();
-  }, 15000);
-  window.addEventListener("focus", function () { refreshDashboard(); });
 }).catch(function (err) {
   setSyncStatus("Could not load clinic settings: " + err.message, true);
   console.error("Could not load clinic settings:", err);
