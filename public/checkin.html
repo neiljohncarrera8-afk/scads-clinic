@@ -195,6 +195,7 @@
 
 <script>
 var API = "";
+var submitBusy = false;
 
 /* ---- Step definitions ---- */
 var PURPOSE_STEP = {
@@ -496,14 +497,17 @@ function burst() {
 }
 
 function submitForm() {
+  if (submitBusy) return;
+  submitBusy = true;
   var stage = document.getElementById('stage');
-  stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><p class="sub">Submitting...</p></div>';
+  stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><p class="sub">Saving your check-in…</p></div>';
 
   var payload = {
     purpose: answers.purpose,
     grade: answers.grade,
     section: answers.section,
-    strand: answers.section || '',
+    // Section names are not academic strands; do not submit them as STEM/ABM/HUMSS.
+    strand: '',
     illness: answers.illness || '',
     severity: answers.severity || '',
     action_taken: answers.action || ''
@@ -512,22 +516,31 @@ function submitForm() {
   fetch(API + "/api/visits", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    cache: "no-store"
   }).then(function (res) {
-    if (!res.ok) throw new Error('failed');
+    return res.json().catch(function () { return {}; }).then(function (data) {
+      if (!res.ok) throw new Error(data.error || 'The server could not save this check-in.');
+      return data;
+    });
+  }).then(function (saved) {
     var now = new Date();
-    answers.time = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-    answers.ref = 'AC-' + now.getTime().toString().slice(-6);
-    // Jump to success screen
+    var savedTime = saved && saved.visit_time ? new Date(saved.visit_time.replace(' ', 'T')) : now;
+    if (isNaN(savedTime.getTime())) savedTime = now;
+    answers.time = savedTime.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    answers.ref = 'AC-' + (saved && saved.id ? String(saved.id).padStart(6, '0') : now.getTime().toString().slice(-6));
+    submitBusy = false;
     var steps = getSteps();
     goStep(steps.length);
-  }).catch(function () {
-    // Offline / no API: still allow local success so kiosk keeps working
-    var now = new Date();
-    answers.time = now.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-    answers.ref = 'AC-' + now.getTime().toString().slice(-6);
-    var steps = getSteps();
-    goStep(steps.length);
+  }).catch(function (err) {
+    submitBusy = false;
+    stage.className = 'stage enter';
+    stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;">' +
+      '<div class="badge" aria-hidden="true">!</div>' +
+      '<h1>Check-in <em>not saved</em></h1>' +
+      '<p class="sub" style="max-width:360px;color:var(--red);">' + esc(err && err.message ? err.message : 'Could not reach the clinic server. Please try again.') + '</p>' +
+      '<div class="actions" style="width:100%;"><button class="btn btn-ghost" onclick="showIdle()">Cancel</button><button class="btn btn-primary" onclick="submitForm()">Try again</button></div>' +
+      '<p class="privacy">No receipt will be printed until the server confirms the record.</p></div>';
   });
 }
 

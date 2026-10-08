@@ -7,10 +7,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const db = new Database('clinic.db');
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'clinic.db');
+const db = new Database(dbPath);
+db.pragma('journal_mode = WAL');
 
 const GRADES = ['Grade 11', 'Grade 12'];
 const STRANDS = ['STEM', 'ABM', 'HUMSS'];
@@ -115,7 +117,7 @@ db.exec(`
 
 /* ============== SEED INVENTORY ============== */
 
-if (db.prepare('SELECT COUNT(*) c FROM inventory').get().c === 0) {
+if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM inventory').get().c === 0) {
   const ins = db.prepare(
     'INSERT INTO inventory (item_name, level) VALUES (?, ?)'
   );
@@ -136,7 +138,7 @@ if (db.prepare('SELECT COUNT(*) c FROM inventory').get().c === 0) {
 
 /* ============== SEED DEMO VISITS ============== */
 
-if (db.prepare('SELECT COUNT(*) c FROM visits').get().c === 0) {
+if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM visits').get().c === 0) {
   const ins = db.prepare(`
     INSERT INTO visits
     (purpose, grade, section, strand, illness, severity, action_taken, visit_time)
@@ -609,6 +611,16 @@ app.get('/checkin', (req, res) => {
 
 /* ============== START SERVER ============== */
 
+app.use((err, req, res, next) => {
+  console.error('Request error:', err);
+  if (res.headersSent) return next(err);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: status === 413 ? 'Request body is too large.' : 'The server could not complete the request.'
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`✅ SCADS running at http://localhost:${PORT}`);
 });
+;

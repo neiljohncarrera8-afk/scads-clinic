@@ -364,7 +364,7 @@
     <div class="tab active" id="tab-dashboard">
       <div class="topbar">
         <div><h1>Clinic Dashboard</h1><p>Overview of clinic utilization and health insights</p></div>
-        <div class="datebox"><span class="live-dot"></span><span id="todayDate"></span></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><button class="primary" type="button" onclick="refreshDashboard()">↻ Refresh data</button><div class="datebox"><span class="live-dot"></span><span id="todayDate"></span></div><span id="syncStatus" role="status" aria-live="polite" style="font-size:.72rem;color:var(--muted);">Connecting…</span></div>
       </div>
 
       <div class="stats-grid">
@@ -395,6 +395,11 @@
       <div class="grid2">
         <div class="panel"><h2>Clinic Visits by Strand (Last 7 Days)</h2><canvas id="strandChart"></canvas></div>
         <div class="panel"><h2>Visits by Grade Level (11 vs 12)</h2><canvas id="gradeChart"></canvas></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel"><h2>Top Sections by Visits</h2><canvas id="sectionChart"></canvas></div>
+        <div class="panel"><h2>Visits by Purpose</h2><canvas id="purposeChart"></canvas></div>
       </div>
 
       <div class="grid2">
@@ -553,10 +558,21 @@
 
 <script>
 var API = "";
+function apiJSON(path) {
+  return fetch(API + path, { cache: "no-store" }).then(function (res) {
+    return res.json().catch(function () { return {}; }).then(function (data) {
+      if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
+      return data;
+    });
+  });
+}
 var visitsChartInstance = null;
 var illnessChartInstance = null;
 var gradeChartInstance = null;
 var strandChartInstance = null;
+var sectionChartInstance = null;
+var purposeChartInstance = null;
+var refreshInFlight = false;
 var trendLineChartInstance = null;
 var peakHoursChartInstance = null;
 var severityChartInstance = null;
@@ -605,6 +621,12 @@ function legendSync(chart, legendItem) {
 }
 
 var allVisits = [], rangeDays = 14, strandIllnessInstance = null;
+
+function escapeHTML(value) {
+  var d = document.createElement("div");
+  d.textContent = value == null ? "" : String(value);
+  return d.innerHTML;
+}
 
 function animateCounter(el, target, duration) {
   duration = duration || 1400;
@@ -677,15 +699,38 @@ function toggleConsultFields() {
   }
 }
 
+function setSyncStatus(message, isError) {
+  var el = document.getElementById("syncStatus");
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = isError ? "var(--red)" : "var(--muted)";
+}
+
+function refreshDashboard() {
+  if (refreshInFlight) return Promise.resolve();
+  refreshInFlight = true;
+  setSyncStatus("Updating…", false);
+  return Promise.all([loadAll(), loadTrendAndReports()]).then(function () {
+    setSyncStatus("Updated " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), false);
+  }).catch(function (err) {
+    setSyncStatus("Update failed: " + (err && err.message ? err.message : "server unavailable"), true);
+    console.error("Dashboard refresh failed:", err);
+  }).then(function () {
+    refreshInFlight = false;
+  });
+}
+
 function loadAll() {
   return Promise.all([
-    fetch(API + "/api/visits").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/daily").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/illness").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/grade").then(function (r) { return r.json(); }),
-    fetch(API + "/api/inventory").then(function (r) { return r.json(); }),
-    fetch(API + "/api/alerts").then(function (r) { return r.json(); }),
-    fetch(API + "/api/campaign-suggestion").then(function (r) { return r.json(); })
+    apiJSON("/api/visits"),
+    apiJSON("/api/summary/daily"),
+    apiJSON("/api/summary/illness"),
+    apiJSON("/api/summary/grade"),
+    apiJSON("/api/inventory"),
+    apiJSON("/api/alerts"),
+    apiJSON("/api/campaign-suggestion"),
+    apiJSON("/api/summary/section"),
+    apiJSON("/api/summary/purpose")
   ]).then(function (results) {
     var visits = results[0];
     var daily = results[1];
@@ -694,12 +739,16 @@ function loadAll() {
     var stock = results[4];
     var alerts = results[5];
     var campaign = results[6];
+    var sectionSummary = results[7];
+    var purposeSummary = results[8];
     allVisits = visits;
     renderInsights(visits);
     renderStats(visits, illness, stock);
     renderTable(visits);
     renderStockFull(stock);
     renderCharts(daily, illness, grade);
+    renderSectionChart(sectionSummary);
+    renderPurposeChart(purposeSummary);
     renderVisitsRange();
     renderHeatmap(visits);
     renderStrandIllness(visits);
@@ -712,12 +761,12 @@ function loadAll() {
 
 function loadTrendAndReports() {
   return Promise.all([
-    fetch(API + "/api/trend").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/strand-daily").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/illness-weekly").then(function (r) { return r.json(); }),
-    fetch(API + "/api/visits").then(function (r) { return r.json(); }),
-    fetch(API + "/api/summary/illness").then(function (r) { return r.json(); }),
-    fetch(API + "/api/inventory").then(function (r) { return r.json(); })
+    apiJSON("/api/trend"),
+    apiJSON("/api/summary/strand-daily"),
+    apiJSON("/api/summary/illness-weekly"),
+    apiJSON("/api/visits"),
+    apiJSON("/api/summary/illness"),
+    apiJSON("/api/inventory")
   ]).then(function (results) {
     var trend = results[0];
     var strandDaily = results[1];
@@ -888,10 +937,10 @@ function renderTable(visits) {
       "<td>" + timeStr + "</td>" +
       "<td>" + purposeBadge + "</td>" +
       "<td>" + (v.grade || "—") + "</td>" +
-      "<td>" + (v.section || "—") + "</td>" +
-      "<td>" + (isFeed ? "—" : (v.illness || "—")) + "</td>" +
+      "<td>" + (v.section ? escapeHTML(v.section) : "—") + "</td>" +
+      "<td>" + (isFeed ? "—" : (v.illness ? escapeHTML(v.illness) : "—")) + "</td>" +
       "<td>" + sevCell + "</td>" +
-      "<td>" + (v.action_taken ? v.action_taken : "—") + "</td>" +
+      "<td>" + (v.action_taken ? escapeHTML(v.action_taken) : "—") + "</td>" +
       '<td><button class="delete-btn" onclick="deleteVisit(' + v.id + ')">Delete</button></td>' +
       "</tr>";
   }
@@ -934,6 +983,35 @@ function renderCampaign(c) {
     return;
   }
   box.innerHTML = '<div class="title">' + c.title + "</div><p><strong>Reason:</strong> " + c.reason + "</p>";
+}
+
+function renderSectionChart(rows) {
+  var top = (rows || []).slice().sort(function (a, b) { return b.count - a.count; }).slice(0, 10);
+  if (sectionChartInstance) sectionChartInstance.destroy();
+  sectionChartInstance = new Chart(document.getElementById("sectionChart"), {
+    type: "bar",
+    data: {
+      labels: top.map(function (r) { return r.grade + " · " + r.section; }),
+      datasets: [{ label: "Visits", data: top.map(function (r) { return r.count; }), backgroundColor: "#1b7a4d", borderRadius: 7 }]
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } },
+      animation: { duration: 700 }
+    }
+  });
+}
+
+function renderPurposeChart(rows) {
+  var labels = (rows || []).map(function (r) { return r.purpose; });
+  var values = (rows || []).map(function (r) { return r.count; });
+  if (purposeChartInstance) purposeChartInstance.destroy();
+  purposeChartInstance = new Chart(document.getElementById("purposeChart"), {
+    type: "doughnut",
+    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 0, hoverOffset: 8 }] },
+    options: { cutout: "64%", plugins: { legend: { position: "bottom" } }, animation: { duration: 700 } }
+  });
 }
 
 function renderPeakHours(visits) {
@@ -1249,22 +1327,27 @@ document.getElementById("visitForm").addEventListener("submit", function (e) {
       document.getElementById("visitForm").reset();
       toggleConsultFields();
       fillSections();
-      loadAll();
-      loadTrendAndReports();
+      refreshDashboard();
     } else {
       res.json().then(function (err) {
         msg.style.color = "#e05c5c";
         msg.textContent = "Error: " + (err.error || "Failed.");
       });
     }
+  }).catch(function (err) {
+    var msg = document.getElementById("formMsg");
+    msg.style.color = "#e05c5c";
+    msg.textContent = "Could not connect to the server: " + err.message;
   });
 });
 
 function deleteVisit(id) {
   if (!confirm("Delete this record?")) { return; }
-  fetch(API + "/api/visits/" + id, { method: "DELETE" }).then(function () {
-    loadAll();
-    loadTrendAndReports();
+  fetch(API + "/api/visits/" + id, { method: "DELETE" }).then(function (res) {
+    if (!res.ok) throw new Error("Delete failed (" + res.status + ")");
+    return refreshDashboard();
+  }).catch(function (err) {
+    alert("Could not delete this visit: " + err.message);
   });
 }
 
@@ -1286,8 +1369,14 @@ new QRCode(document.getElementById("qrcode"), {
 })();
 
 loadMeta().then(function () {
-  loadAll();
-  loadTrendAndReports();
+  refreshDashboard();
+  window.setInterval(function () {
+    if (!document.hidden) refreshDashboard();
+  }, 15000);
+  window.addEventListener("focus", function () { refreshDashboard(); });
+}).catch(function (err) {
+  setSyncStatus("Could not load clinic settings: " + err.message, true);
+  console.error("Could not load clinic settings:", err);
 });
 </script>
 </body>
