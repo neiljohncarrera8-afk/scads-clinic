@@ -50,6 +50,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS visits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     purpose TEXT NOT NULL DEFAULT 'Consultation',
+    student_name TEXT NOT NULL DEFAULT '',
     grade TEXT NOT NULL,
     section TEXT DEFAULT '',
     strand TEXT DEFAULT '',
@@ -78,7 +79,7 @@ db.exec(`
    Rebuild the visits table once if purpose/section columns are missing. */
 
 (function migrateVisits() {
-  const cols = db.prepare('PRAGMA table_info(visits)').all().map(c => c.name);
+  let cols = db.prepare('PRAGMA table_info(visits)').all().map(c => c.name);
 
   if (!cols.includes('purpose') || !cols.includes('section')) {
     db.exec(`
@@ -86,6 +87,7 @@ db.exec(`
       CREATE TABLE IF NOT EXISTS visits_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         purpose TEXT NOT NULL DEFAULT 'Consultation',
+        student_name TEXT NOT NULL DEFAULT '',
         grade TEXT NOT NULL,
         section TEXT DEFAULT '',
         strand TEXT DEFAULT '',
@@ -95,10 +97,11 @@ db.exec(`
         visit_time TEXT DEFAULT (datetime('now','localtime'))
       );
       INSERT INTO visits_new
-        (id, purpose, grade, section, strand, illness, severity, action_taken, visit_time)
+        (id, purpose, student_name, grade, section, strand, illness, severity, action_taken, visit_time)
       SELECT
         id,
         'Consultation',
+        '',
         grade,
         '',
         strand,
@@ -112,6 +115,12 @@ db.exec(`
       COMMIT;
     `);
     console.log('✅ Migrated visits table: added purpose + section');
+    cols = db.prepare('PRAGMA table_info(visits)').all().map(c => c.name);
+  }
+
+  if (!cols.includes('student_name')) {
+    db.exec("ALTER TABLE visits ADD COLUMN student_name TEXT NOT NULL DEFAULT ''");
+    console.log('✅ Migrated visits table: added student_name');
   }
 })();
 
@@ -187,6 +196,7 @@ app.get('/api/visits', (req, res) => {
 app.post('/api/visits', (req, res) => {
   let {
     purpose,
+    student_name,
     grade,
     section,
     strand,
@@ -201,6 +211,18 @@ app.post('/api/visits', (req, res) => {
   if (!PURPOSES.includes(purpose)) {
     return res.status(400).json({
       error: 'purpose must be Feeding or Consultation.'
+    });
+  }
+
+  student_name = purpose === 'Feeding' ? String(student_name || '').trim() : '';
+  if (purpose === 'Feeding' && !student_name) {
+    return res.status(400).json({
+      error: 'Student name is required for Feeding.'
+    });
+  }
+  if (student_name.length > 120) {
+    return res.status(400).json({
+      error: 'Student name must be 120 characters or fewer.'
     });
   }
 
@@ -244,10 +266,11 @@ app.post('/api/visits', (req, res) => {
 
   const info = db.prepare(`
     INSERT INTO visits
-    (purpose, grade, section, strand, illness, severity, action_taken)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    (purpose, student_name, grade, section, strand, illness, severity, action_taken)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     purpose,
+    student_name,
     grade,
     section,
     strand,
@@ -623,4 +646,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ SCADS running at http://localhost:${PORT}`);
 });
-;

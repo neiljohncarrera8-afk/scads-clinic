@@ -59,6 +59,10 @@
   textarea{width:100%;margin-top:22px;border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;
     font-family:'Manrope',sans-serif;font-size:.95rem;resize:none;min-height:110px;transition:border-color .2s;}
   textarea:focus{outline:none;border-color:var(--forest);}
+  .text-input{width:100%;margin-top:22px;border:1.5px solid var(--line);border-radius:16px;padding:16px;
+    font-family:'Manrope',sans-serif;font-size:1rem;color:var(--ink);transition:border-color .2s;}
+  .text-input:focus{outline:none;border-color:var(--forest);box-shadow:0 0 0 4px rgba(15,92,61,.12);}
+  .field-error{color:var(--red);font-size:.8rem;min-height:1.2em;margin-top:7px;}
 
   .actions{margin-top:auto;padding-top:22px;display:flex;gap:10px;}
   .btn{flex:1;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-weight:800;
@@ -207,6 +211,12 @@ var PURPOSE_STEP = {
   ]
 };
 
+var NAME_STEP = {
+  key: 'name',
+  title: 'What is your <em>name</em>?',
+  input: true
+};
+
 var GRADE_STEP = {
   key: 'grade',
   title: 'What <em>grade</em> are you in?',
@@ -277,9 +287,11 @@ var ACTION_STEP = {
   text: true
 };
 
-/* Build the active step list based on purpose + grade */
+/* Feeding collects a name first; consultations stay anonymous. */
 function getSteps() {
-  var steps = [PURPOSE_STEP, GRADE_STEP];
+  var steps = [PURPOSE_STEP];
+  if (answers.purpose === 'Feeding') steps.push(NAME_STEP);
+  steps.push(GRADE_STEP);
   // Section only after grade is chosen (so options match that grade)
   if (answers.grade) {
     steps.push(getSectionStep());
@@ -345,6 +357,7 @@ function render() {
 
     var rows = '';
     rows += '<div class="trow"><span>Purpose</span><span>' + esc(r.purpose) + '</span></div>';
+    if (isFeeding) rows += '<div class="trow"><span>Student</span><span>' + esc(r.name) + '</span></div>';
     rows += '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>';
     rows += '<div class="trow"><span>Section</span><span>' + esc(r.section) + '</span></div>';
     if (!isFeeding) {
@@ -392,6 +405,18 @@ function render() {
     return;
   }
 
+  if (step.input) {
+    stage.innerHTML = back + head +
+      '<input class="text-input" id="studentNameInput" type="text" maxlength="120" autocomplete="name" placeholder="Enter your full name">' +
+      '<p class="field-error" id="nameError" role="alert"></p>' +
+      '<div class="actions"><button class="btn btn-primary" onclick="continueWithName()">Continue →</button></div>';
+    document.getElementById('studentNameInput').value = answers.name || '';
+    document.getElementById('studentNameInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); continueWithName(); }
+    });
+    return;
+  }
+
   var optsHTML = '';
   for (var i = 0; i < step.options.length; i++) {
     optsHTML += optHTML(step, step.options[i], i);
@@ -403,6 +428,18 @@ function goStep(i) {
   dir = i < current ? -1 : 1;
   current = i;
   render();
+}
+
+function continueWithName() {
+  var input = document.getElementById('studentNameInput');
+  var name = input ? input.value.trim() : '';
+  if (!name) {
+    document.getElementById('nameError').textContent = 'Please enter your name before continuing.';
+    if (input) input.focus();
+    return;
+  }
+  answers.name = name;
+  goStep(current + 1);
 }
 
 /* ---- Bluetooth receipt printing (RawBT) ---- */
@@ -418,6 +455,7 @@ function buildReceiptText(r) {
   t += isFeeding ? '       Feeding Check-In\n' : '      Visit Check-In Slip\n';
   t += line;
   t += 'Purpose:  ' + safeForPrinter(r.purpose) + '\n';
+  if (isFeeding) t += 'Student:  ' + safeForPrinter(r.name) + '\n';
   t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
   t += 'Section:  ' + safeForPrinter(r.section) + '\n';
   if (!isFeeding) {
@@ -445,6 +483,9 @@ function printReceipt() {
 
 function pick(key, value, btn) {
   answers[key] = value;
+  if (key === 'purpose' && value !== 'Feeding') {
+    delete answers.name;
+  }
   // Changing grade clears previous section choice
   if (key === 'grade') {
     delete answers.section;
@@ -504,6 +545,7 @@ function submitForm() {
 
   var payload = {
     purpose: answers.purpose,
+    student_name: answers.purpose === 'Feeding' ? answers.name : '',
     grade: answers.grade,
     section: answers.section,
     // Section names are not academic strands; do not submit them as STEM/ABM/HUMSS.
