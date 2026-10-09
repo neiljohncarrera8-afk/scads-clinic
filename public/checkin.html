@@ -357,7 +357,11 @@ function render() {
 
     var rows = '';
     rows += '<div class="trow"><span>Purpose</span><span>' + esc(r.purpose) + '</span></div>';
-    if (isFeeding) rows += '<div class="trow"><span>Student</span><span>' + esc(r.name) + '</span></div>';
+    if (isFeeding) {
+      rows += r.nameSaveFailed
+        ? '<div class="trow"><span>Student</span><span style="color:var(--red);font-weight:700;">Name not confirmed — tell clinic staff</span></div>'
+        : '<div class="trow"><span>Student</span><span>' + esc(r.name) + '</span></div>';
+    }
     rows += '<div class="trow"><span>Grade</span><span>' + esc(r.grade) + '</span></div>';
     rows += '<div class="trow"><span>Section</span><span>' + esc(r.section) + '</span></div>';
     if (!isFeeding) {
@@ -367,10 +371,14 @@ function render() {
     rows += '<div class="trow"><span>Time</span><span>' + esc(r.time) + '</span></div>';
 
     var titleHtml = isFeeding
-      ? '<h1 style="text-align:center;">Feeding <em>recorded</em></h1>'
+      ? (r.nameSaveFailed
+        ? '<h1 style="text-align:center;">Feeding saved, <em>name not confirmed</em></h1>'
+        : '<h1 style="text-align:center;">Feeding <em>recorded</em></h1>')
       : '<h1 style="text-align:center;">Check-in <em>recorded</em></h1>';
     var subHtml = isFeeding
-      ? '<p class="sub" style="text-align:center;">Please show this slip / proceed to the feeding area.</p>'
+      ? (r.nameSaveFailed
+        ? '<p class="sub" style="text-align:center;color:var(--red);">This record may be missing its name. Do not submit again; notify clinic staff to update/restart the server.</p>'
+        : '<p class="sub" style="text-align:center;">Please show this slip / proceed to the feeding area.</p>')
       : '<p class="sub" style="text-align:center;">Please proceed to the clinic staff.</p>';
 
     stage.innerHTML =
@@ -455,7 +463,11 @@ function buildReceiptText(r) {
   t += isFeeding ? '       Feeding Check-In\n' : '      Visit Check-In Slip\n';
   t += line;
   t += 'Purpose:  ' + safeForPrinter(r.purpose) + '\n';
-  if (isFeeding) t += 'Student:  ' + safeForPrinter(r.name) + '\n';
+  if (isFeeding) {
+    t += r.nameSaveFailed
+      ? 'Student:  NAME NOT CONFIRMED - CONTACT STAFF\n'
+      : 'Student:  ' + safeForPrinter(r.name) + '\n';
+  }
   t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
   t += 'Section:  ' + safeForPrinter(r.section) + '\n';
   if (!isFeeding) {
@@ -566,6 +578,11 @@ function submitForm() {
       return data;
     });
   }).then(function (saved) {
+    if (answers.purpose === 'Feeding') {
+      var enteredName = String(answers.name || '').trim();
+      var confirmedName = String(saved && saved.student_name || '').trim();
+      answers.nameSaveFailed = !confirmedName || confirmedName !== enteredName;
+    }
     var now = new Date();
     var savedTime = saved && saved.visit_time ? new Date(saved.visit_time.replace(' ', 'T')) : now;
     if (isNaN(savedTime.getTime())) savedTime = now;
@@ -651,4 +668,3 @@ showIdle();
 </script>
 </body>
 </html>
-
