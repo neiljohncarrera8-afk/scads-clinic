@@ -13,6 +13,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'clinic.db');
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
+const visitEventClients = new Set();
+
+function publishVisitUpdate() {
+  const message = 'event: visits-updated\ndata: {}\n\n';
+  for (const client of visitEventClients) {
+    try {
+      client.write(message);
+    } catch (err) {
+      visitEventClients.delete(client);
+    }
+  }
+}
 
 const GRADES = ['Grade 11', 'Grade 12'];
 const STRANDS = ['STEM', 'ABM', 'HUMSS'];
@@ -193,6 +205,29 @@ app.get('/api/visits', (req, res) => {
   );
 });
 
+// Push visit changes to open dashboards; this avoids polling/resetting the page on a timer.
+app.get('/api/events', (req, res) => {
+  res.status(200);
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  if (typeof res.flushHeaders === 'function') res.flushHeaders();
+  res.write('retry: 5000\n\n');
+  visitEventClients.add(res);
+
+  const heartbeat = setInterval(() => {
+    if (!res.writableEnded) res.write(': keep-alive\n\n');
+  }, 25000);
+
+  res.on('close', () => {
+    clearInterval(heartbeat);
+    visitEventClients.delete(res);
+  });
+});
+
 app.post('/api/visits', (req, res) => {
   let {
     purpose,
@@ -279,6 +314,7 @@ app.post('/api/visits', (req, res) => {
     action_taken || ''
   );
 
+  publishVisitUpdate();
   res.status(201).json(
     db.prepare(
       'SELECT * FROM visits WHERE id = ?'
@@ -291,6 +327,7 @@ app.delete('/api/visits/:id', (req, res) => {
     'DELETE FROM visits WHERE id = ?'
   ).run(req.params.id);
 
+  publishVisitUpdate();
   res.json({ success: true });
 });
 
@@ -646,3 +683,4 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ SCADS running at http://localhost:${PORT}`);
 });
+
