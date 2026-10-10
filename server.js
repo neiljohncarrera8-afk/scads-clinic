@@ -56,6 +56,26 @@ const SECTIONS = {
   ]
 };
 
+/* Default clinic stocks (PH common meds) — used when inventory is empty */
+const DEFAULT_INVENTORY = [
+  ['Biogesic (Paracetamol 500mg)', 78],
+  ['Bioflu', 55],
+  ['Neozep Forte', 48],
+  ['Lagundi (Ascof)', 40],
+  ['Solmux', 35],
+  ['Kremil-S', 60],
+  ['Buscopan', 28],
+  ['Mefenamic Acid 250mg', 42],
+  ['Cetirizine 10mg', 38],
+  ['Oral Rehydration Salts (Oresol)', 22],
+  ['Betadine Solution', 30],
+  ['Isopropyl Alcohol 70%', 45],
+  ['Band-Aid / Adhesive Bandage', 70],
+  ['Gauze Pad / Cotton', 50],
+  ['Ice Pack / Cold Compress', 15],
+  ['Sanitary Pad', 40]
+];
+
 /* ============== SCHEMA ============== */
 
 db.exec(`
@@ -87,8 +107,6 @@ db.exec(`
 `);
 
 /* ============== MIGRATE OLD DB ============== */
-/* Existing clinic.db may have old CHECK constraints on strand/illness/severity.
-   Rebuild the visits table once if purpose/section columns are missing. */
 
 (function migrateVisits() {
   let cols = db.prepare('PRAGMA table_info(visits)').all().map(c => c.name);
@@ -136,26 +154,19 @@ db.exec(`
   }
 })();
 
-/* ============== SEED INVENTORY ============== */
+/* ============== SEED INVENTORY (always if empty) ============== */
 
-if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM inventory').get().c === 0) {
-  const ins = db.prepare(
-    'INSERT INTO inventory (item_name, level) VALUES (?, ?)'
-  );
+(function seedInventory() {
+  const count = db.prepare('SELECT COUNT(*) c FROM inventory').get().c;
+  if (count > 0) return;
 
+  const ins = db.prepare('INSERT INTO inventory (item_name, level) VALUES (?, ?)');
   const tx = db.transaction(rows => {
     rows.forEach(row => ins.run(...row));
   });
-
-  tx([
-    ['Paracetamol (500mg)', 78],
-    ['Povidone Iodine', 45],
-    ['Bandages / Gauze', 18],
-    ['Cotton Balls', 60],
-    ['Oral Rehydration Salts', 12],
-    ['Alcohol / Antiseptic', 8]
-  ]);
-}
+  tx(DEFAULT_INVENTORY);
+  console.log('✅ Seeded inventory with', DEFAULT_INVENTORY.length, 'clinic items');
+})();
 
 /* ============== SEED DEMO VISITS ============== */
 
@@ -205,7 +216,6 @@ app.get('/api/visits', (req, res) => {
   );
 });
 
-// Push visit changes to open dashboards; this avoids polling/resetting the page on a timer.
 app.get('/api/events', (req, res) => {
   res.status(200);
   res.set({
@@ -240,7 +250,6 @@ app.post('/api/visits', (req, res) => {
     action_taken
   } = req.body;
 
-  // Default purpose for older clients
   purpose = purpose || 'Consultation';
 
   if (!PURPOSES.includes(purpose)) {
@@ -274,7 +283,6 @@ app.post('/api/visits', (req, res) => {
     });
   }
 
-  // Strand is optional (kept for older dashboard form / charts)
   strand = strand || '';
   if (strand && !STRANDS.includes(strand)) {
     return res.status(400).json({
@@ -283,7 +291,6 @@ app.post('/api/visits', (req, res) => {
   }
 
   if (purpose === 'Feeding') {
-    // Feeding: no illness/severity required
     illness = '';
     severity = '';
   } else {
@@ -348,7 +355,6 @@ app.get('/api/summary/daily', (req, res) => {
 });
 
 app.get('/api/summary/illness', (req, res) => {
-  // Only consultation visits with an illness
   res.json(
     db.prepare(`
       SELECT
@@ -405,8 +411,6 @@ app.get('/api/summary/section', (req, res) => {
   );
 });
 
-/* ============== STRAND DAILY ============== */
-
 app.get('/api/summary/strand-daily', (req, res) => {
   res.json(
     db.prepare(`
@@ -423,8 +427,6 @@ app.get('/api/summary/strand-daily', (req, res) => {
     `).all()
   );
 });
-
-/* ============== ILLNESS WEEKLY ============== */
 
 app.get('/api/summary/illness-weekly', (req, res) => {
   res.json(
@@ -624,29 +626,68 @@ app.get('/api/inventory', (req, res) => {
   );
 });
 
-app.put('/api/inventory/:id', (req, res) => {
+app.post('/api/inventory', (req, res) => {
+  const name = String(req.body.item_name || req.body.name || '').trim();
+  let level = req.body.level;
+  if (level === undefined || level === null) level = 50;
+  level = Math.max(0, Math.min(100, parseInt(level, 10) || 0));
 
-  const { level } = req.body;
-
-  if (
-    level === undefined ||
-    level < 0 ||
-    level > 100
-  ) {
-    return res.status(400).json({
-      error: 'level must be 0-100.'
-    });
+  if (!name || name.length > 120) {
+    return res.status(400).json({ error: 'item_name is required (max 120 chars).' });
   }
 
-  db.prepare(
+  try {
+    const info = db.prepare(
+      'INSERT INTO inventory (item_name, level) VALUES (?, ?)'
+    ).run(name, level);
+    res.status(201).json(
+      db.prepare('SELECT * FROM inventory WHERE id = ?').get(info.lastInsertRowid)
+    );
+  } catch (err) {
+    if (String(err.message || '').includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Item already exists.' });
+    }
+    throw err;
+  }
+});
+
+app.put('/api/inventory/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ error: 'invalid id.' });
+
+  // Support both absolute level and delta adjustment
+  let level = req.body.level;
+  if (req.body.delta !== undefined) {
+    const row = db.prepare('SELECT level FROM inventory WHERE id = ?').get(id);
+    if (!row) return res.status(404).json({ error: 'Item not found.' });
+    level = row.level + (parseInt(req.body.delta, 10) || 0);
+  }
+
+  level = parseInt(level, 10);
+  if (Number.isNaN(level) || level < 0 || level > 100) {
+    return res.status(400).json({ error: 'level must be 0-100.' });
+  }
+
+  const result = db.prepare(
     'UPDATE inventory SET level = ? WHERE id = ?'
-  ).run(level, req.params.id);
+  ).run(level, id);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Item not found.' });
+  }
 
   res.json(
-    db.prepare(
-      'SELECT * FROM inventory WHERE id = ?'
-    ).get(req.params.id)
+    db.prepare('SELECT * FROM inventory WHERE id = ?').get(id)
   );
+});
+
+app.delete('/api/inventory/:id', (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  const result = db.prepare('DELETE FROM inventory WHERE id = ?').run(id);
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Item not found.' });
+  }
+  res.json({ success: true });
 });
 
 /* ============== META ============== */
@@ -683,4 +724,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ SCADS running at http://localhost:${PORT}`);
 });
-
