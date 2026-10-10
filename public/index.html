@@ -1146,10 +1146,10 @@ function stockRowHTML(item) {
   return '<div class="stock-item" data-id="' + id + '">' +
     '<span class="si-name">' + item.item_name + '</span>' +
     '<div class="si-controls">' +
-      '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-5)" title="-5">−</button>' +
+      '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-1)" title="-1">−</button>' +
       '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + item.level + '%;background:' + color + ';"></div></div>' +
       '<span style="color:' + color + ';font-weight:700;min-width:36px;text-align:right;">' + item.level + '%</span>' +
-      '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',5)" title="+5">+</button>' +
+      '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',1)" title="+1">+</button>' +
     '</div></div>';
 }
 
@@ -1712,6 +1712,4 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
-
-
 
