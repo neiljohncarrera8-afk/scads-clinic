@@ -315,6 +315,67 @@
   @keyframes cellIn{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:none;}}
   .heat-legend{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:.68rem;color:var(--muted);font-weight:600;}
   .heat-legend i{height:8px;width:110px;border-radius:6px;background:linear-gradient(90deg,#e3f2ea,#1b7a4d);}
+
+  /* Inventory controls */
+  .inv-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;align-items:center;}
+  .inv-toolbar input[type="text"]{flex:1;min-width:160px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:0.9rem;}
+  .inv-toolbar input[type="number"]{width:80px;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font-family:inherit;font-size:0.9rem;}
+  .inv-toolbar input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(27,122,77,0.12);}
+  .btn-inv-add,.btn-inv-refresh{
+    border:none;border-radius:12px;padding:10px 16px;font-weight:700;font-size:0.85rem;
+    cursor:pointer;font-family:inherit;transition:transform 0.15s,filter 0.15s;
+  }
+  .btn-inv-add{background:var(--primary);color:#fff;}
+  .btn-inv-refresh{background:var(--primary-light);color:var(--primary-dark);}
+  .btn-inv-add:active,.btn-inv-refresh:active{transform:scale(0.97);}
+  .inv-hint{font-size:0.75rem;color:var(--muted);margin-top:14px;line-height:1.45;}
+  .stock-item{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 14px;border-radius:14px;border:1px solid var(--border);
+    margin-bottom:8px;background:#fff;transition:box-shadow 0.2s;
+  }
+  .stock-item:hover{box-shadow:var(--shadow-sm);}
+  .stock-item .si-name{font-weight:700;font-size:0.9rem;flex:1;min-width:0;}
+  .stock-item .si-controls{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .stock-item .si-btn{
+    width:32px;height:32px;border:none;border-radius:10px;font-weight:800;font-size:1.05rem;
+    cursor:pointer;line-height:1;transition:transform 0.12s;
+  }
+  .stock-item .si-btn:active{transform:scale(0.9);}
+  .stock-item .si-btn.minus{background:#fde8e8;color:var(--red);}
+  .stock-item .si-btn.plus{background:var(--primary-light);color:var(--primary-dark);}
+  .stock-bar-bg{width:90px;height:8px;background:#eef2ef;border-radius:6px;overflow:hidden;}
+  .stock-bar-fill{height:100%;border-radius:6px;transition:width 0.3s ease;}
+
+  /* Illness guide (More tab) */
+  .illness-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+  }
+  .illness-card{
+    background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:20px;
+    box-shadow:var(--shadow-sm);transition:transform 0.25s ease, box-shadow 0.25s ease;
+    animation:fadeInUp 0.5s ease both;position:relative;overflow:hidden;
+  }
+  .illness-card::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;
+    background:var(--ic-accent, var(--primary));
+  }
+  .illness-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+  .illness-card .ic-icon{
+    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;
+    margin-bottom:12px;background:var(--ic-bg, var(--primary-light));
+  }
+  .illness-card .ic-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;color:var(--primary-dark);margin-bottom:6px;}
+  .illness-card .ic-tag{
+    display:inline-block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
+    padding:3px 9px;border-radius:20px;margin-bottom:10px;
+    background:var(--ic-bg, var(--primary-light));color:var(--ic-accent, var(--primary));
+  }
+  .illness-card .ic-desc{font-size:0.86rem;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+  .illness-card .ic-section{font-size:0.78rem;font-weight:700;color:var(--primary-dark);margin-bottom:4px;margin-top:8px;}
+  .illness-card ul{margin:0 0 0 18px;font-size:0.82rem;color:var(--text);line-height:1.5;}
+  .illness-card li{margin-bottom:3px;}
+
 </style>
 </head>
 <body>
@@ -330,6 +391,7 @@
     <div class="nav-item" data-tab="trends"><span class="emoji">📈</span> Health Trends</div>
     <div class="nav-item" data-tab="reports"><span class="emoji">📄</span> Reports</div>
     <div class="nav-item" data-tab="inventory"><span class="emoji">📦</span> Inventory</div>
+    <div class="nav-item" data-tab="more"><span class="emoji">📚</span> More</div>
     <div class="nav-item" data-tab="personnel"><span class="emoji">🧑‍⚕️</span> Clinic Personnel</div>
     <div class="nav-item" data-tab="about"><span class="emoji">ℹ️</span> About System</div>
 
@@ -496,8 +558,22 @@
     </div>
 
     <div class="tab" id="tab-inventory">
-      <div class="topbar"><div><h1>Medicine and Supply Inventory</h1><p>Track and update stock levels</p></div></div>
-      <div class="panel"><div id="stockListFull"></div></div>
+      <div class="topbar"><div><h1>Medicine and Supply Inventory</h1><p>Track and update stock levels · synced with kiosk check-in</p></div></div>
+      <div class="panel">
+        <div class="inv-toolbar">
+          <input id="newInvName" type="text" maxlength="120" placeholder="New item name (e.g. Biogesic)">
+          <input id="newInvLevel" type="number" min="0" max="100" value="50" title="Starting level %">
+          <button type="button" class="btn-inv-add" onclick="addInventoryItem()">+ Add Item</button>
+          <button type="button" class="btn-inv-refresh" onclick="refreshInventoryOnly()">↻ Refresh</button>
+        </div>
+        <div id="stockListFull"></div>
+        <p class="inv-hint">Levels are 0–100%. Changes here update the same database used by the check-in kiosk Stocks tab.</p>
+      </div>
+    </div>
+
+    <div class="tab" id="tab-more">
+      <div class="topbar"><div><h1>Illness Guide</h1><p>Quick reference for common clinic concerns</p></div></div>
+      <div class="illness-grid" id="illnessGuide"></div>
     </div>
 
     <div class="tab" id="tab-personnel">
@@ -694,7 +770,10 @@ for (var n = 0; n < navItems.length; n++) {
     var tabs = document.querySelectorAll(".tab");
     for (var y = 0; y < tabs.length; y++) { tabs[y].classList.remove("active"); }
     this.classList.add("active");
-    document.getElementById("tab-" + this.getAttribute("data-tab")).classList.add("active");
+    var tabName = this.getAttribute("data-tab");
+    document.getElementById("tab-" + tabName).classList.add("active");
+    if (tabName === "more") renderIllnessGuide();
+    if (tabName === "inventory") refreshInventoryOnly();
   });
 }
 
@@ -1012,21 +1091,141 @@ function renderTable(visits) {
 
 function stockRowHTML(item) {
   var color = item.status === "critical" ? "var(--red)" : item.status === "low" ? "var(--yellow)" : "var(--primary)";
-  return '<div class="stock-item">' +
-    "<span>" + item.item_name + "</span>" +
-    '<div style="display:flex;align-items:center;gap:8px;">' +
-    '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + item.level + "%;background:" + color + ';"></div></div>' +
-    '<span style="color:' + color + ';font-weight:700;min-width:32px;text-align:right;">' + item.level + "%</span>" +
-    "</div></div>";
+  var id = item.id;
+  return '<div class="stock-item" data-id="' + id + '">' +
+    '<span class="si-name">' + item.item_name + '</span>' +
+    '<div class="si-controls">' +
+      '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-5)" title="-5">−</button>' +
+      '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + item.level + '%;background:' + color + ';"></div></div>' +
+      '<span style="color:' + color + ';font-weight:700;min-width:36px;text-align:right;">' + item.level + '%</span>' +
+      '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',5)" title="+5">+</button>' +
+    '</div></div>';
 }
 
 function renderStockFull(stock) {
+  var el = document.getElementById("stockListFull");
+  if (!el) return;
+  if (!stock || !stock.length) {
+    el.innerHTML = '<p style="color:var(--muted);padding:12px 0;">No inventory items yet. Add one above, or restart the server to seed defaults (Biogesic, etc.).</p>';
+    return;
+  }
   var html = "";
   for (var i = 0; i < stock.length; i++) {
     html = html + stockRowHTML(stock[i]);
   }
-  document.getElementById("stockListFull").innerHTML = html;
+  el.innerHTML = html;
 }
+
+function adjustInventory(id, delta) {
+  fetch(API + "/api/inventory/" + id, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ delta: delta })
+  }).then(function (res) {
+    if (!res.ok) return res.json().then(function (e) { throw new Error(e.error || "Update failed"); });
+    return res.json();
+  }).then(function () {
+    return apiJSON("/api/inventory");
+  }).then(function (stock) {
+    renderStockFull(stock);
+    // also refresh stats that use stock if present
+    if (typeof allVisits !== "undefined" && allVisits) {
+      /* stats may include stock counts — soft refresh */
+    }
+  }).catch(function (err) {
+    alert("Could not update stock: " + err.message);
+  });
+}
+
+function addInventoryItem() {
+  var nameEl = document.getElementById("newInvName");
+  var levelEl = document.getElementById("newInvLevel");
+  var name = (nameEl && nameEl.value || "").trim();
+  var level = levelEl ? parseInt(levelEl.value, 10) : 50;
+  if (!name) { if (nameEl) nameEl.focus(); return; }
+  if (isNaN(level)) level = 50;
+  fetch(API + "/api/inventory", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item_name: name, level: level })
+  }).then(function (res) {
+    return res.json().then(function (d) { return { ok: res.ok, d: d }; });
+  }).then(function (r) {
+    if (!r.ok) throw new Error(r.d.error || "Failed to add");
+    if (nameEl) nameEl.value = "";
+    return apiJSON("/api/inventory");
+  }).then(function (stock) {
+    renderStockFull(stock);
+  }).catch(function (err) {
+    alert("Could not add item: " + err.message);
+  });
+}
+
+function refreshInventoryOnly() {
+  apiJSON("/api/inventory").then(renderStockFull).catch(function (err) {
+    alert("Could not load inventory: " + err.message);
+  });
+}
+
+var ILLNESS_GUIDE = [
+  { name: "Headache", icon: "🤕", tag: "Common", accent: "#1b7a4d", bg: "#e8f5ee",
+    desc: "Pain or pressure in the head. Often linked to dehydration, lack of sleep, eye strain, or stress.",
+    signs: ["Throbbing or dull pain", "Sensitivity to light/noise", "Difficulty concentrating"],
+    care: ["Rest in a quiet area", "Drink water", "Cold compress on forehead", "Refer if severe or with fever"] },
+  { name: "Fever", icon: "🤒", tag: "Monitor closely", accent: "#e05c5c", bg: "#fde8e8",
+    desc: "Body temperature above normal, often a sign the body is fighting infection.",
+    signs: ["Warm skin / flushed face", "Chills or sweating", "Weakness, headache"],
+    care: ["Check temperature", "Hydrate", "Rest", "Send home if ≥38°C or with other severe symptoms"] },
+  { name: "Stomachache", icon: "🤢", tag: "GI", accent: "#e8b93f", bg: "#fdf6e3",
+    desc: "Abdominal discomfort that may relate to meals, gas, mild infection, or menstrual pain.",
+    signs: ["Cramping or dull ache", "Nausea", "Loss of appetite"],
+    care: ["Rest", "Sips of water", "Avoid heavy food", "Monitor; escalate if severe or persistent"] },
+  { name: "Minor Injury", icon: "🩹", tag: "First aid", accent: "#3b82c4", bg: "#e8f1fa",
+    desc: "Cuts, scrapes, bruises, or mild sprains common during PE and campus activity.",
+    signs: ["Bleeding, swelling, or bruising", "Pain on movement", "Broken skin"],
+    care: ["Clean with antiseptic", "Apply bandage", "Ice for swelling", "Refer if deep wound or suspected fracture"] },
+  { name: "Cough/Colds", icon: "🤧", tag: "Respiratory", accent: "#8b6bd1", bg: "#f0ebfa",
+    desc: "Upper respiratory symptoms — runny nose, cough, mild sore throat — often viral.",
+    signs: ["Cough, sneezing", "Nasal congestion", "Mild sore throat"],
+    care: ["Rest and fluids", "Tissue hygiene", "Separate from others if possible", "Refer if breathing difficulty"] },
+  { name: "Allergy", icon: "🌿", tag: "Allergy", accent: "#d97ba8", bg: "#fceef5",
+    desc: "Reaction to allergens (dust, food, pollen). May include rash, itch, or sneezing.",
+    signs: ["Itchy eyes/skin", "Sneezing, runny nose", "Rash or hives"],
+    care: ["Remove trigger if known", "Antihistamine per protocol", "Watch for swelling of lips/throat (emergency)"] },
+  { name: "Dizziness", icon: "💫", tag: "Neurologic", accent: "#3b82c4", bg: "#e8f1fa",
+    desc: "Lightheadedness or spinning sensation; may follow skipped meals, dehydration, or standing up quickly.",
+    signs: ["Unsteady feeling", "Blurred vision briefly", "Nausea"],
+    care: ["Sit or lie down", "Offer water / light snack", "Check BP if trained", "Refer if with chest pain or fainting"] },
+  { name: "Menstrual Cramps", icon: "🩸", tag: "Reproductive health", accent: "#d97ba8", bg: "#fceef5",
+    desc: "Lower abdominal pain during menstruation. Common and usually manageable with rest and warmth.",
+    signs: ["Cramping in lower abdomen", "Back ache", "Fatigue"],
+    care: ["Rest", "Warm compress", "Hydration", "Pain relief per clinic protocol", "Private, respectful care"] },
+  { name: "Others", icon: "➕", tag: "General", accent: "#6b7c76", bg: "#f0f4f2",
+    desc: "Concerns that do not fit the usual categories — still document clearly and assess severity.",
+    signs: ["Variable — note student description", "Observe general appearance", "Ask onset and triggers"],
+    care: ["Listen and document", "Basic first aid as needed", "Escalate to nurse / parent when unsure"] }
+];
+
+function renderIllnessGuide() {
+  var el = document.getElementById("illnessGuide");
+  if (!el) return;
+  var html = "";
+  for (var i = 0; i < ILLNESS_GUIDE.length; i++) {
+    var g = ILLNESS_GUIDE[i];
+    var signs = g.signs.map(function (s) { return "<li>" + s + "</li>"; }).join("");
+    var care = g.care.map(function (s) { return "<li>" + s + "</li>"; }).join("");
+    html += '<div class="illness-card" style="--ic-accent:' + g.accent + ';--ic-bg:' + g.bg + ';animation-delay:' + (i * 0.05) + 's">' +
+      '<div class="ic-icon">' + g.icon + '</div>' +
+      '<div class="ic-title">' + g.name + '</div>' +
+      '<span class="ic-tag">' + g.tag + '</span>' +
+      '<p class="ic-desc">' + g.desc + '</p>' +
+      '<div class="ic-section">Common signs</div><ul>' + signs + '</ul>' +
+      '<div class="ic-section">Clinic response</div><ul>' + care + '</ul>' +
+      '</div>';
+  }
+  el.innerHTML = html;
+}
+
 
 function renderAlerts(alerts) {
   var box = document.getElementById("alertContent");
