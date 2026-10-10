@@ -856,8 +856,8 @@ function submitForm() {
   var stage = document.getElementById('stage');
   stage.innerHTML = '<div class="welcome" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;"><p class="sub">Saving your check-in…</p></div>';
 
-  // Offline / no-server mode: save locally and print
-  if (!API) {
+  // Offline only when opened as a local file (not via the server)
+  if (location.protocol === 'file:') {
     setTimeout(function () { finishCheckInLocal(null); }, 280);
     return;
   }
@@ -1122,7 +1122,7 @@ function saveLocalStock(list) {
 }
 
 function fetchStock(cb) {
-  if (!API && location.protocol === 'file:') {
+  if (location.protocol === 'file:') {
     stockCache = loadLocalStock();
     if (cb) cb(stockCache);
     return;
@@ -1182,7 +1182,7 @@ function addMedicine() {
   if (!name) { if (input) input.focus(); return; }
 
   var base = API || '';
-  var tryServer = !(location.protocol === 'file:' && !API);
+  var tryServer = location.protocol !== 'file:';
 
   if (tryServer) {
     fetch(base + '/api/inventory', {
