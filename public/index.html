@@ -347,34 +347,85 @@
   .stock-bar-bg{width:90px;height:8px;background:#eef2ef;border-radius:6px;overflow:hidden;}
   .stock-bar-fill{height:100%;border-radius:6px;transition:width 0.3s ease;}
 
-  /* Illness guide (More tab) */
+  /* Illness guide (More tab) — enhanced hover */
   .illness-grid{
-    display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;
   }
   .illness-card{
-    background:var(--card);border:1.5px solid var(--border);border-radius:18px;padding:20px;
-    box-shadow:var(--shadow-sm);transition:transform 0.25s ease, box-shadow 0.25s ease;
-    animation:fadeInUp 0.5s ease both;position:relative;overflow:hidden;
+    background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:22px 22px 20px;
+    box-shadow:var(--shadow-sm);transition:transform 0.4s cubic-bezier(.22,1,.36,1), box-shadow 0.4s ease, border-color 0.35s ease;
+    animation:fadeInUp 0.55s ease both;position:relative;overflow:hidden;cursor:default;
   }
   .illness-card::before{
     content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;
     background:var(--ic-accent, var(--primary));
+    transition:width 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease;
   }
-  .illness-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);}
+  .illness-card::after{
+    content:'';position:absolute;inset:0;border-radius:20px;pointer-events:none;
+    background:radial-gradient(600px circle at var(--mx,50%) var(--my,50%), color-mix(in srgb, var(--ic-accent) 14%, transparent), transparent 42%);
+    opacity:0;transition:opacity 0.35s ease;
+  }
+  .illness-card:hover{
+    transform:translateY(-8px) scale(1.015);
+    box-shadow:0 16px 40px rgba(15,61,46,0.12), 0 0 0 1px color-mix(in srgb, var(--ic-accent) 25%, transparent);
+    border-color:color-mix(in srgb, var(--ic-accent) 35%, var(--border));
+  }
+  .illness-card:hover::before{
+    width:6px;
+    box-shadow:0 0 16px color-mix(in srgb, var(--ic-accent) 55%, transparent);
+  }
+  .illness-card:hover::after{opacity:1;}
   .illness-card .ic-icon{
-    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.35rem;
-    margin-bottom:12px;background:var(--ic-bg, var(--primary-light));
+    width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:1.45rem;
+    margin-bottom:14px;background:var(--ic-bg, var(--primary-light));
+    transition:transform 0.4s cubic-bezier(.34,1.56,.64,1), box-shadow 0.35s ease;
+    position:relative;z-index:1;
   }
-  .illness-card .ic-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;color:var(--primary-dark);margin-bottom:6px;}
+  .illness-card:hover .ic-icon{
+    transform:scale(1.12) rotate(-6deg);
+    box-shadow:0 8px 20px color-mix(in srgb, var(--ic-accent) 28%, transparent);
+  }
+  .illness-card .ic-title{
+    font-family:'Fraunces',serif;font-weight:600;font-size:1.2rem;color:var(--primary-dark);
+    margin-bottom:6px;position:relative;z-index:1;
+    transition:color 0.3s ease, letter-spacing 0.3s ease;
+  }
+  .illness-card:hover .ic-title{color:var(--ic-accent, var(--primary));letter-spacing:0.2px;}
   .illness-card .ic-tag{
-    display:inline-block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
-    padding:3px 9px;border-radius:20px;margin-bottom:10px;
+    display:inline-block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.45px;
+    padding:4px 10px;border-radius:20px;margin-bottom:12px;position:relative;z-index:1;
     background:var(--ic-bg, var(--primary-light));color:var(--ic-accent, var(--primary));
+    transition:transform 0.3s ease, box-shadow 0.3s ease;
   }
-  .illness-card .ic-desc{font-size:0.86rem;color:var(--muted);line-height:1.55;margin-bottom:12px;}
-  .illness-card .ic-section{font-size:0.78rem;font-weight:700;color:var(--primary-dark);margin-bottom:4px;margin-top:8px;}
-  .illness-card ul{margin:0 0 0 18px;font-size:0.82rem;color:var(--text);line-height:1.5;}
-  .illness-card li{margin-bottom:3px;}
+  .illness-card:hover .ic-tag{
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px color-mix(in srgb, var(--ic-accent) 20%, transparent);
+  }
+  .illness-card .ic-desc{
+    font-size:0.88rem;color:var(--muted);line-height:1.6;margin-bottom:12px;position:relative;z-index:1;
+  }
+  .illness-card .ic-section{
+    font-size:0.78rem;font-weight:800;color:var(--primary-dark);margin-bottom:5px;margin-top:10px;
+    position:relative;z-index:1;display:flex;align-items:center;gap:6px;
+  }
+  .illness-card .ic-section::before{
+    content:'';width:6px;height:6px;border-radius:50%;background:var(--ic-accent, var(--primary));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--ic-accent) 20%, transparent);
+  }
+  .illness-card ul{margin:0 0 0 18px;font-size:0.84rem;color:var(--text);line-height:1.55;position:relative;z-index:1;}
+  .illness-card li{margin-bottom:4px;transition:transform 0.25s ease, color 0.25s ease;}
+  .illness-card:hover li{transform:translateX(3px);}
+  .illness-card .ic-footer{
+    margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);
+    font-size:0.72rem;color:var(--muted);font-weight:600;position:relative;z-index:1;
+    opacity:0.85;transition:opacity 0.3s ease, color 0.3s ease;
+  }
+  .illness-card:hover .ic-footer{opacity:1;color:var(--ic-accent, var(--primary));}
+  @media (prefers-reduced-motion: reduce){
+    .illness-card,.illness-card *{transition:none!important;animation:none!important;}
+    .illness-card:hover{transform:none;}
+  }
 
 </style>
 </head>
@@ -1169,13 +1220,13 @@ function refreshInventoryOnly() {
 
 var ILLNESS_GUIDE = [
   { name: "Headache", icon: "🤕", tag: "Common", accent: "#1b7a4d", bg: "#e8f5ee",
-    desc: "Pain or pressure in the head. Often linked to dehydration, lack of sleep, eye strain, or stress.",
-    signs: ["Throbbing or dull pain", "Sensitivity to light/noise", "Difficulty concentrating"],
-    care: ["Rest in a quiet area", "Drink water", "Cold compress on forehead", "Refer if severe or with fever"] },
+    desc: "Pain or pressure in the head or neck. Often linked to dehydration, skipped meals, lack of sleep, screen strain, or stress during class.",
+    signs: ["Throbbing, tight, or dull pain", "Sensitivity to light or noise", "Difficulty focusing on lessons"],
+    care: ["Rest in a quiet clinic area", "Offer water; ask about last meal", "Cold compress on forehead", "Refer to nurse / send home if severe, sudden, or with fever"] },
   { name: "Fever", icon: "🤒", tag: "Monitor closely", accent: "#e05c5c", bg: "#fde8e8",
-    desc: "Body temperature above normal, often a sign the body is fighting infection.",
-    signs: ["Warm skin / flushed face", "Chills or sweating", "Weakness, headache"],
-    care: ["Check temperature", "Hydrate", "Rest", "Send home if ≥38°C or with other severe symptoms"] },
+    desc: "Raised body temperature — the body is often fighting infection. Needs careful checking so it does not spread in class.",
+    signs: ["Warm skin or flushed face", "Chills, sweating, or shivering", "Weakness, headache, or body ache"],
+    care: ["Check temperature and record it", "Encourage fluids and rest", "Isolate from crowded areas if possible", "Send home if ≥38°C, persistent, or with severe symptoms"] },
   { name: "Stomachache", icon: "🤢", tag: "GI", accent: "#e8b93f", bg: "#fdf6e3",
     desc: "Abdominal discomfort that may relate to meals, gas, mild infection, or menstrual pain.",
     signs: ["Cramping or dull ache", "Nausea", "Loss of appetite"],
@@ -1206,6 +1257,17 @@ var ILLNESS_GUIDE = [
     care: ["Listen and document", "Basic first aid as needed", "Escalate to nurse / parent when unsure"] }
 ];
 
+
+function illnessCardMove(e, el) {
+  var r = el.getBoundingClientRect();
+  el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}
+function illnessCardLeave(el) {
+  el.style.setProperty('--mx', '50%');
+  el.style.setProperty('--my', '50%');
+}
+
 function renderIllnessGuide() {
   var el = document.getElementById("illnessGuide");
   if (!el) return;
@@ -1214,13 +1276,14 @@ function renderIllnessGuide() {
     var g = ILLNESS_GUIDE[i];
     var signs = g.signs.map(function (s) { return "<li>" + s + "</li>"; }).join("");
     var care = g.care.map(function (s) { return "<li>" + s + "</li>"; }).join("");
-    html += '<div class="illness-card" style="--ic-accent:' + g.accent + ';--ic-bg:' + g.bg + ';animation-delay:' + (i * 0.05) + 's">' +
+    html += '<div class="illness-card" style="--ic-accent:' + g.accent + ';--ic-bg:' + g.bg + ';animation-delay:' + (i * 0.06) + 's" onmousemove="illnessCardMove(event,this)" onmouseleave="illnessCardLeave(this)">' +
       '<div class="ic-icon">' + g.icon + '</div>' +
       '<div class="ic-title">' + g.name + '</div>' +
       '<span class="ic-tag">' + g.tag + '</span>' +
       '<p class="ic-desc">' + g.desc + '</p>' +
       '<div class="ic-section">Common signs</div><ul>' + signs + '</ul>' +
       '<div class="ic-section">Clinic response</div><ul>' + care + '</ul>' +
+      '<div class="ic-footer">Clinic quick guide · for staff reference</div>' +
       '</div>';
   }
   el.innerHTML = html;
@@ -1649,4 +1712,6 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+
+
 
