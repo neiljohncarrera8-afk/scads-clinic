@@ -427,6 +427,183 @@
     .illness-card:hover{transform:none;}
   }
 
+
+/* === Dashboard polish v2 === */
+  :root{
+    --ease-out: cubic-bezier(.22,1,.36,1);
+    --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* Stat cards — richer hover */
+  .stat-card{
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s ease, border-color 0.35s ease;
+    border: 1.5px solid var(--border);
+    will-change: transform;
+  }
+  .stat-card:hover{
+    transform: translateY(-8px) scale(1.025);
+    box-shadow: 0 18px 40px rgba(15,61,46,0.14), 0 0 0 1px rgba(27,122,77,0.12);
+    border-color: rgba(27,122,77,0.28);
+  }
+  .stat-card:hover .stat-icon{
+    transform: rotate(-8deg) scale(1.12);
+    box-shadow: 0 8px 18px rgba(15,61,46,0.2);
+  }
+  .stat-card .value{
+    transition: transform 0.35s var(--ease-out), color 0.3s ease;
+  }
+  .stat-card:hover .value{
+    transform: scale(1.04);
+    color: var(--primary);
+  }
+  .stat-card .label{
+    transition: letter-spacing 0.3s ease, color 0.3s ease;
+  }
+  .stat-card:hover .label{
+    letter-spacing: 0.7px;
+    color: var(--primary-dark);
+  }
+
+  /* Panels — lift + accent on hover */
+  .panel{
+    transition: transform 0.4s var(--ease-out), box-shadow 0.4s ease, border-color 0.35s ease;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+  }
+  .panel::after{
+    content:'';
+    position:absolute; inset:0; pointer-events:none; border-radius:18px;
+    background: radial-gradient(500px circle at var(--mx,50%) var(--my,0%), rgba(27,122,77,0.06), transparent 45%);
+    opacity:0; transition: opacity 0.35s ease;
+  }
+  .panel:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 14px 36px rgba(15,61,46,0.1);
+    border-color: rgba(27,122,77,0.22);
+  }
+  .panel:hover::after{ opacity:1; }
+  .panel h2{
+    transition: color 0.3s ease;
+  }
+  .panel:hover h2{ color: var(--primary); }
+  .panel h2::before{
+    transition: height 0.3s var(--ease-spring), box-shadow 0.3s ease;
+  }
+  .panel:hover h2::before{
+    height: 18px;
+    box-shadow: 0 0 10px rgba(27,122,77,0.45);
+  }
+
+  /* Canvas charts soft scale on panel hover */
+  .panel canvas{
+    transition: transform 0.45s var(--ease-out);
+    transform-origin: center center;
+  }
+  .panel:hover canvas{
+    transform: scale(1.01);
+  }
+
+  /* Table rows */
+  tbody tr{
+    transition: background 0.25s ease, transform 0.25s var(--ease-out), box-shadow 0.25s ease;
+  }
+  tbody tr:hover{
+    background: rgba(27,122,77,0.06) !important;
+    transform: scale(1.005);
+    box-shadow: inset 3px 0 0 var(--primary);
+  }
+
+  /* Heatmap cells */
+  .hc{
+    transition: transform 0.25s var(--ease-spring), box-shadow 0.25s ease, filter 0.25s ease !important;
+    cursor: default;
+  }
+  .hc:hover{
+    transform: scale(1.35) !important;
+    z-index: 3;
+    box-shadow: 0 6px 16px rgba(15,61,46,0.25);
+    filter: brightness(1.08);
+  }
+
+  /* Primary buttons */
+  button.primary, .primary{
+    transition: transform 0.25s var(--ease-spring), box-shadow 0.3s ease, filter 0.2s ease !important;
+  }
+  button.primary:hover, .primary:hover{
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 20px rgba(27,122,77,0.4);
+    filter: brightness(1.05);
+  }
+  button.primary:active, .primary:active{
+    transform: scale(0.97);
+  }
+
+  /* Range pills / filter buttons if present */
+  .range-pills button, #rangePills button, .pill{
+    transition: transform 0.25s var(--ease-spring), background 0.25s ease, box-shadow 0.25s ease, color 0.2s ease;
+  }
+  .range-pills button:hover, #rangePills button:hover, .pill:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15,61,46,0.12);
+  }
+
+  /* Topbar date box */
+  .datebox{
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .datebox:hover{
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(27,122,77,0.25);
+  }
+
+  /* Nav items already animated — slightly smoother */
+  .nav-item{
+    transition: background 0.3s ease, transform 0.3s var(--ease-out), color 0.25s ease, box-shadow 0.35s ease !important;
+  }
+
+  /* Stock items on inventory */
+  .stock-item{
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease, border-color 0.3s ease !important;
+  }
+  .stock-item:hover{
+    transform: translateX(4px);
+    box-shadow: 0 6px 18px rgba(15,61,46,0.08);
+    border-color: rgba(27,122,77,0.25);
+  }
+  .stock-item .si-btn{
+    transition: transform 0.2s var(--ease-spring), background 0.2s ease !important;
+  }
+  .stock-item .si-btn:hover{
+    transform: scale(1.12);
+  }
+
+  /* Form inputs focus polish */
+  input, select, textarea{
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+  }
+  input:focus, select:focus, textarea:focus{
+    transform: translateY(-1px);
+  }
+
+  /* Tab content enter */
+  .tab.active{
+    animation: tabIn 0.45s var(--ease-out) both !important;
+  }
+  @keyframes tabIn{
+    from{ opacity:0; transform: translateY(12px); }
+    to{ opacity:1; transform: none; }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .stat-card, .panel, .panel canvas, tbody tr, .hc, .stock-item, .nav-item, button.primary{
+      transition: none !important;
+      animation: none !important;
+    }
+    .stat-card:hover, .panel:hover{ transform: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -825,6 +1002,7 @@ for (var n = 0; n < navItems.length; n++) {
     document.getElementById("tab-" + tabName).classList.add("active");
     if (tabName === "more") renderIllnessGuide();
     if (tabName === "inventory") refreshInventoryOnly();
+    setTimeout(bindPanelSpotlights, 50);
   });
 }
 
@@ -1702,6 +1880,21 @@ new QRCode(document.getElementById("qrcode"), {
   for(var i=0;i<items.length;i++){items[i].style.animationDelay=(0.25+i*0.07)+'s';}
 })();
 
+
+function panelPointerMove(e) {
+  var p = e.currentTarget;
+  var r = p.getBoundingClientRect();
+  p.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  p.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}
+function bindPanelSpotlights() {
+  var panels = document.querySelectorAll('.panel');
+  for (var i = 0; i < panels.length; i++) {
+    panels[i].addEventListener('pointermove', panelPointerMove);
+  }
+}
+
+bindPanelSpotlights();
 listenForVisitUpdates();
 loadMeta().then(function () {
   refreshDashboard();
@@ -1712,6 +1905,3 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
-
-
-
