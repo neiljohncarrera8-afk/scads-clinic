@@ -413,6 +413,9 @@
   border:1.5px solid rgba(255,255,255,.35);
 }
 
+
+
+
 </style>
 </head>
 <body>
@@ -454,13 +457,10 @@
 
   <div class="staff-panel" id="panel-stock">
     <div id="stockList"></div>
-    <div class="stock-add-row">
-      <input id="newMedName" type="text" placeholder="New medicine name" maxlength="60">
-      <button type="button" onclick="addMedicine()">+ Add</button>
-    </div>
-    <p class="staff-footer">Tap − / + to adjust qty · Red = out of stock</p>
+    <p class="staff-footer">View only · Adjust stocks on the clinic dashboard</p>
   </div>
 </aside>
+
 
 
 <div class="kiosk" style="display:none;">
@@ -1217,12 +1217,11 @@ function addMedicine() {
 }
 
 function renderStock() {
-  var list = stockCache && stockCache.length ? stockCache : loadLocalStock();
-  stockCache = list;
+  var list = stockCache && stockCache.length ? stockCache : [];
   var el = document.getElementById('stockList');
   if (!el) return;
   if (!list.length) {
-    el.innerHTML = '<div class="rec-empty">No medicines listed.<br>Tap + Add below.</div>';
+    el.innerHTML = '<div class="rec-empty">No stock data.<br>Open the dashboard to manage inventory.</div>';
     return;
   }
   var out = '';
@@ -1231,18 +1230,16 @@ function renderStock() {
     var qty = typeof m.qty === 'number' ? m.qty : 0;
     var cls = (m.status === 'critical' || qty === 0) ? 'out' : ((m.status === 'low' || qty <= 25) ? 'low' : 'ok');
     var icon = m.icon || iconForName(m.name);
-    var safeId = String(m.id || '').replace(/'/g, '');
     out += '<div class="stock-item">' +
       '<div class="si-info"><div class="si-name">' + icon + ' ' + esc(m.name || '') + '</div>' +
       '<div class="si-cat">' + esc(m.status || m.cat || '') + '</div></div>' +
-      '<div class="si-qty ' + cls + '">' + qty + '</div>' +
-      '<div class="stock-btns">' +
-        '<button type="button" class="minus" onclick="adjustStock(\'' + safeId + '\',-1)">−</button>' +
-        '<button type="button" class="plus" onclick="adjustStock(\'' + safeId + '\',1)">+</button>' +
-      '</div></div>';
+      '<div class="si-qty ' + cls + '">' + qty + '</div></div>';
   }
   el.innerHTML = out;
 }
+
+
+
 
 function switchStaffPanel(name) {
   var panels = document.querySelectorAll('.staff-panel');

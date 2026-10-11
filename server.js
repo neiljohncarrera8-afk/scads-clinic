@@ -95,10 +95,11 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS inventory (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     item_name TEXT NOT NULL UNIQUE,
-    level INTEGER NOT NULL CHECK(level BETWEEN 0 AND 100),
+    level INTEGER NOT NULL DEFAULT 0 CHECK(level >= 0),
     status TEXT GENERATED ALWAYS AS (
       CASE
-        WHEN level <= 10 THEN 'critical'
+        WHEN level <= 0 THEN 'critical'
+        WHEN level <= 10 THEN 'low'
         WHEN level <= 25 THEN 'low'
         ELSE 'ok'
       END
@@ -153,6 +154,40 @@ db.exec(`
     console.log('✅ Migrated visits table: added student_name');
   }
 })();
+
+/* Migrate inventory: remove 0-100 cap, allow unlimited stock */
+(function migrateInventory() {
+  try {
+    const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='inventory'").get();
+    if (row && row.sql && row.sql.includes('BETWEEN 0 AND 100')) {
+      db.exec(`
+        BEGIN;
+        CREATE TABLE inventory_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          item_name TEXT NOT NULL UNIQUE,
+          level INTEGER NOT NULL DEFAULT 0 CHECK(level >= 0),
+          status TEXT GENERATED ALWAYS AS (
+            CASE
+              WHEN level <= 0 THEN 'critical'
+              WHEN level <= 25 THEN 'low'
+              ELSE 'ok'
+            END
+          ) VIRTUAL
+        );
+        INSERT INTO inventory_new (id, item_name, level)
+          SELECT id, item_name, level FROM inventory;
+        DROP TABLE inventory;
+        ALTER TABLE inventory_new RENAME TO inventory;
+        COMMIT;
+      `);
+      console.log('✅ Migrated inventory: removed 0–100 cap (unlimited stock)');
+    }
+  } catch (e) {
+    console.warn('Inventory migration skipped:', e.message);
+  }
+})();
+
+
 
 /* ============== SEED INVENTORY (always if empty) ============== */
 
@@ -630,7 +665,7 @@ app.post('/api/inventory', (req, res) => {
   const name = String(req.body.item_name || req.body.name || '').trim();
   let level = req.body.level;
   if (level === undefined || level === null) level = 50;
-  level = Math.max(0, Math.min(100, parseInt(level, 10) || 0));
+  level = Math.max(0, parseInt(level, 10) || 0);
 
   if (!name || name.length > 120) {
     return res.status(400).json({ error: 'item_name is required (max 120 chars).' });
@@ -664,8 +699,8 @@ app.put('/api/inventory/:id', (req, res) => {
   }
 
   level = parseInt(level, 10);
-  if (Number.isNaN(level) || level < 0 || level > 100) {
-    return res.status(400).json({ error: 'level must be 0-100.' });
+  if (Number.isNaN(level) || level < 0) {
+    return res.status(400).json({ error: 'level must be 0 or greater (unlimited max).' });
   }
 
   const result = db.prepare(
