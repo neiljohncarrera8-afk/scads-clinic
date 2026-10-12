@@ -1159,111 +1159,40 @@ var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9
 
 Chart.defaults.font.family = "'Manrope', sans-serif";
 Chart.defaults.color = "#6b7c76";
-Chart.defaults.animation = {
-  duration: 1400,
-  easing: "easeOutQuart",
-  delay: function (ctx) {
-    if (ctx.type === "data" && ctx.mode === "default") {
-      return (ctx.dataIndex || 0) * 35;
-    }
-    return 0;
-  }
-};
-Chart.defaults.animations = {
-  numbers: { type: "number", properties: ["x", "y", "base", "width", "height", "r"], duration: 1200, easing: "easeOutQuart" },
-  colors: { type: "color", properties: ["backgroundColor", "borderColor"], duration: 600 }
-};
+Chart.defaults.animation = { duration: 900, easing: "easeOutQuart" };
 Chart.defaults.hover = { mode: "nearest", intersect: false };
 Chart.defaults.interaction = { mode: "nearest", intersect: false };
-Chart.defaults.events = ["mousemove", "mouseout", "click", "touchstart", "touchmove"];
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.tooltip.enabled = true;
-Chart.defaults.plugins.tooltip.external = function (context) {
-  var tooltip = context.tooltip;
-  var chart = context.chart;
-  var el = document.getElementById("chartJsTooltip");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "chartJsTooltip";
-    document.body.appendChild(el);
-  }
-  if (!tooltip || tooltip.opacity === 0) {
-    el.classList.remove("show");
-    return;
-  }
-  var lines = [];
-  var title = (tooltip.title && tooltip.title.length) ? tooltip.title[0] : "";
-  var bodyLines = tooltip.body || [];
-  var dataPoints = tooltip.dataPoints || [];
-  var htmlTip = "";
-  if (title) htmlTip += '<div class="tt-title">' + title + "</div>";
-
-  if (dataPoints.length) {
-    for (var i = 0; i < dataPoints.length; i++) {
-      var dp = dataPoints[i];
-      var raw = dp.parsed;
-      var num = typeof raw === "object" && raw !== null
-        ? (raw.y !== undefined ? raw.y : Number(raw))
-        : Number(raw);
-      if (isNaN(num)) num = Number(dp.raw) || 0;
-      var total = 0;
-      var arr = (dp.dataset && dp.dataset.data) || [];
-      for (var j = 0; j < arr.length; j++) {
-        var v = arr[j];
-        total += typeof v === "number" ? v : (v && v.y) || 0;
-      }
-      var pct = total > 0 ? Math.round((num / total) * 100) : 0;
-      var dsName = dp.dataset && dp.dataset.label ? dp.dataset.label + " · " : "";
-      htmlTip += '<div class="tt-line">' + dsName + num + ' cases · <span class="tt-pct">' + pct + "%</span></div>";
-    }
-    if (total > 0) {
-      htmlTip += '<div class="tt-foot">Total: ' + total + "</div>";
-    }
-  } else if (bodyLines.length) {
-    for (var b = 0; b < bodyLines.length; b++) {
-      var parts = bodyLines[b].lines || [];
-      for (var p = 0; p < parts.length; p++) {
-        htmlTip += '<div class="tt-line">' + parts[p] + "</div>";
-      }
-    }
-  }
-
-  el.innerHTML = htmlTip || "—";
-  var canvas = chart.canvas;
-  var rect = canvas.getBoundingClientRect();
-  var left = rect.left + window.pageXOffset + tooltip.caretX;
-  var top = rect.top + window.pageYOffset + tooltip.caretY;
-  el.style.left = left + "px";
-  el.style.top = top + "px";
-  el.classList.add("show");
-};
 Chart.defaults.plugins.tooltip.backgroundColor = "rgba(15, 61, 46, 0.95)";
+Chart.defaults.plugins.tooltip.titleColor = "#ffffff";
+Chart.defaults.plugins.tooltip.bodyColor = "#e8f5ee";
+Chart.defaults.plugins.tooltip.footerColor = "#a9c8e0";
 Chart.defaults.plugins.tooltip.padding = 12;
-Chart.defaults.plugins.tooltip.displayColors = false;
+Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.displayColors = true;
 Chart.defaults.plugins.tooltip.callbacks = {
-  title: function (items) {
-    if (!items || !items.length) return "";
-    var it = items[0];
-    return String(it.label || (it.chart.data.labels && it.chart.data.labels[it.dataIndex]) || "");
-  },
   label: function (ctx) {
     var raw = ctx.parsed;
-    var num = typeof raw === "object" && raw !== null ? (raw.y !== undefined ? raw.y : Number(raw)) : Number(raw);
+    var num = (typeof raw === "object" && raw !== null)
+      ? (typeof raw.y === "number" ? raw.y : Number(raw))
+      : Number(raw);
     if (isNaN(num)) num = Number(ctx.raw) || 0;
-    var total = 0, data = (ctx.dataset && ctx.dataset.data) || [];
+    var data = (ctx.dataset && ctx.dataset.data) || [];
+    var total = 0;
     for (var i = 0; i < data.length; i++) {
       var v = data[i];
-      total += typeof v === "number" ? v : (v && v.y) || 0;
+      total += typeof v === "number" ? v : 0;
     }
     var pct = total > 0 ? Math.round((num / total) * 100) : 0;
-    return num + " cases · " + pct + "%";
+    var name = ctx.label || ctx.dataset.label || "";
+    return name + ": " + num + " (" + pct + "%)";
   }
 };
 Chart.defaults.borderColor = "#eef2f0";
-Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.elements.arc.hoverOffset = 12;
 Chart.defaults.elements.bar.borderRadius = 8;
-Chart.defaults.elements.point.hoverRadius = 7;
-Chart.defaults.elements.point.hitRadius = 12;
-Chart.defaults.elements.arc.hoverOffset = 14;
+
 Chart.register({
   id: 'centerTotal',
   afterDraw: function (c) {
@@ -1342,6 +1271,7 @@ for (var n = 0; n < navItems.length; n++) {
     if (tabName === "more") renderIllnessGuide();
     if (tabName === "inventory") refreshInventoryOnly();
     setTimeout(bindPanelSpotlights, 50);
+    setTimeout(bindAllChartTips, 80);
   });
 }
 
@@ -1406,6 +1336,7 @@ function refreshDashboard() {
   setSyncStatus("Updating…", false);
   return Promise.all([loadAll(), loadTrendAndReports()]).then(function () {
     setSyncStatus("Updated " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), false);
+    setTimeout(bindAllChartTips, 150);
   }).catch(function (err) {
     setSyncStatus("Update failed: " + (err && err.message ? err.message : "server unavailable"), true);
     console.error("Dashboard refresh failed:", err);
@@ -1416,6 +1347,98 @@ function refreshDashboard() {
       return refreshDashboard();
     }
   });
+}
+
+
+/* ===== Reliable chart percent tooltip (custom) ===== */
+function ensureChartTipEl() {
+  var el = document.getElementById("chartJsTooltip");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "chartJsTooltip";
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function hideChartTip() {
+  var el = document.getElementById("chartJsTooltip");
+  if (el) el.classList.remove("show");
+}
+function showChartTipAt(pageX, pageY, htmlContent) {
+  var el = ensureChartTipEl();
+  el.innerHTML = htmlContent;
+  el.style.left = pageX + "px";
+  el.style.top = pageY + "px";
+  el.classList.add("show");
+}
+function formatSliceTip(chart, index) {
+  var label = (chart.data.labels && chart.data.labels[index]) || "";
+  var ds = chart.data.datasets[0];
+  if (!ds) return "";
+  var val = Number(ds.data[index]) || 0;
+  var total = 0;
+  for (var i = 0; i < ds.data.length; i++) total += Number(ds.data[i]) || 0;
+  var pct = total > 0 ? Math.round((val / total) * 100) : 0;
+  return '<div class="tt-title">' + String(label) + "</div>" +
+    '<div class="tt-line">' + val + ' cases · <span class="tt-pct">' + pct + "%</span></div>" +
+    '<div class="tt-foot">Total: ' + total + "</div>";
+}
+function formatBarTip(chart, index, datasetIndex) {
+  var label = (chart.data.labels && chart.data.labels[index]) || "";
+  var ds = chart.data.datasets[datasetIndex || 0];
+  if (!ds) return "";
+  var val = Number(ds.data[index]) || 0;
+  var total = 0;
+  for (var i = 0; i < ds.data.length; i++) total += Number(ds.data[i]) || 0;
+  var pct = total > 0 ? Math.round((val / total) * 100) : 0;
+  var dsLabel = ds.label ? ds.label + ": " : "";
+  return '<div class="tt-title">' + String(label) + "</div>" +
+    '<div class="tt-line">' + dsLabel + val + (total ? ' · <span class="tt-pct">' + pct + "%</span>" : " visits") + "</div>";
+}
+function bindCanvasTip(canvas) {
+  if (!canvas || canvas._tipBound) return;
+  canvas._tipBound = true;
+  canvas.style.cursor = "crosshair";
+  canvas.addEventListener("mousemove", function (e) {
+    var chart = typeof Chart !== "undefined" && Chart.getChart ? Chart.getChart(canvas) : null;
+    if (!chart) return;
+    var pts = [];
+    try {
+      pts = chart.getElementsAtEventForMode(e, "nearest", { intersect: false }, true) || [];
+    } catch (err) {
+      try { pts = chart.getElementsAtEventForMode(e, "index", { intersect: false }, true) || []; } catch (e2) {}
+    }
+    if (!pts.length) { hideChartTip(); return; }
+    var p = pts[0];
+    var type = (chart.config && chart.config.type) || "";
+    var htmlContent = "";
+    if (type === "doughnut" || type === "pie") {
+      htmlContent = formatSliceTip(chart, p.index);
+      // also highlight center via setActiveElements
+      try {
+        chart.setActiveElements([{ datasetIndex: p.datasetIndex, index: p.index }]);
+        chart.update("none");
+      } catch (e3) {}
+    } else {
+      htmlContent = formatBarTip(chart, p.index, p.datasetIndex);
+    }
+    if (!htmlContent) { hideChartTip(); return; }
+    showChartTipAt(e.pageX, e.pageY, htmlContent);
+  });
+  canvas.addEventListener("mouseleave", function () {
+    hideChartTip();
+    var chart = typeof Chart !== "undefined" && Chart.getChart ? Chart.getChart(canvas) : null;
+    if (chart) {
+      try {
+        chart.setActiveElements([]);
+        chart.update("none");
+      } catch (e4) {}
+    }
+  });
+}
+function bindAllChartTips() {
+  var canvases = document.querySelectorAll("canvas");
+  for (var i = 0; i < canvases.length; i++) bindCanvasTip(canvases[i]);
 }
 
 function listenForVisitUpdates() {
@@ -1485,6 +1508,7 @@ function loadAll() {
     renderCampaign(campaign);
     renderPeakHours(visits);
     renderSeverityBreakdown(visits);
+    setTimeout(bindAllChartTips, 150);
   });
 }
 
@@ -1892,7 +1916,7 @@ function renderPurposeChart(rows) {
           }
         }
       },
-      animation: { duration: 1000, easing: "easeOutBack" }
+      animation: { duration: 1000, easing: "easeOutQuart" }
     }
   });
 }
@@ -1968,10 +1992,7 @@ function renderSeverityBreakdown(visits) {
         }
       },
       cutout: "64%",
-      animation: { duration: 900, easing: "easeOutBack", delay: function (c) {
-        if (c.type === "data" && c.mode === "default" && !c.dropped) { c.dropped = true; return c.dataIndex * 120; }
-        return 0;
-      } },
+      animation: { duration: 900, easing: "easeOutQuart" },
       onHover: function (e, els) { e.native.target.style.cursor = els.length ? "pointer" : "default"; }
     }
   });
@@ -2054,10 +2075,7 @@ function renderCharts(daily, illness, grade) {
           }
         }
       },
-      animation: { duration: 900, easing: "easeOutBack", delay: function (c) {
-        if (c.type === "data" && c.mode === "default" && !c.dropped) { c.dropped = true; return c.dataIndex * 90; }
-        return 0;
-      } },
+      animation: { duration: 900, easing: "easeOutQuart" },
       cutout: "64%",
       onHover: function (e, els) { e.native.target.style.cursor = els.length ? "pointer" : "default"; }
     }
@@ -2307,7 +2325,9 @@ function bindPanelSpotlights() {
 bindPanelSpotlights();
 listenForVisitUpdates();
 loadMeta().then(function () {
-  refreshDashboard();
+  return refreshDashboard();
+}).then(function () {
+  setTimeout(bindAllChartTips, 200);
 }).catch(function (err) {
   setSyncStatus("Could not load clinic settings: " + err.message, true);
   console.error("Could not load clinic settings:", err);
@@ -2315,3 +2335,4 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+
