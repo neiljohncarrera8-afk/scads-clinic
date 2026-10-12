@@ -1165,77 +1165,99 @@ var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9
 
 Chart.defaults.font.family = "'Manrope', sans-serif";
 Chart.defaults.color = "#6b7c76";
-Chart.defaults.animation = { duration: 900, easing: "easeOutQuart" };
+Chart.defaults.animation = { duration: 0 };
 Chart.defaults.hover = { mode: "nearest", intersect: false };
 Chart.defaults.interaction = { mode: "nearest", intersect: false };
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.tooltip.enabled = true;
-Chart.defaults.plugins.tooltip.backgroundColor = "rgba(15, 61, 46, 0.95)";
-Chart.defaults.plugins.tooltip.titleColor = "#ffffff";
+Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
+Chart.defaults.plugins.tooltip.titleColor = "#fff";
 Chart.defaults.plugins.tooltip.bodyColor = "#e8f5ee";
-Chart.defaults.plugins.tooltip.footerColor = "#a9c8e0";
 Chart.defaults.plugins.tooltip.padding = 12;
 Chart.defaults.plugins.tooltip.cornerRadius = 10;
 Chart.defaults.plugins.tooltip.displayColors = true;
 Chart.defaults.plugins.tooltip.callbacks = {
   label: function (ctx) {
-    var raw = ctx.parsed;
-    var num = (typeof raw === "object" && raw !== null)
-      ? (typeof raw.y === "number" ? raw.y : Number(raw))
-      : Number(raw);
-    if (isNaN(num)) num = Number(ctx.raw) || 0;
-    var data = (ctx.dataset && ctx.dataset.data) || [];
-    var total = 0;
-    for (var i = 0; i < data.length; i++) {
-      var v = data[i];
-      total += typeof v === "number" ? v : 0;
+    try {
+      var num = 0;
+      if (typeof ctx.parsed === "number") num = ctx.parsed;
+      else if (ctx.parsed && typeof ctx.parsed.y === "number") num = ctx.parsed.y;
+      else num = Number(ctx.raw) || 0;
+      var data = (ctx.dataset && ctx.dataset.data) || [];
+      var total = 0;
+      for (var i = 0; i < data.length; i++) total += Number(data[i]) || 0;
+      var pct = total ? Math.round((num / total) * 100) : 0;
+      var name = ctx.label || "";
+      return (name ? name + ": " : "") + num + " (" + pct + "%)";
+    } catch (e) {
+      return String(ctx.raw || "");
     }
-    var pct = total > 0 ? Math.round((num / total) * 100) : 0;
-    var name = ctx.label || ctx.dataset.label || "";
-    return name + ": " + num + " (" + pct + "%)";
   }
 };
 Chart.defaults.borderColor = "#eef2f0";
-Chart.defaults.elements.arc.hoverOffset = 12;
-Chart.defaults.elements.bar.borderRadius = 8;
 
 Chart.register({
   id: 'centerTotal',
   afterDraw: function (c) {
-    if (c.config.type !== 'doughnut') { return; }
-    var ds = c.data.datasets[0], total = 0;
-    ds.data.forEach(function (v) { total += v; });
-    var a = c.chartArea, x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2, k = c.ctx;
-    var active = c.getActiveElements ? c.getActiveElements() : [];
-    k.save(); k.textAlign = 'center'; k.textBaseline = 'middle';
-    if (active && active.length) {
-      var idx = active[0].index;
-      var label = String(c.data.labels[idx]), val = ds.data[idx];
-      var pct = total ? Math.round((val / total) * 100) : 0;
-      if (label.length > 13) { label = label.slice(0, 12) + '…'; }
-      k.fillStyle = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[idx] : '#0f3d2e';
-      k.font = "700 12px Manrope, sans-serif"; k.fillText(label.toUpperCase(), x, y - 14);
-      k.fillStyle = '#0f3d2e'; k.font = "600 26px Fraunces, serif"; k.fillText(val, x, y + 8);
-      k.fillStyle = '#6b7c76'; k.font = "700 10px Manrope, sans-serif"; k.fillText(pct + '% of total', x, y + 28);
-    } else {
-      k.fillStyle = '#0f3d2e'; k.font = "600 28px Fraunces, serif"; k.fillText(total, x, y - 6);
-      k.fillStyle = '#6b7c76'; k.font = "700 10px Manrope, sans-serif"; k.fillText('TOTAL', x, y + 16);
-    }
-    k.restore();
+    try {
+      if (!c || !c.config || c.config.type !== 'doughnut') return;
+      if (!c.data || !c.data.datasets || !c.data.datasets[0]) return;
+      var ds = c.data.datasets[0];
+      var total = 0;
+      for (var i = 0; i < ds.data.length; i++) total += Number(ds.data[i]) || 0;
+      var a = c.chartArea;
+      if (!a) return;
+      var x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2;
+      var k = c.ctx;
+      var active = [];
+      try { active = c.getActiveElements() || []; } catch (e1) {}
+      k.save();
+      k.textAlign = 'center';
+      k.textBaseline = 'middle';
+      if (active.length) {
+        var idx = active[0].index;
+        var label = String((c.data.labels && c.data.labels[idx]) || '');
+        var val = Number(ds.data[idx]) || 0;
+        var pct = total ? Math.round((val / total) * 100) : 0;
+        if (label.length > 13) label = label.slice(0, 12) + '…';
+        k.fillStyle = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[idx] : '#0f3d2e';
+        k.font = '700 12px Manrope, sans-serif';
+        k.fillText(label.toUpperCase(), x, y - 14);
+        k.fillStyle = '#0f3d2e';
+        k.font = '600 26px Fraunces, serif';
+        k.fillText(String(val), x, y + 8);
+        k.fillStyle = '#6b7c76';
+        k.font = '700 10px Manrope, sans-serif';
+        k.fillText(pct + '% of total', x, y + 28);
+      } else {
+        k.fillStyle = '#0f3d2e';
+        k.font = '600 28px Fraunces, serif';
+        k.fillText(String(total), x, y - 6);
+        k.fillStyle = '#6b7c76';
+        k.font = '700 10px Manrope, sans-serif';
+        k.fillText('TOTAL', x, y + 16);
+      }
+      k.restore();
+    } catch (e) {}
   }
 });
 
+
+
 function legendSync(chart, legendItem) {
-  var els = legendItem ? [{ datasetIndex: 0, index: legendItem.index }] : [];
-  chart.setActiveElements(els);
-  var area = chart.chartArea || {};
-  var cx = ((area.left || 0) + (area.right || 0)) / 2;
-  var cy = ((area.top || 0) + (area.bottom || 0)) / 2;
-  chart.tooltip.setActiveElements(els, { x: cx, y: cy });
-  chart.update("none");
+  try {
+    if (!chart) return;
+    var els = legendItem ? [{ datasetIndex: 0, index: legendItem.index }] : [];
+    chart.setActiveElements(els);
+    chart.update('none');
+  } catch (e) {}
 }
 
 var allVisits = [], rangeDays = 14, strandIllnessInstance = null;
+var lastGoodVisits = [];
+var lastGoodIllness = [];
+var lastGoodDaily = [];
+var lastGoodGrade = [];
 
 function escapeHTML(value) {
   var d = document.createElement("div");
@@ -1420,10 +1442,9 @@ function bindCanvasTip(canvas) {
     var htmlContent = "";
     if (type === "doughnut" || type === "pie") {
       htmlContent = formatSliceTip(chart, p.index);
-      // also highlight center via setActiveElements
       try {
         chart.setActiveElements([{ datasetIndex: p.datasetIndex, index: p.index }]);
-        chart.update("none");
+        chart.draw();
       } catch (e3) {}
     } else {
       htmlContent = formatBarTip(chart, p.index, p.datasetIndex);
@@ -1456,7 +1477,10 @@ function listenForVisitUpdates() {
     es = new EventSource(API + "/api/events");
     es.addEventListener("visits-updated", function () {
       retryMs = 2000;
-      refreshDashboard();
+      clearTimeout(window._dashRefreshT);
+      window._dashRefreshT = setTimeout(function () {
+        refreshDashboard().catch(function () {});
+      }, 400);
     });
     es.onopen = function () {
       retryMs = 2000;
@@ -1470,12 +1494,7 @@ function listenForVisitUpdates() {
     };
   }
   connect();
-  // Soft refresh every 2 minutes only if tab visible (avoids wiping charts too often)
-  setInterval(function () {
-    if (document.visibilityState === "visible" && !refreshInFlight) {
-      refreshDashboard().catch(function () {});
-    }
-  }, 120000);
+  // No aggressive timer refresh — SSE + Refresh button only (prevents charts vanishing)
 }
 
 function loadAll() {
@@ -1499,6 +1518,17 @@ function loadAll() {
     var campaign = results[6];
     var sectionSummary = results[7];
     var purposeSummary = results[8];
+
+    // Keep previous charts if a soft API failure returned empty
+    if ((!visits || !visits.length) && lastGoodVisits.length) visits = lastGoodVisits;
+    else if (visits && visits.length) lastGoodVisits = visits;
+    if ((!illness || !illness.length) && lastGoodIllness.length) illness = lastGoodIllness;
+    else if (illness && illness.length) lastGoodIllness = illness;
+    if ((!daily || !daily.length) && lastGoodDaily.length) daily = lastGoodDaily;
+    else if (daily && daily.length) lastGoodDaily = daily;
+    if ((!grade || !grade.length) && lastGoodGrade.length) grade = lastGoodGrade;
+    else if (grade && grade.length) lastGoodGrade = grade;
+
     allVisits = visits;
     renderInsights(visits);
     renderStats(visits, illness, stock);
@@ -1583,7 +1613,7 @@ function loadTrendAndReports() {
     strandChartInstance = new Chart(document.getElementById("strandChart"), {
       type: "bar",
       data: { labels: strandLabels, datasets: strandDatasets },
-      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
+      options: { scales: { y: { beginAtZero: true } } }
     });
 
     var weeks = [];
@@ -1614,7 +1644,7 @@ function loadTrendAndReports() {
     trendLineChartInstance = new Chart(document.getElementById("trendLineChart"), {
       type: "line",
       data: { labels: weeks, datasets: lineDatasets },
-      options: { scales: { y: { beginAtZero: true } }, animation: { duration: 1100, easing: "easeOutQuart" } }
+      options: { scales: { y: { beginAtZero: true } } }
     });
 
     var today = new Date().toISOString().slice(0, 10);
@@ -1921,8 +1951,7 @@ function renderPurposeChart(rows) {
             }
           }
         }
-      },
-      animation: { duration: 1000, easing: "easeOutQuart" }
+      }
     }
   });
 }
@@ -1950,8 +1979,7 @@ function renderPeakHours(visits) {
     data: { labels: labels, datasets: [{ data: hourCounts, borderColor: "#3b82c4", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#3b82c4", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
     options: {
       plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } },
-      animation: { duration: 1100, easing: "easeOutQuart" }
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } }
     }
   });
 }
@@ -1998,7 +2026,6 @@ function renderSeverityBreakdown(visits) {
         }
       },
       cutout: "64%",
-      animation: { duration: 900, easing: "easeOutQuart" },
       onHover: function (e, els) {
         var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
         if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
@@ -2032,8 +2059,7 @@ function renderCharts(daily, illness, grade) {
     data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointBackgroundColor: "#1b7a4d", pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#1b7a4d", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
     options: {
       plugins: { legend: { display: false } },
-      scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } },
-      animation: { duration: 1200, easing: "easeOutQuart" }
+      scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } }
     }
   });
 
@@ -2086,7 +2112,6 @@ function renderCharts(daily, illness, grade) {
           }
         }
       },
-      animation: { duration: 900, easing: "easeOutQuart" },
       cutout: "64%",
       onHover: function (e, els) {
         var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
@@ -2116,8 +2141,7 @@ function renderCharts(daily, illness, grade) {
         }
       }
     },
-    scales: { y: { beginAtZero: true } },
-    animation: { duration: 1200, easing: "easeOutQuart" }
+    scales: { y: { beginAtZero: true } }
   }
   });
 }
