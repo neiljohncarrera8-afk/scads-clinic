@@ -1141,7 +1141,13 @@ function apiJSON(path) {
       if (!res.ok) throw new Error(data.error || ("Request failed (" + res.status + ")"));
       return data;
     });
+  }).catch(function (err) {
+    console.warn("API error", path, err && err.message);
+    throw err;
   });
+}
+function apiJSONSoft(path, fallback) {
+  return apiJSON(path).catch(function () { return fallback; });
 }
 var visitsChartInstance = null;
 var illnessChartInstance = null;
@@ -1464,25 +1470,25 @@ function listenForVisitUpdates() {
     };
   }
   connect();
-  // Periodic soft refresh so dashboard stays in sync even if SSE drops
+  // Soft refresh every 2 minutes only if tab visible (avoids wiping charts too often)
   setInterval(function () {
-    if (document.visibilityState === "visible") {
+    if (document.visibilityState === "visible" && !refreshInFlight) {
       refreshDashboard().catch(function () {});
     }
-  }, 60000);
+  }, 120000);
 }
 
 function loadAll() {
   return Promise.all([
-    apiJSON("/api/visits"),
-    apiJSON("/api/summary/daily"),
-    apiJSON("/api/summary/illness"),
-    apiJSON("/api/summary/grade"),
-    apiJSON("/api/inventory"),
-    apiJSON("/api/alerts"),
-    apiJSON("/api/campaign-suggestion"),
-    apiJSON("/api/summary/section"),
-    apiJSON("/api/summary/purpose")
+    apiJSONSoft("/api/visits", []),
+    apiJSONSoft("/api/summary/daily", []),
+    apiJSONSoft("/api/summary/illness", []),
+    apiJSONSoft("/api/summary/grade", []),
+    apiJSONSoft("/api/inventory", []),
+    apiJSONSoft("/api/alerts", []),
+    apiJSONSoft("/api/campaign-suggestion", null),
+    apiJSONSoft("/api/summary/section", []),
+    apiJSONSoft("/api/summary/purpose", [])
   ]).then(function (results) {
     var visits = results[0];
     var daily = results[1];
@@ -1514,12 +1520,12 @@ function loadAll() {
 
 function loadTrendAndReports() {
   return Promise.all([
-    apiJSON("/api/trend"),
-    apiJSON("/api/summary/strand-daily"),
-    apiJSON("/api/summary/illness-weekly"),
-    apiJSON("/api/visits"),
-    apiJSON("/api/summary/illness"),
-    apiJSON("/api/inventory")
+    apiJSONSoft("/api/trend", {}),
+    apiJSONSoft("/api/summary/strand-daily", []),
+    apiJSONSoft("/api/summary/illness-weekly", []),
+    apiJSONSoft("/api/visits", []),
+    apiJSONSoft("/api/summary/illness", []),
+    apiJSONSoft("/api/inventory", [])
   ]).then(function (results) {
     var trend = results[0];
     var strandDaily = results[1];
@@ -1993,7 +1999,10 @@ function renderSeverityBreakdown(visits) {
       },
       cutout: "64%",
       animation: { duration: 900, easing: "easeOutQuart" },
-      onHover: function (e, els) { e.native.target.style.cursor = els.length ? "pointer" : "default"; }
+      onHover: function (e, els) {
+        var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
+        if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
+      }
     }
   });
 }
@@ -2038,8 +2047,10 @@ function renderCharts(daily, illness, grade) {
   for (var pc = 0; pc < illnessLabels.length; pc++) {
     illnessColors.push(brandPalette[pc % brandPalette.length]);
   }
-  if (illnessChartInstance) { illnessChartInstance.destroy(); }
-  illnessChartInstance = new Chart(document.getElementById("illnessChart"), {
+  var illnessCanvas = document.getElementById("illnessChart");
+  if (!illnessCanvas) return;
+  if (illnessChartInstance) { illnessChartInstance.destroy(); illnessChartInstance = null; }
+  illnessChartInstance = new Chart(illnessCanvas, {
     type: "doughnut",
     data: {
       labels: illnessLabels,
@@ -2077,7 +2088,10 @@ function renderCharts(daily, illness, grade) {
       },
       animation: { duration: 900, easing: "easeOutQuart" },
       cutout: "64%",
-      onHover: function (e, els) { e.native.target.style.cursor = els.length ? "pointer" : "default"; }
+      onHover: function (e, els) {
+        var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
+        if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
+      }
     }
   });
 
