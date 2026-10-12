@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alangilan Senior High School - Smart Clinic Analytics and Decision Support System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -49,17 +49,45 @@
   .layout{display:flex;min-height:100vh;}
 
   .sidebar{
-    width:240px;background:linear-gradient(160deg,var(--sb-dark),var(--sb-darker));
-    color:#fff;display:flex;flex-direction:column;padding:24px 16px;flex-shrink:0;
-    overflow-y:auto;
+    width:252px;background:linear-gradient(165deg,var(--sb-dark) 0%,var(--sb-darker) 55%,#0a1240 100%);
+    color:#fff;display:flex;flex-direction:column;padding:26px 14px 20px;flex-shrink:0;
+    overflow-y:auto;position:relative;
+    border-right:1px solid rgba(90,108,255,0.22);
+    box-shadow:
+      4px 0 24px rgba(12,22,80,0.18),
+      inset -1px 0 0 rgba(255,255,255,0.06);
   }
-  .brand{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:0 8px;}
+  .sidebar::after{
+    content:'';
+    position:absolute;top:12%;right:0;width:3px;height:76%;
+    border-radius:3px 0 0 3px;
+    background:linear-gradient(180deg, transparent, var(--sb-neon), rgba(90,108,255,0.5), transparent);
+    box-shadow:0 0 14px rgba(90,108,255,0.55), 0 0 28px rgba(90,108,255,0.25);
+    opacity:0.9;pointer-events:none;
+  }
+  .brand{
+    display:flex;align-items:center;gap:12px;margin-bottom:20px;
+    padding:12px 12px;border-radius:18px;
+    background:linear-gradient(145deg, rgba(42,63,201,0.55), rgba(20,30,100,0.4));
+    border:1px solid rgba(140,160,255,0.28);
+    box-shadow:0 8px 24px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.12);
+    transition:transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .brand:hover{
+    transform:translateY(-2px);
+    box-shadow:0 12px 28px rgba(0,0,0,0.22), 0 0 20px rgba(90,108,255,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+    border-color:rgba(160,180,255,0.4);
+  }
   .brand .icon{
-    width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--sb-accent),var(--sb-accent-dark));
+    width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg,var(--sb-accent),var(--sb-accent-dark));
     display:flex;align-items:center;justify-content:center;font-size:1.3rem;
-    box-shadow:var(--shadow-md);overflow:hidden;padding:0;flex-shrink:0;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25), 0 0 0 2px rgba(255,255,255,0.18);
+    overflow:hidden;padding:0;flex-shrink:0;
+    border:none;
   }
-  .brand h2{font-size:0.9rem;font-weight:800;letter-spacing:0.2px;line-height:1.25;}
+  .brand .icon img{width:100%;height:100%;object-fit:cover;border-radius:12px;}
+  .brand h2{font-family:'Fraunces',Georgia,serif;font-size:0.95rem;font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#fff;}
   .brand span{font-size:0.66rem;color:#a9c8e0;display:block;font-weight:500;line-height:1.3;margin-top:1px;}
 
   .nav-item{
@@ -294,7 +322,9 @@
     background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);}
   button.primary:hover::after{left:130%;transition:left .7s var(--ease);}
 
-  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important;}}
+  @media (prefers-reduced-motion: reduce) {
+    .stat-card, .panel, .hc { animation: none !important; }
+  }
 
   /* ===== Dashboard visualization layer ===== */
   .insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px;}
@@ -428,6 +458,106 @@
   }
 
 
+
+/* chart cursor */
+  .panel canvas { cursor: crosshair; }
+  .panel:hover canvas { cursor: crosshair; }
+
+
+/* === Typography polish === */
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    letter-spacing:0.01em;
+  }
+  .topbar h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:clamp(1.55rem, 2.2vw, 1.85rem);
+    letter-spacing:-0.03em;
+    line-height:1.15;
+    color:var(--primary-dark);
+  }
+  .topbar p{
+    font-family:'Manrope',sans-serif;
+    font-weight:500;
+    font-size:0.86rem;
+    letter-spacing:0.01em;
+    color:var(--muted);
+  }
+  .panel h2{
+    font-family:'Manrope',sans-serif;
+    font-weight:800;
+    font-size:0.92rem;
+    letter-spacing:0.02em;
+  }
+  .stat-card .label{
+    font-family:'Manrope',sans-serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+  }
+  .stat-card .value{
+    font-family:'Fraunces',Georgia,serif;
+    font-optical-sizing:auto;
+    font-weight:600;
+    font-size:1.85rem;
+    letter-spacing:-0.03em;
+    line-height:1.1;
+  }
+  .stat-card .sub{
+    font-weight:500;
+    letter-spacing:0.01em;
+  }
+  .brand h2{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:600;
+    font-size:0.95rem;
+    letter-spacing:-0.02em;
+    line-height:1.25;
+  }
+  .brand span{
+    font-family:'Manrope',sans-serif;
+    font-weight:500;
+    letter-spacing:0.02em;
+  }
+  .nav-item{
+    font-family:'Manrope',sans-serif;
+  }
+  .sidebar-label{
+    font-family:'Manrope',sans-serif;
+    letter-spacing:0.08em !important;
+  }
+  th{
+    font-family:'Manrope',sans-serif;
+    font-weight:800;
+    letter-spacing:0.06em;
+  }
+  td{
+    font-family:'Manrope',sans-serif;
+    font-weight:500;
+  }
+  .illness-card .ic-title{
+    font-family:'Fraunces',Georgia,serif !important;
+    font-optical-sizing:auto;
+    letter-spacing:-0.02em;
+  }
+  .privacy-note{
+    font-family:'Manrope',sans-serif;
+    letter-spacing:0.01em;
+  }
+  /* Soft edge between sidebar and main */
+  .main{
+    position:relative;
+  }
+  .main::before{
+    content:'';
+    position:absolute;left:0;top:0;bottom:0;width:1px;
+    background:linear-gradient(180deg, transparent, rgba(27,122,77,0.12), transparent);
+    pointer-events:none;
+  }
+
 /* === Dashboard polish v2 === */
   :root{
     --ease-out: cubic-bezier(.22,1,.36,1);
@@ -557,10 +687,8 @@
     border-color: rgba(27,122,77,0.25);
   }
 
-  /* Nav items already animated — slightly smoother */
-  .nav-item{
-    transition: background 0.3s ease, transform 0.3s var(--ease-out), color 0.25s ease, box-shadow 0.35s ease !important;
-  }
+  /* nav transition kept in base styles */
+
 
   /* Stock items on inventory */
   .stock-item{
@@ -597,11 +725,100 @@
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce){
-    .stat-card, .panel, .panel canvas, tbody tr, .hc, .stock-item, .nav-item, button.primary{
-      transition: none !important;
+    .stat-card, .panel, .panel canvas, tbody tr, .hc, .stock-item{
       animation: none !important;
     }
-    .stat-card:hover, .panel:hover{ transform: none; }
+  }
+
+
+
+
+
+
+/* sidebar shell only — no nav animation overrides */
+  .sidebar{
+    width:252px;
+    background:linear-gradient(165deg,var(--sb-dark) 0%,var(--sb-darker) 55%,#0a1240 100%);
+    border-right:1px solid rgba(90,108,255,0.2);
+    box-shadow:4px 0 24px rgba(12,22,80,0.18), inset -1px 0 0 rgba(255,255,255,0.06);
+  }
+  .brand h2{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-0.02em;}
+  .staff-photo{border:2px solid var(--sb-accent);box-shadow:0 0 0 2px rgba(90,108,255,0.2);}
+  .staff-card:hover{background:rgba(90,108,255,0.12);transform:translateX(2px);transition:background 0.25s ease, transform 0.25s ease;}
+
+
+/* === Extra polish v4 === */
+  /* Refresh / primary buttons */
+  button.primary, .primary{
+    letter-spacing:0.02em;
+    box-shadow:0 4px 14px rgba(27,122,77,0.32);
+  }
+  button.primary:hover, .primary:hover{
+    transform:translateY(-2px) scale(1.02);
+    box-shadow:0 8px 22px rgba(27,122,77,0.4);
+  }
+
+  /* Stat cards value pulse feel on hover */
+  .stat-card{
+    border-radius:20px;
+  }
+  .stat-icon{
+    transition:transform 0.35s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s ease;
+  }
+
+  /* Date box */
+  .datebox{
+    border-radius:14px;
+    font-weight:600;
+    letter-spacing:0.01em;
+  }
+
+  /* Panel titles */
+  .panel{
+    border-radius:20px;
+  }
+  .panel h2{
+    letter-spacing:0.01em;
+  }
+
+  /* Table polish */
+  tbody tr{
+    transition:background 0.22s ease, box-shadow 0.22s ease;
+  }
+  tbody tr:hover{
+    background:rgba(27,122,77,0.055);
+  }
+
+  /* Scrollbar in sidebar */
+  .sidebar::-webkit-scrollbar{width:5px;}
+  .sidebar::-webkit-scrollbar-thumb{
+    background:rgba(120,140,255,0.35);border-radius:8px;
+  }
+  .sidebar::-webkit-scrollbar-thumb:hover{
+    background:rgba(120,140,255,0.55);
+  }
+
+  /* Staff cards */
+  .staff-card{
+    transition:background 0.25s ease, transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .staff-card:hover{
+    background:rgba(90,108,255,0.14);
+    transform:translateX(3px);
+    border-color:rgba(120,140,255,0.25);
+  }
+
+  /* Live dot */
+  .live-dot{
+    box-shadow:0 0 0 3px rgba(27,122,77,0.2);
+  }
+
+  /* Topbar title */
+  .topbar h1{
+    background:linear-gradient(120deg, var(--primary-dark) 0%, #1b7a4d 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
   }
 
 </style>
@@ -921,14 +1138,87 @@ var severityChartInstance = null;
 var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9e68", "#6a6fc4", "#c2578f"];
 
 Chart.defaults.font.family = "'Manrope', sans-serif";
-Chart.defaults.animation = { duration: 1200, easing: 'easeOutQuart' };
-Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
-Chart.defaults.plugins.tooltip.padding = 10;
-Chart.defaults.plugins.tooltip.cornerRadius = 8;
-Chart.defaults.plugins.tooltip.titleFont = { weight: "700", size: 12 };
-Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
-Chart.defaults.borderColor = '#eef2f0';
+Chart.defaults.color = "#6b7c76";
+Chart.defaults.animation = {
+  duration: 1400,
+  easing: "easeOutQuart",
+  delay: function (ctx) {
+    if (ctx.type === "data" && ctx.mode === "default") {
+      return (ctx.dataIndex || 0) * 35;
+    }
+    return 0;
+  }
+};
+Chart.defaults.animations = {
+  numbers: { type: "number", properties: ["x", "y", "base", "width", "height", "r"], duration: 1200, easing: "easeOutQuart" },
+  colors: { type: "color", properties: ["backgroundColor", "borderColor"], duration: 600 }
+};
+Chart.defaults.hover = { mode: "nearest", intersect: true };
+Chart.defaults.interaction = { mode: "nearest", intersect: true };
+Chart.defaults.plugins.tooltip.enabled = true;
+Chart.defaults.plugins.tooltip.backgroundColor = "rgba(15, 61, 46, 0.95)";
+Chart.defaults.plugins.tooltip.titleColor = "#fff";
+Chart.defaults.plugins.tooltip.bodyColor = "#e8f5ee";
+Chart.defaults.plugins.tooltip.padding = 14;
+Chart.defaults.plugins.tooltip.cornerRadius = 12;
+Chart.defaults.plugins.tooltip.displayColors = true;
+Chart.defaults.plugins.tooltip.boxPadding = 6;
+Chart.defaults.plugins.tooltip.usePointStyle = true;
+Chart.defaults.plugins.tooltip.borderColor = "rgba(57, 232, 143, 0.35)";
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.caretSize = 8;
+Chart.defaults.plugins.tooltip.caretPadding = 8;
+Chart.defaults.plugins.tooltip.titleFont = { weight: "800", size: 13, family: "'Manrope', sans-serif" };
+Chart.defaults.plugins.tooltip.bodyFont = { weight: "600", size: 12, family: "'Manrope', sans-serif" };
+Chart.defaults.plugins.tooltip.footerFont = { weight: "500", size: 11, family: "'Manrope', sans-serif" };
+Chart.defaults.plugins.tooltip.footerColor = "#a9c8e0";
+Chart.defaults.plugins.tooltip.callbacks = {
+  title: function (items) {
+    if (!items || !items.length) return "";
+    var it = items[0];
+    var label = it.label || (it.chart.data.labels && it.chart.data.labels[it.dataIndex]) || "";
+    return String(label);
+  },
+  label: function (ctx) {
+    var raw = ctx.parsed;
+    var value = typeof raw === "object" && raw !== null
+      ? (raw.y !== undefined ? raw.y : (raw.r !== undefined ? raw.r : raw))
+      : raw;
+    if (value === undefined || value === null) value = ctx.raw;
+    var num = Number(value) || 0;
+    var dsLabel = ctx.dataset && ctx.dataset.label ? ctx.dataset.label + ": " : "";
+    var total = 0;
+    var data = (ctx.dataset && ctx.dataset.data) || [];
+    for (var i = 0; i < data.length; i++) {
+      var v = data[i];
+      total += typeof v === "number" ? v : (v && typeof v === "object" ? (v.y || 0) : 0);
+    }
+    var pct = total > 0 ? Math.round((num / total) * 1000) / 10 : 0;
+    var chartType = ctx.chart && ctx.chart.config && ctx.chart.config.type;
+    if (chartType === "doughnut" || chartType === "pie") {
+      return "  " + dsLabel + num + " cases · " + pct + "%";
+    }
+    if (chartType === "bar") {
+      return "  " + dsLabel + num + (total > 0 && (ctx.dataset.data || []).length > 1 ? " · " + pct + "%" : " visits");
+    }
+    return "  " + dsLabel + num;
+  },
+  footer: function (items) {
+    if (!items || !items.length) return "";
+    var chartType = items[0].chart && items[0].chart.config && items[0].chart.config.type;
+    if (chartType !== "doughnut" && chartType !== "pie") return "";
+    var total = 0;
+    var data = items[0].dataset.data || [];
+    for (var i = 0; i < data.length; i++) total += Number(data[i]) || 0;
+    return "Total: " + total + " cases";
+  }
+};
+Chart.defaults.borderColor = "#eef2f0";
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.elements.bar.borderRadius = 8;
+Chart.defaults.elements.point.hoverRadius = 7;
+Chart.defaults.elements.point.hitRadius = 12;
+Chart.defaults.elements.arc.hoverOffset = 14;
 Chart.register({
   id: 'centerTotal',
   afterDraw: function (c) {
@@ -1512,8 +1802,30 @@ function renderPurposeChart(rows) {
   if (purposeChartInstance) purposeChartInstance.destroy();
   purposeChartInstance = new Chart(document.getElementById("purposeChart"), {
     type: "doughnut",
-    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 0, hoverOffset: 8 }] },
-    options: { cutout: "64%", plugins: { legend: { position: "bottom" } }, animation: { duration: 700 } }
+    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 2, borderColor: "#fffdf6", hoverOffset: 14, hoverBorderWidth: 0 }] },
+    options: {
+      cutout: "64%",
+      interaction: { mode: "nearest", intersect: true },
+      plugins: {
+        legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 10 } },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              var total = 0;
+              for (var i = 0; i < ctx.dataset.data.length; i++) total += ctx.dataset.data[i];
+              var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
+              return ctx.label + ": " + ctx.parsed + " · " + pct + "%";
+            },
+            footer: function (items) {
+              var total = 0, d = items[0].dataset.data;
+              for (var i = 0; i < d.length; i++) total += d[i];
+              return "Total: " + total + " visits";
+            }
+          }
+        }
+      },
+      animation: { duration: 1000, easing: "easeOutBack" }
+    }
   });
 }
 
@@ -1537,7 +1849,7 @@ function renderPeakHours(visits) {
   if (peakHoursChartInstance) { peakHoursChartInstance.destroy(); }
   peakHoursChartInstance = new Chart(canvas, {
     type: "line",
-    data: { labels: labels, datasets: [{ data: hourCounts, borderColor: "#3b82c4", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 2, borderWidth: 2 }] },
+    data: { labels: labels, datasets: [{ data: hourCounts, borderColor: "#3b82c4", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#3b82c4", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
     options: {
       plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } },
@@ -1576,7 +1888,13 @@ function renderSeverityBreakdown(visits) {
               var total = 0;
               for (var k = 0; k < ctx.dataset.data.length; k++) { total = total + ctx.dataset.data[k]; }
               var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
-              return ctx.label + ": " + ctx.parsed + " (" + pct + "%)";
+              return ctx.label + ": " + ctx.parsed + " cases · " + pct + "%";
+            },
+            footer: function (items) {
+              if (!items.length) return "";
+              var total = 0, data = items[0].dataset.data || [];
+              for (var i = 0; i < data.length; i++) total += data[i];
+              return "Total: " + total + " consultations";
             }
           }
         }
@@ -1613,7 +1931,7 @@ function renderCharts(daily, illness, grade) {
   if (visitsChartInstance) { visitsChartInstance.destroy(); }
   visitsChartInstance = new Chart(visitsCanvas, {
     type: "line",
-    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: "#1b7a4d", borderWidth: 2.5 }] },
+    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointBackgroundColor: "#1b7a4d", pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#1b7a4d", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
     options: {
       plugins: { legend: { display: false } },
       scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } },
@@ -1652,7 +1970,13 @@ function renderCharts(daily, illness, grade) {
               var total = 0;
               for (var k2 = 0; k2 < ctx.dataset.data.length; k2++) { total = total + ctx.dataset.data[k2]; }
               var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
-              return ctx.label + ": " + ctx.parsed + " (" + pct + "%)";
+              return ctx.label + ": " + ctx.parsed + " cases · " + pct + "%";
+            },
+            footer: function (items) {
+              if (!items.length) return "";
+              var total = 0, data = items[0].dataset.data || [];
+              for (var i = 0; i < data.length; i++) total += data[i];
+              return "Total: " + total + " cases";
             }
           }
         }
@@ -1676,7 +2000,20 @@ function renderCharts(daily, illness, grade) {
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
     data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
-    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } }, animation: { duration: 1200, easing: "easeOutQuart" } }
+    options: {
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function (ctx) {
+            return ctx.label + ": " + ctx.parsed.y + " visits";
+          }
+        }
+      }
+    },
+    scales: { y: { beginAtZero: true } },
+    animation: { duration: 1200, easing: "easeOutQuart" }
+  }
   });
 }
 
