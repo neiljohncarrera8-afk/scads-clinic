@@ -598,7 +598,7 @@
   .panel{
     transition: transform 0.4s var(--ease-out), box-shadow 0.4s ease, border-color 0.35s ease;
     border: 1.5px solid var(--border);
-    overflow: hidden;
+    overflow: visible;
   }
   .panel::after{
     content:'';
@@ -1153,9 +1153,12 @@ Chart.defaults.animations = {
   numbers: { type: "number", properties: ["x", "y", "base", "width", "height", "r"], duration: 1200, easing: "easeOutQuart" },
   colors: { type: "color", properties: ["backgroundColor", "borderColor"], duration: 600 }
 };
-Chart.defaults.hover = { mode: "nearest", intersect: true };
-Chart.defaults.interaction = { mode: "nearest", intersect: true };
+Chart.defaults.hover = { mode: "nearest", intersect: false };
+Chart.defaults.interaction = { mode: "nearest", intersect: false };
+Chart.defaults.events = ["mousemove", "mouseout", "click", "touchstart", "touchmove"];
 Chart.defaults.plugins.tooltip.enabled = true;
+Chart.defaults.plugins.tooltip.external = undefined;
+Chart.defaults.plugins.tooltip.position = "nearest";
 Chart.defaults.plugins.tooltip.backgroundColor = "rgba(15, 61, 46, 0.95)";
 Chart.defaults.plugins.tooltip.titleColor = "#fff";
 Chart.defaults.plugins.tooltip.bodyColor = "#e8f5ee";
@@ -1246,9 +1249,13 @@ Chart.register({
 });
 
 function legendSync(chart, legendItem) {
-  chart.setActiveElements(legendItem ? [{ datasetIndex: 0, index: legendItem.index }] : []);
-  chart.tooltip.setActiveElements(legendItem ? [{ datasetIndex: 0, index: legendItem.index }] : [], { x: 0, y: 0 });
-  chart.update('none');
+  var els = legendItem ? [{ datasetIndex: 0, index: legendItem.index }] : [];
+  chart.setActiveElements(els);
+  var area = chart.chartArea || {};
+  var cx = ((area.left || 0) + (area.right || 0)) / 2;
+  var cy = ((area.top || 0) + (area.bottom || 0)) / 2;
+  chart.tooltip.setActiveElements(els, { x: cx, y: cy });
+  chart.update("none");
 }
 
 var allVisits = [], rangeDays = 14, strandIllnessInstance = null;
@@ -1371,14 +1378,33 @@ function refreshDashboard() {
 
 function listenForVisitUpdates() {
   if (typeof EventSource === "undefined") return;
-  var updates = new EventSource(API + "/api/events");
-  updates.addEventListener("visits-updated", function () {
-    refreshDashboard();
-  });
-  updates.onerror = function () {
-    // EventSource reconnects automatically; the manual refresh remains available.
-    console.warn("Live visit updates disconnected; retrying automatically.");
-  };
+  var retryMs = 2000;
+  var es = null;
+  function connect() {
+    try { if (es) es.close(); } catch (e1) {}
+    es = new EventSource(API + "/api/events");
+    es.addEventListener("visits-updated", function () {
+      retryMs = 2000;
+      refreshDashboard();
+    });
+    es.onopen = function () {
+      retryMs = 2000;
+      console.log("Live updates connected");
+    };
+    es.onerror = function () {
+      console.warn("Live visit updates disconnected; retrying…");
+      try { es.close(); } catch (e2) {}
+      setTimeout(connect, retryMs);
+      retryMs = Math.min(retryMs * 1.5, 15000);
+    };
+  }
+  connect();
+  // Periodic soft refresh so dashboard stays in sync even if SSE drops
+  setInterval(function () {
+    if (document.visibilityState === "visible") {
+      refreshDashboard().catch(function () {});
+    }
+  }, 60000);
 }
 
 function loadAll() {
@@ -1805,7 +1831,7 @@ function renderPurposeChart(rows) {
     data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 2, borderColor: "#fffdf6", hoverOffset: 14, hoverBorderWidth: 0 }] },
     options: {
       cutout: "64%",
-      interaction: { mode: "nearest", intersect: true },
+      interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 10 } },
         tooltip: {
@@ -1875,7 +1901,7 @@ function renderSeverityBreakdown(visits) {
         borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
     },
     options: {
-      interaction: { mode: "nearest", intersect: true },
+      interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
           position: "bottom", labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: "circle" },
@@ -1957,7 +1983,7 @@ function renderCharts(daily, illness, grade) {
       datasets: [{ data: illnessCounts, backgroundColor: illnessColors, borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
     },
     options: {
-      interaction: { mode: "nearest", intersect: true },
+      interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
           position: "bottom", labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: "circle" },
@@ -1965,12 +1991,17 @@ function renderCharts(daily, illness, grade) {
           onLeave: function (e, item, legend) { legendSync(legend.chart, null); }
         },
         tooltip: {
+          enabled: true,
+          position: "nearest",
           callbacks: {
+            title: function (items) {
+              return items.length ? String(items[0].label || "") : "";
+            },
             label: function (ctx) {
               var total = 0;
               for (var k2 = 0; k2 < ctx.dataset.data.length; k2++) { total = total + ctx.dataset.data[k2]; }
               var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
-              return ctx.label + ": " + ctx.parsed + " cases · " + pct + "%";
+              return " " + ctx.parsed + " cases · " + pct + "%";
             },
             footer: function (items) {
               if (!items.length) return "";
@@ -2242,3 +2273,4 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+
