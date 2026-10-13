@@ -841,6 +841,26 @@
   #chartJsTooltip .tt-pct{color:#39e88f;font-weight:800;}
   #chartJsTooltip .tt-foot{margin-top:4px;font-size:11px;color:#a9c8e0;font-weight:500;}
 
+
+  .stock-item .si-btn.del{
+    background:#fde8e8;color:var(--red);font-size:0.85rem;min-width:32px;
+  }
+  .stock-item .si-btn.eq{
+    background:#e8f0fe;color:#1a56db;font-weight:800;min-width:32px;
+  }
+  .stock-item .si-qty-input{
+    width:52px;padding:5px 6px;border:1.5px solid var(--border);border-radius:8px;
+    font-family:inherit;font-size:0.8rem;font-weight:700;text-align:center;
+  }
+  .stock-item .si-qty-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(27,122,77,0.12);}
+  .range button{
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), background 0.25s ease, color 0.2s ease, box-shadow 0.25s ease;
+  }
+  .range button:hover{transform:translateY(-2px);}
+  .range button.on{
+    box-shadow:0 4px 12px rgba(27,122,77,0.25);
+  }
+
 </style>
 </head>
 <body>
@@ -1165,9 +1185,25 @@ var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9
 
 Chart.defaults.font.family = "'Manrope', sans-serif";
 Chart.defaults.color = "#6b7c76";
-Chart.defaults.animation = { duration: 0 };
+Chart.defaults.animation = {
+  duration: 1000,
+  easing: "easeOutQuart",
+  delay: function (ctx) {
+    if (ctx.type !== "data" || ctx.mode !== "default") return 0;
+    return (ctx.dataIndex || 0) * 90;
+  }
+};
+Chart.defaults.animations = {
+  numbers: {
+    type: "number",
+    properties: ["x", "y", "base", "width", "height", "circumference", "startAngle", "endAngle", "outerRadius", "innerRadius"],
+    duration: 1000,
+    easing: "easeOutQuart"
+  }
+};
 Chart.defaults.hover = { mode: "nearest", intersect: false };
 Chart.defaults.interaction = { mode: "nearest", intersect: false };
+Chart.defaults.elements.arc.hoverOffset = 10;
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.tooltip.enabled = true;
 Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
@@ -1195,6 +1231,41 @@ Chart.defaults.plugins.tooltip.callbacks = {
   }
 };
 Chart.defaults.borderColor = "#eef2f0";
+
+function doughnutAnimOpts() {
+  return {
+    duration: 1100,
+    easing: "easeOutQuart",
+    delay: function (ctx) {
+      if (ctx.type !== "data" || ctx.mode !== "default") return 0;
+      return (ctx.dataIndex || 0) * 110;
+    },
+    animateRotate: true,
+    animateScale: true
+  };
+}
+function barAnimOpts() {
+  return {
+    duration: 900,
+    easing: "easeOutQuart",
+    delay: function (ctx) {
+      if (ctx.type !== "data" || ctx.mode !== "default") return 0;
+      return (ctx.dataIndex || 0) * 70;
+    }
+  };
+}
+function lineAnimOpts() {
+  return {
+    duration: 1000,
+    easing: "easeOutQuart",
+    delay: function (ctx) {
+      if (ctx.type !== "data" || ctx.mode !== "default") return 0;
+      return (ctx.dataIndex || 0) * 40;
+    }
+  };
+}
+
+
 
 Chart.register({
   id: 'centerTotal',
@@ -1300,6 +1371,20 @@ for (var n = 0; n < navItems.length; n++) {
     if (tabName === "inventory") refreshInventoryOnly();
     setTimeout(bindPanelSpotlights, 50);
     setTimeout(bindAllChartTips, 80);
+    if (tabName === "trends" || tabName === "dashboard") {
+      var panels = document.querySelectorAll("#tab-" + tabName + " .panel");
+      for (var pi = 0; pi < panels.length; pi++) {
+        panels[pi].style.opacity = "0";
+        panels[pi].style.transform = "translateY(14px) scale(0.98)";
+        (function (el, delay) {
+          setTimeout(function () {
+            el.style.transition = "opacity 0.45s ease, transform 0.45s cubic-bezier(.22,1,.36,1)";
+            el.style.opacity = "1";
+            el.style.transform = "none";
+          }, 80 + delay);
+        })(panels[pi], pi * 90);
+      }
+    }
   });
 }
 
@@ -1613,7 +1698,7 @@ function loadTrendAndReports() {
     strandChartInstance = new Chart(document.getElementById("strandChart"), {
       type: "bar",
       data: { labels: strandLabels, datasets: strandDatasets },
-      options: { scales: { y: { beginAtZero: true } } }
+      options: { animation: barAnimOpts(), scales: { y: { beginAtZero: true } } }
     });
 
     var weeks = [];
@@ -1644,7 +1729,11 @@ function loadTrendAndReports() {
     trendLineChartInstance = new Chart(document.getElementById("trendLineChart"), {
       type: "line",
       data: { labels: weeks, datasets: lineDatasets },
-      options: { scales: { y: { beginAtZero: true } } }
+      options: {
+        animation: lineAnimOpts(),
+        interaction: { mode: "index", intersect: false },
+        scales: { y: { beginAtZero: true } }
+      }
     });
 
     var today = new Date().toISOString().slice(0, 10);
@@ -1740,12 +1829,15 @@ function stockRowHTML(item) {
   var color = item.status === "critical" ? "var(--red)" : item.status === "low" ? "var(--yellow)" : "var(--primary)";
   var id = item.id;
   return '<div class="stock-item" data-id="' + id + '">' +
-    '<span class="si-name">' + item.item_name + '</span>' +
+    '<span class="si-name">' + escapeHTML(item.item_name) + '</span>' +
     '<div class="si-controls">' +
       '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-1)" title="-1">−</button>' +
-      '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + Math.min(100, item.level) + '%;background:' + color + ';"></div></div>' +
+      '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + Math.min(100, Math.max(0, item.level)) + '%;background:' + color + ';"></div></div>' +
       '<span style="color:' + color + ';font-weight:700;min-width:36px;text-align:right;">' + item.level + '</span>' +
       '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',1)" title="+1">+</button>' +
+      '<input type="number" min="1" value="10" class="si-qty-input" id="qtyAdd' + id + '" title="Amount to add">' +
+      '<button type="button" class="si-btn eq" onclick="addInventoryAmount(' + id + ')" title="Add this amount">=</button>' +
+      '<button type="button" class="si-btn del" onclick="deleteInventoryItem(' + id + ')" title="Delete item">✕</button>' +
     '</div></div>';
 }
 
@@ -1761,6 +1853,30 @@ function renderStockFull(stock) {
     html = html + stockRowHTML(stock[i]);
   }
   el.innerHTML = html;
+}
+
+
+function addInventoryAmount(id) {
+  var input = document.getElementById("qtyAdd" + id);
+  var n = input ? parseInt(input.value, 10) : 0;
+  if (!n || n < 1) {
+    alert("Enter a number of 1 or more to add.");
+    if (input) input.focus();
+    return;
+  }
+  adjustInventory(id, n);
+}
+
+function deleteInventoryItem(id) {
+  if (!confirm("Delete this inventory item?")) return;
+  fetch(API + "/api/inventory/" + id, { method: "DELETE" })
+    .then(function (res) {
+      if (!res.ok) return res.json().then(function (e) { throw new Error(e.error || "Delete failed"); });
+      return res.json();
+    })
+    .then(function () { return apiJSON("/api/inventory"); })
+    .then(function (stock) { renderStockFull(stock); })
+    .catch(function (err) { alert("Could not delete: " + err.message); });
 }
 
 function adjustInventory(id, delta) {
@@ -1847,6 +1963,10 @@ var ILLNESS_GUIDE = [
     desc: "Lower abdominal pain during menstruation. Common and usually manageable with rest and warmth.",
     signs: ["Cramping in lower abdomen", "Back ache", "Fatigue"],
     care: ["Rest", "Warm compress", "Hydration", "Pain relief per clinic protocol", "Private, respectful care"] },
+  { name: "Vomiting", icon: "🤮", tag: "Digestive", accent: "#2f9e68", bg: "#e8f7ef",
+    desc: "Forceful emptying of stomach contents. May relate to infection, migraine, food issues, or other illness — assess hydration and severity.",
+    signs: ["Nausea", "Repeated vomiting", "Weakness", "Possible fever or stomach pain"],
+    care: ["Rest", "Small sips of water if tolerated", "ORS if advised", "Avoid solid food until settled", "Refer if severe or persistent"] },
   { name: "Others", icon: "➕", tag: "General", accent: "#6b7c76", bg: "#f0f4f2",
     desc: "Concerns that do not fit the usual categories — still document clearly and assess severity.",
     signs: ["Variable — note student description", "Observe general appearance", "Ask onset and triggers"],
@@ -1932,6 +2052,7 @@ function renderPurposeChart(rows) {
     type: "doughnut",
     data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 2, borderColor: "#fffdf6", hoverOffset: 14, hoverBorderWidth: 0 }] },
     options: {
+      animation: doughnutAnimOpts(),
       cutout: "64%",
       interaction: { mode: "nearest", intersect: false },
       plugins: {
@@ -1978,6 +2099,7 @@ function renderPeakHours(visits) {
     type: "line",
     data: { labels: labels, datasets: [{ data: hourCounts, borderColor: "#3b82c4", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#3b82c4", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
     options: {
+      animation: lineAnimOpts(),
       plugins: { legend: { display: false } },
       scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 9 } } } }
     }
@@ -2001,6 +2123,7 @@ function renderSeverityBreakdown(visits) {
         borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
     },
     options: {
+      animation: doughnutAnimOpts(),
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
@@ -2083,6 +2206,7 @@ function renderCharts(daily, illness, grade) {
       datasets: [{ data: illnessCounts, backgroundColor: illnessColors, borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
     },
     options: {
+      animation: doughnutAnimOpts(),
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
@@ -2130,7 +2254,7 @@ function renderCharts(daily, illness, grade) {
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
     data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
-    options: {
+    options: { animation: barAnimOpts(), 
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -2186,17 +2310,68 @@ function renderVisitsRange() {
     labels.push(dt.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
     data.push(map[dt.toISOString().slice(0, 10)] || 0);
   }
-  document.getElementById("visitsTitle").textContent = "Clinic Visits — Last " + rangeDays + " Days";
-  var c = document.getElementById("visitsChart"), g = c.getContext("2d").createLinearGradient(0, 0, 0, 240);
-  g.addColorStop(0, "rgba(27,122,77,0.4)"); g.addColorStop(1, "rgba(27,122,77,0)");
-  if (visitsChartInstance) { visitsChartInstance.destroy(); }
-  visitsChartInstance = new Chart(c, {
-    type: "line",
-    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: g, fill: true, tension: 0.4, borderWidth: 3,
-      pointRadius: 0, pointHoverRadius: 6, pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#1b7a4d", pointHoverBorderWidth: 3 }] },
-    options: { interaction: { mode: "index", intersect: false }, plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8, font: { size: 10 } } }, y: { beginAtZero: true, ticks: { precision: 0 } } } }
-  });
+  var titleEl = document.getElementById("visitsTitle");
+  if (titleEl) {
+    titleEl.style.opacity = "0";
+    titleEl.style.transform = "translateY(4px)";
+    titleEl.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+    setTimeout(function () {
+      titleEl.textContent = "Clinic Visits — Last " + rangeDays + " Days";
+      titleEl.style.opacity = "1";
+      titleEl.style.transform = "none";
+    }, 120);
+  }
+  var c = document.getElementById("visitsChart");
+  if (!c) return;
+  var g = c.getContext("2d").createLinearGradient(0, 0, 0, 240);
+  g.addColorStop(0, "rgba(27,122,77,0.45)");
+  g.addColorStop(1, "rgba(27,122,77,0)");
+  var chartData = {
+    labels: labels,
+    datasets: [{
+      data: data,
+      borderColor: "#1b7a4d",
+      backgroundColor: g,
+      fill: true,
+      tension: 0.4,
+      borderWidth: 3,
+      pointRadius: rangeDays <= 14 ? 3 : 0,
+      pointHoverRadius: 7,
+      pointBackgroundColor: "#1b7a4d",
+      pointHoverBackgroundColor: "#fff",
+      pointHoverBorderColor: "#1b7a4d",
+      pointHoverBorderWidth: 3
+    }]
+  };
+  var chartOpts = {
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function (ctx) {
+            var n = ctx.parsed && typeof ctx.parsed.y === "number" ? ctx.parsed.y : ctx.raw;
+            return " " + n + " visits";
+          }
+        }
+      }
+    },
+    animation: {
+      duration: 900,
+      easing: "easeOutQuart"
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: rangeDays <= 14 ? 8 : 10, font: { size: 10 } } },
+      y: { beginAtZero: true, ticks: { precision: 0 } }
+    }
+  };
+  if (visitsChartInstance) {
+    visitsChartInstance.data = chartData;
+    visitsChartInstance.options = Object.assign({}, visitsChartInstance.options, chartOpts);
+    visitsChartInstance.update();
+  } else {
+    visitsChartInstance = new Chart(c, { type: "line", data: chartData, options: chartOpts });
+  }
 }
 document.getElementById("rangePills").addEventListener("click", function (e) {
   var b = e.target.closest("button"); if (!b) { return; }
@@ -2373,4 +2548,3 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
-

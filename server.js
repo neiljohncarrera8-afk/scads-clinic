@@ -38,6 +38,7 @@ const ILLNESSES = [
   'Allergy',
   'Dizziness',
   'Menstrual Cramps',
+  'Vomiting',
   'Others'
 ];
 
@@ -58,22 +59,33 @@ const SECTIONS = {
 
 /* Default clinic stocks (PH common meds) — used when inventory is empty */
 const DEFAULT_INVENTORY = [
-  ['Biogesic (Paracetamol 500mg)', 78],
-  ['Bioflu', 55],
-  ['Neozep Forte', 48],
-  ['Lagundi (Ascof)', 40],
-  ['Solmux', 35],
-  ['Kremil-S', 60],
-  ['Buscopan', 28],
-  ['Mefenamic Acid 250mg', 42],
-  ['Cetirizine 10mg', 38],
-  ['Oral Rehydration Salts (Oresol)', 22],
-  ['Betadine Solution', 30],
-  ['Isopropyl Alcohol 70%', 45],
-  ['Band-Aid / Adhesive Bandage', 70],
-  ['Gauze Pad / Cotton', 50],
-  ['Ice Pack / Cold Compress', 15],
-  ['Sanitary Pad', 40]
+  ['Kremil-S', 50],
+  ['Buscopan', 40],
+  ['Diatabs', 40],
+  ['Buscopan (Venus)', 30],
+  ['Mefenamic Acid', 50],
+  ['Cetirizine', 40],
+  ['Neozep', 45],
+  ['Symdex-D', 35],
+  ['Paracetamol / Biogesic', 80],
+  ['Alcohol Swabs', 60],
+  ['Solmux', 40],
+  ['Allecure', 35],
+  ['Levocetirizine', 30],
+  ['Mecid', 25],
+  ['Bandaid', 70],
+  ['Gauze Pad', 50],
+  ['Salonpas', 40],
+  ['Loperamide', 35],
+  ['Silver Sulfadiazine', 20],
+  ['Povidone-iodide', 30],
+  ['Vicks Vaporub', 25],
+  ['White Flower', 25],
+  ['Efficascent Oil', 30],
+  ['Blood Glucose Test Strip', 20],
+  ['Aceite De Manzanilla', 25],
+  ['Facemask', 100],
+  ['Hot Compress', 15]
 ];
 
 /* ============== SCHEMA ============== */
@@ -192,15 +204,20 @@ db.exec(`
 /* ============== SEED INVENTORY (always if empty) ============== */
 
 (function seedInventory() {
-  const count = db.prepare('SELECT COUNT(*) c FROM inventory').get().c;
-  if (count > 0) return;
-
-  const ins = db.prepare('INSERT INTO inventory (item_name, level) VALUES (?, ?)');
+  const ins = db.prepare(
+    'INSERT OR IGNORE INTO inventory (item_name, level) VALUES (?, ?)'
+  );
+  let added = 0;
   const tx = db.transaction(rows => {
-    rows.forEach(row => ins.run(...row));
+    rows.forEach(row => {
+      const info = ins.run(...row);
+      if (info.changes) added += 1;
+    });
   });
   tx(DEFAULT_INVENTORY);
-  console.log('✅ Seeded inventory with', DEFAULT_INVENTORY.length, 'clinic items');
+  if (added > 0) {
+    console.log('✅ Inventory: added', added, 'missing clinic items (total list', DEFAULT_INVENTORY.length + ')');
+  }
 })();
 
 /* ============== SEED DEMO VISITS ============== */
