@@ -861,6 +861,45 @@
     box-shadow:0 4px 12px rgba(27,122,77,0.25);
   }
 
+
+  .stock-item .si-level{
+    font-weight:800;min-width:40px;text-align:right;font-variant-numeric:tabular-nums;
+    font-size:0.95rem;
+  }
+  .stock-item .si-btn.addn{
+    background:linear-gradient(135deg,#dcf3e6,#b8e6c9);color:var(--primary-dark);font-size:0.72rem;font-weight:800;min-width:36px;padding:6px 8px;
+  }
+  .stock-item .si-btn.subn{
+    background:linear-gradient(135deg,#fde8e8,#f5c4c4);color:var(--red);font-size:0.72rem;font-weight:800;min-width:36px;padding:6px 8px;
+  }
+  .stock-bar-bg{
+    width:72px;height:10px;border-radius:999px;background:#eef2f0;overflow:hidden;
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .stock-bar-fill{
+    height:100%;border-radius:999px;transition:width 0.45s cubic-bezier(.22,1,.36,1);
+    box-shadow:0 0 8px rgba(27,122,77,0.25);
+  }
+  .stock-item{
+    flex-wrap:wrap;gap:10px;
+  }
+  .inv-hint{font-size:0.8rem;color:var(--muted);margin-top:12px;}
+  /* Chart panel polish */
+  .panel canvas{
+    max-height:280px;
+  }
+  #tab-trends .panel, #tab-dashboard .panel{
+    transition:transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+
+  .panel canvas {
+    filter: drop-shadow(0 8px 16px rgba(15, 61, 46, 0.08));
+  }
+  .panel {
+    background: linear-gradient(165deg, #ffffff 0%, #f7fbf8 100%);
+  }
+
 </style>
 </head>
 <body>
@@ -1052,7 +1091,7 @@
           <button type="button" class="btn-inv-refresh" onclick="refreshInventoryOnly()">↻ Refresh</button>
         </div>
         <div id="stockListFull"></div>
-        <p class="inv-hint">Quantity has no upper limit. Changes here sync to the check-in kiosk (students can view only).</p>
+        <p class="inv-hint">Use − / + for 1 step, or type an amount then +N (add) or −N (subtract). ✕ deletes the item. Unlimited stock. Syncs to kiosk (view only).</p>
       </div>
     </div>
 
@@ -1231,14 +1270,19 @@ Chart.defaults.plugins.tooltip.callbacks = {
   }
 };
 Chart.defaults.borderColor = "#eef2f0";
+Chart.defaults.elements.bar.borderRadius = 10;
+Chart.defaults.elements.bar.borderSkipped = false;
+Chart.defaults.elements.line.borderWidth = 3;
+Chart.defaults.elements.point.hoverRadius = 7;
+
 
 function doughnutAnimOpts() {
   return {
-    duration: 1100,
+    duration: 1200,
     easing: "easeOutQuart",
     delay: function (ctx) {
       if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-      return (ctx.dataIndex || 0) * 110;
+      return (ctx.dataIndex || 0) * 100;
     },
     animateRotate: true,
     animateScale: true
@@ -1254,6 +1298,31 @@ function barAnimOpts() {
     }
   };
 }
+
+/* Rich chart visuals — gradients + soft depth (safe Chart.js 4) */
+function barGradient(ctx, colorTop, colorBottom) {
+  try {
+    var chart = ctx.chart;
+    var area = chart.chartArea;
+    if (!area) return colorTop;
+    var g = chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
+    g.addColorStop(0, colorBottom || colorTop);
+    g.addColorStop(1, colorTop);
+    return g;
+  } catch (e) {
+    return colorTop;
+  }
+}
+function richBarColors(hexList) {
+  return function (ctx) {
+    var i = ctx.dataIndex || 0;
+    var top = hexList[i % hexList.length];
+    var bottom = hexList[(i + 1) % hexList.length];
+    return barGradient(ctx, top, bottom);
+  };
+}
+var DEPTH_PALETTE = ["#0f5c3d", "#1b7a4d", "#2f9e68", "#3b82c4", "#5b6bcf", "#8b6bd1", "#d97ba8", "#e8b93f", "#e05c5c"];
+
 function lineAnimOpts() {
   return {
     duration: 1000,
@@ -1312,6 +1381,25 @@ Chart.register({
     } catch (e) {}
   }
 });
+Chart.register({
+  id: 'softDepth',
+  beforeDatasetsDraw: function (chart) {
+    try {
+      var ctx = chart.ctx;
+      var type = chart.config && chart.config.type;
+      if (type !== 'bar' && type !== 'line') return;
+      ctx.save();
+      ctx.shadowColor = 'rgba(15, 61, 46, 0.18)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 6;
+      ctx.shadowOffsetX = 0;
+    } catch (e) {}
+  },
+  afterDatasetsDraw: function (chart) {
+    try { chart.ctx.restore(); } catch (e) {}
+  }
+});
+
 
 
 
@@ -1687,7 +1775,7 @@ function loadTrendAndReports() {
         }
         dataArr.push(match ? match.count : 0);
       }
-      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName], borderRadius: 6 });
+      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName], borderRadius: 10, borderSkipped: false, maxBarThickness: 28 });
     }
     if (strandChartInstance) { strandChartInstance.destroy(); }
     var strandLabels = [];
@@ -1825,18 +1913,21 @@ function renderTable(visits) {
   tbody.innerHTML = html;
 }
 
-function stockRowHTML(item) {
+function stockRowHTML(item, maxLevel) {
   var color = item.status === "critical" ? "var(--red)" : item.status === "low" ? "var(--yellow)" : "var(--primary)";
   var id = item.id;
+  var maxL = maxLevel && maxLevel > 0 ? maxLevel : 100;
+  var pct = Math.min(100, Math.round((Math.max(0, item.level) / maxL) * 100));
   return '<div class="stock-item" data-id="' + id + '">' +
     '<span class="si-name">' + escapeHTML(item.item_name) + '</span>' +
     '<div class="si-controls">' +
       '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-1)" title="-1">−</button>' +
-      '<div class="stock-bar-bg"><div class="stock-bar-fill" style="width:' + Math.min(100, Math.max(0, item.level)) + '%;background:' + color + ';"></div></div>' +
-      '<span style="color:' + color + ';font-weight:700;min-width:36px;text-align:right;">' + item.level + '</span>' +
+      '<div class="stock-bar-bg" title="' + item.level + ' units"><div class="stock-bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>' +
+      '<span class="si-level" style="color:' + color + ';">' + item.level + '</span>' +
       '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',1)" title="+1">+</button>' +
-      '<input type="number" min="1" value="10" class="si-qty-input" id="qtyAdd' + id + '" title="Amount to add">' +
-      '<button type="button" class="si-btn eq" onclick="addInventoryAmount(' + id + ')" title="Add this amount">=</button>' +
+      '<input type="number" min="1" value="10" class="si-qty-input" id="qtyAdd' + id + '" title="Custom amount">' +
+      '<button type="button" class="si-btn eq addn" onclick="addInventoryAmount(' + id + ')" title="Add this amount">+N</button>' +
+      '<button type="button" class="si-btn eq subn" onclick="subInventoryAmount(' + id + ')" title="Subtract this amount">−N</button>' +
       '<button type="button" class="si-btn del" onclick="deleteInventoryItem(' + id + ')" title="Delete item">✕</button>' +
     '</div></div>';
 }
@@ -1845,12 +1936,17 @@ function renderStockFull(stock) {
   var el = document.getElementById("stockListFull");
   if (!el) return;
   if (!stock || !stock.length) {
-    el.innerHTML = '<p style="color:var(--muted);padding:12px 0;">No inventory items yet. Add one above, or restart the server to seed defaults (Biogesic, etc.).</p>';
+    el.innerHTML = '<p style="color:var(--muted);padding:12px 0;">No inventory items yet. Add one above, or restart the server to seed defaults.</p>';
     return;
   }
+  var maxLevel = 0;
+  for (var m = 0; m < stock.length; m++) {
+    if (stock[m].level > maxLevel) maxLevel = stock[m].level;
+  }
+  if (maxLevel < 10) maxLevel = 10;
   var html = "";
   for (var i = 0; i < stock.length; i++) {
-    html = html + stockRowHTML(stock[i]);
+    html = html + stockRowHTML(stock[i], maxLevel);
   }
   el.innerHTML = html;
 }
@@ -1860,11 +1956,22 @@ function addInventoryAmount(id) {
   var input = document.getElementById("qtyAdd" + id);
   var n = input ? parseInt(input.value, 10) : 0;
   if (!n || n < 1) {
-    alert("Enter a number of 1 or more to add.");
+    alert("Enter a number of 1 or more.");
     if (input) input.focus();
     return;
   }
   adjustInventory(id, n);
+}
+
+function subInventoryAmount(id) {
+  var input = document.getElementById("qtyAdd" + id);
+  var n = input ? parseInt(input.value, 10) : 0;
+  if (!n || n < 1) {
+    alert("Enter a number of 1 or more to subtract.");
+    if (input) input.focus();
+    return;
+  }
+  adjustInventory(id, -n);
 }
 
 function deleteInventoryItem(id) {
@@ -2050,7 +2157,7 @@ function renderPurposeChart(rows) {
   if (purposeChartInstance) purposeChartInstance.destroy();
   purposeChartInstance = new Chart(document.getElementById("purposeChart"), {
     type: "doughnut",
-    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 2, borderColor: "#fffdf6", hoverOffset: 14, hoverBorderWidth: 0 }] },
+    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0, spacing: 3 }] },
     options: {
       animation: doughnutAnimOpts(),
       cutout: "64%",
@@ -2120,7 +2227,7 @@ function renderSeverityBreakdown(visits) {
     data: {
       labels: ["Mild", "Moderate", "Severe"],
       datasets: [{ data: [counts.mild, counts.moderate, counts.severe], backgroundColor: ["#1b7a4d", "#e8b93f", "#e05c5c"],
-        borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
+        borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 18, hoverBorderWidth: 0, spacing: 3 }]
     },
     options: {
       animation: doughnutAnimOpts(),
@@ -2179,7 +2286,7 @@ function renderCharts(daily, illness, grade) {
   if (visitsChartInstance) { visitsChartInstance.destroy(); }
   visitsChartInstance = new Chart(visitsCanvas, {
     type: "line",
-    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 3, pointHoverRadius: 8, pointBackgroundColor: "#1b7a4d", pointHoverBackgroundColor: "#fff", pointHoverBorderColor: "#1b7a4d", pointHoverBorderWidth: 3, borderWidth: 2.5 }] },
+    data: { labels: labels, datasets: [{ data: data, borderColor: "#1b7a4d", backgroundColor: gradient, fill: true, tension: 0.4, pointRadius: 4, pointHoverRadius: 9, pointBackgroundColor: "#fff", pointBorderColor: "#1b7a4d", pointBorderWidth: 2, pointHoverBackgroundColor: "#1b7a4d", pointHoverBorderColor: "#fff", pointHoverBorderWidth: 3, borderWidth: 3 }] },
     options: {
       plugins: { legend: { display: false } },
       scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } }
@@ -2203,7 +2310,7 @@ function renderCharts(daily, illness, grade) {
     type: "doughnut",
     data: {
       labels: illnessLabels,
-      datasets: [{ data: illnessCounts, backgroundColor: illnessColors, borderWidth: 3, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0 }]
+      datasets: [{ data: illnessCounts, backgroundColor: illnessColors, borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 18, hoverBorderWidth: 0, spacing: 2 }]
     },
     options: {
       animation: doughnutAnimOpts(),
@@ -2253,20 +2360,39 @@ function renderCharts(daily, illness, grade) {
   if (gradeChartInstance) { gradeChartInstance.destroy(); }
   gradeChartInstance = new Chart(document.getElementById("gradeChart"), {
     type: "bar",
-    data: { labels: gradeLabels, datasets: [{ data: gradeCounts, backgroundColor: ["#1b7a4d", "#3b82c4"], borderRadius: 10 }] },
-    options: { animation: barAnimOpts(), 
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: function (ctx) {
-            return ctx.label + ": " + ctx.parsed.y + " visits";
+    data: {
+      labels: gradeLabels,
+      datasets: [{
+        data: gradeCounts,
+        backgroundColor: function (ctx) {
+          var tops = ["#1b7a4d", "#3b82c4"];
+          var bots = ["#0b4530", "#1e4a8c"];
+          var i = ctx.dataIndex || 0;
+          return barGradient(ctx, tops[i % 2], bots[i % 2]);
+        },
+        borderRadius: 12,
+        borderSkipped: false,
+        borderWidth: 0,
+        maxBarThickness: 56
+      }]
+    },
+    options: {
+      animation: barAnimOpts(),
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.label + ": " + ctx.parsed.y + " visits";
+            }
           }
         }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: "rgba(18,36,29,0.06)" } },
+        x: { grid: { display: false } }
       }
-    },
-    scales: { y: { beginAtZero: true } }
-  }
+    }
   });
 }
 
