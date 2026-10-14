@@ -900,6 +900,31 @@
     background: linear-gradient(165deg, #ffffff 0%, #f7fbf8 100%);
   }
 
+
+  .grid1{display:grid;grid-template-columns:1fr;gap:18px;margin-bottom:18px;}
+  .panel-accent{
+    background:linear-gradient(165deg,#ffffff 0%,#f3faf6 55%,#eef8f2 100%) !important;
+    border:1px solid rgba(27,122,77,0.12);
+    box-shadow:0 10px 28px rgba(15,61,46,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+  }
+  .panel-accent h2{
+    background:linear-gradient(90deg,var(--ink),#1b7a4d);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .stat-card{
+    background:linear-gradient(160deg,#ffffff,#f7fbf8);
+    border:1px solid rgba(27,122,77,0.08);
+  }
+  .stat-card .value{
+    font-feature-settings:"tnum";
+    letter-spacing:-0.02em;
+  }
+  #heatmap{
+    min-height:200px;
+  }
+
 </style>
 </head>
 <body>
@@ -993,8 +1018,8 @@
       </div>
 
       <div class="grid2">
-        <div class="panel"><h2>Clinic Visits by Strand (Last 7 Days)</h2><canvas id="strandChart"></canvas></div>
-        <div class="panel"><h2>Visits by Grade Level (11 vs 12)</h2><canvas id="gradeChart"></canvas></div>
+        <div class="panel panel-accent"><h2>Visits by Grade Level (11 vs 12)</h2><canvas id="gradeChart"></canvas></div>
+        <div class="panel panel-accent"><h2>Severity Snapshot</h2><canvas id="dashSeverityChart"></canvas></div>
       </div>
 
       <div class="grid2">
@@ -1061,9 +1086,8 @@
         <div class="panel"><h2>Peak Hours (All Time)</h2><canvas id="peakHoursChart"></canvas></div>
         <div class="panel"><h2>Severity Breakdown</h2><canvas id="severityChart"></canvas></div>
       </div>
-      <div class="grid2">
-        <div class="panel"><h2>Visit Heatmap (Day × Hour)</h2><div id="heatmap"></div></div>
-        <div class="panel"><h2>Illness by Strand</h2><canvas id="strandIllnessChart"></canvas></div>
+      <div class="grid1">
+        <div class="panel panel-accent"><h2>Visit Heatmap (Day × Hour)</h2><div id="heatmap"></div></div>
       </div>
     </div>
 
@@ -1219,6 +1243,7 @@ var refreshPending = false;
 var trendLineChartInstance = null;
 var peakHoursChartInstance = null;
 var severityChartInstance = null;
+var dashSeverityChartInstance = null;
 
 var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9e68", "#6a6fc4", "#c2578f"];
 
@@ -1754,40 +1779,7 @@ function loadTrendAndReports() {
     }
     document.getElementById("gradeTrendCards").innerHTML = gcHtml;
 
-    var days = [];
-    for (var s1 = 0; s1 < strandDaily.length; s1++) {
-      if (days.indexOf(strandDaily[s1].day) === -1) { days.push(strandDaily[s1].day); }
-    }
-    days.sort();
-    var strands = ["STEM", "ABM", "HUMSS"];
-    var strandColors = { STEM: "#1b7a4d", ABM: "#3b82c4", HUMSS: "#8b6bd1" };
-    var strandDatasets = [];
-    for (var s2 = 0; s2 < strands.length; s2++) {
-      var strandName = strands[s2];
-      var dataArr = [];
-      for (var d1 = 0; d1 < days.length; d1++) {
-        var match = null;
-        for (var s3 = 0; s3 < strandDaily.length; s3++) {
-          if (strandDaily[s3].day === days[d1] && strandDaily[s3].strand === strandName) {
-            match = strandDaily[s3];
-            break;
-          }
-        }
-        dataArr.push(match ? match.count : 0);
-      }
-      strandDatasets.push({ label: strandName, data: dataArr, backgroundColor: strandColors[strandName], borderRadius: 10, borderSkipped: false, maxBarThickness: 28 });
-    }
-    if (strandChartInstance) { strandChartInstance.destroy(); }
-    var strandLabels = [];
-    for (var d2 = 0; d2 < days.length; d2++) {
-      var dt2 = new Date(days[d2]);
-      strandLabels.push(dt2.toLocaleDateString("en-US", { month: "short", day: "numeric" }));
-    }
-    strandChartInstance = new Chart(document.getElementById("strandChart"), {
-      type: "bar",
-      data: { labels: strandLabels, datasets: strandDatasets },
-      options: { animation: barAnimOpts(), scales: { y: { beginAtZero: true } } }
-    });
+    /* Strand charts removed from UI — skip render */
 
     var weeks = [];
     for (var w1 = 0; w1 < illnessWeekly.length; w1++) {
@@ -2213,28 +2205,28 @@ function renderPeakHours(visits) {
   });
 }
 
-function renderSeverityBreakdown(visits) {
-  var counts = { mild: 0, moderate: 0, severe: 0 };
-  for (var i = 0; i < visits.length; i++) {
-    if (visits[i].purpose === "Feeding") { continue; }
-    if (counts[visits[i].severity] !== undefined) {
-      counts[visits[i].severity] = counts[visits[i].severity] + 1;
-    }
-  }
-  if (severityChartInstance) { severityChartInstance.destroy(); }
-  severityChartInstance = new Chart(document.getElementById("severityChart"), {
+function severityChartConfig(counts) {
+  return {
     type: "doughnut",
     data: {
       labels: ["Mild", "Moderate", "Severe"],
-      datasets: [{ data: [counts.mild, counts.moderate, counts.severe], backgroundColor: ["#1b7a4d", "#e8b93f", "#e05c5c"],
-        borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 18, hoverBorderWidth: 0, spacing: 3 }]
+      datasets: [{
+        data: [counts.mild, counts.moderate, counts.severe],
+        backgroundColor: ["#1b7a4d", "#e8b93f", "#e05c5c"],
+        borderWidth: 4,
+        borderColor: "#fffdf6",
+        hoverOffset: 18,
+        hoverBorderWidth: 0,
+        spacing: 3
+      }]
     },
     options: {
       animation: doughnutAnimOpts(),
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: {
-          position: "bottom", labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: "circle" },
+          position: "bottom",
+          labels: { boxWidth: 10, font: { size: 10 }, usePointStyle: true, pointStyle: "circle" },
           onHover: function (e, item, legend) { legendSync(legend.chart, item); },
           onLeave: function (e, item, legend) { legendSync(legend.chart, null); }
         },
@@ -2242,7 +2234,7 @@ function renderSeverityBreakdown(visits) {
           callbacks: {
             label: function (ctx) {
               var total = 0;
-              for (var k = 0; k < ctx.dataset.data.length; k++) { total = total + ctx.dataset.data[k]; }
+              for (var k = 0; k < ctx.dataset.data.length; k++) total += ctx.dataset.data[k];
               var pct = total ? Math.round((ctx.parsed / total) * 100) : 0;
               return ctx.label + ": " + ctx.parsed + " cases · " + pct + "%";
             },
@@ -2261,7 +2253,28 @@ function renderSeverityBreakdown(visits) {
         if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
       }
     }
-  });
+  };
+}
+
+function renderSeverityBreakdown(visits) {
+  var counts = { mild: 0, moderate: 0, severe: 0 };
+  for (var i = 0; i < visits.length; i++) {
+    if (visits[i].purpose === "Feeding") continue;
+    if (counts[visits[i].severity] !== undefined) {
+      counts[visits[i].severity] = counts[visits[i].severity] + 1;
+    }
+  }
+  var cfg = severityChartConfig(counts);
+  var el = document.getElementById("severityChart");
+  if (el) {
+    if (severityChartInstance) { severityChartInstance.destroy(); severityChartInstance = null; }
+    severityChartInstance = new Chart(el, cfg);
+  }
+  var dash = document.getElementById("dashSeverityChart");
+  if (dash) {
+    if (dashSeverityChartInstance) { dashSeverityChartInstance.destroy(); dashSeverityChartInstance = null; }
+    dashSeverityChartInstance = new Chart(dash, severityChartConfig(counts));
+  }
 }
 
 function renderCharts(daily, illness, grade) {
@@ -2528,25 +2541,8 @@ function renderHeatmap(v) {
 }
 
 function renderStrandIllness(v) {
-  var strands = ["STEM", "ABM", "HUMSS"], counts = {}, tot = {};
-  v.forEach(function (x) {
-    if (x.purpose === "Feeding" || !x.illness) { return; }
-    var st = x.strand || "—";
-    counts[x.illness] = counts[x.illness] || {};
-    counts[x.illness][st] = (counts[x.illness][st] || 0) + 1;
-    tot[x.illness] = (tot[x.illness] || 0) + 1;
-  });
-  var names = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; }).slice(0, 6);
-  var ds = names.map(function (n, i) {
-    return { label: n, backgroundColor: brandPalette[i % brandPalette.length], borderRadius: 4, borderSkipped: false,
-      data: strands.map(function (st) { return counts[n][st] || 0; }) };
-  });
-  if (strandIllnessInstance) { strandIllnessInstance.destroy(); }
-  strandIllnessInstance = new Chart(document.getElementById("strandIllnessChart"), {
-    type: "bar", data: { labels: strands, datasets: ds },
-    options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 8, font: { size: 10 } } } },
-      scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } } }
-  });
+  /* Strand chart removed from dashboard */
+  return;
 }
 
 function exportCSV() {
