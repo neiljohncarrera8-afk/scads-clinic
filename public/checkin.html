@@ -416,6 +416,78 @@
 
 
 
+
+/* Check-in stocks — enhanced view-only cards */
+#stockList{display:flex;flex-direction:column;gap:8px;padding:2px 0 12px;}
+.stock-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 12px;border-radius:14px;
+  background:linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
+  border:1px solid rgba(255,255,255,0.1);
+  box-shadow:0 4px 14px rgba(0,0,0,0.15);
+  animation:kioskStockIn 0.45s cubic-bezier(.22,1,.36,1) both;
+  transition:transform 0.25s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.stock-item:hover{
+  transform:translateY(-2px);
+  border-color:rgba(125,255,176,0.25);
+  background:linear-gradient(145deg,rgba(255,255,255,0.12),rgba(255,255,255,0.05));
+}
+.stock-item.is-low{
+  border-color:rgba(255,184,77,0.35);
+  background:linear-gradient(145deg,rgba(163,105,15,0.18),rgba(255,255,255,0.04));
+}
+.stock-item.is-out{
+  border-color:rgba(255,122,122,0.4);
+  background:linear-gradient(145deg,rgba(184,67,63,0.2),rgba(255,255,255,0.04));
+}
+@keyframes kioskStockIn{
+  from{opacity:0;transform:translateX(12px) scale(0.97);}
+  to{opacity:1;transform:none;}
+}
+.stock-item .si-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  display:grid;place-items:center;font-size:1.25rem;
+  background:linear-gradient(145deg,rgba(125,255,176,0.2),rgba(15,92,61,0.35));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.stock-item .si-info{flex:1;min-width:0;}
+.stock-item .si-name{font-weight:800;font-size:.86rem;color:#fff;line-height:1.25;}
+.stock-item .si-cat{font-size:.68rem;color:#9cc3e2;margin-top:3px;}
+.stock-item .si-bar-wrap{margin-top:8px;}
+.stock-item .si-bar-bg{
+  height:7px;border-radius:999px;background:rgba(0,0,0,0.35);
+  overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,0.25);
+}
+.stock-item .si-bar-fill{
+  height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--bf,#0f5c3d),var(--bt,#7dffb0));
+  box-shadow:0 0 10px rgba(125,255,176,0.35);
+  transition:width 0.7s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+.stock-item .si-bar-fill::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,0.3),transparent 60%);
+  border-radius:inherit;pointer-events:none;
+}
+.stock-item .si-right{flex-shrink:0;text-align:right;}
+.stock-item .si-qty{
+  font-weight:800;font-size:.95rem;font-variant-numeric:tabular-nums;
+  padding:5px 10px;border-radius:10px;min-width:44px;text-align:center;
+  display:inline-block;
+}
+.stock-item .si-qty.ok{color:#7dffb0;background:rgba(15,92,61,.45);}
+.stock-item .si-qty.low{color:#ffb84d;background:rgba(163,105,15,.3);}
+.stock-item .si-qty.out{color:#ff7a7a;background:rgba(184,67,63,.35);}
+.stock-item .si-badge{
+  display:block;margin-top:5px;font-size:.62rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:.04em;opacity:.9;
+}
+.stock-item .si-badge.ok{color:#7dffb0;}
+.stock-item .si-badge.low{color:#ffb84d;}
+.stock-item .si-badge.out{color:#ff7a7a;}
+
 </style>
 </head>
 <body>
@@ -659,11 +731,11 @@ function render() {
       '<div class="ticket">' + rows + '</div>' +
       '<div class="refcode">' + esc(r.ref) + '</div>' +
       '<div class="actions">' +
-        '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print Again</button>' +
+        '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print slip</button>' +
         '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
-    printReceipt();
+    // Auto-print disabled — user taps "Print slip" only when needed (Windows + XP-58IIH)
     burst();
     startAutoReset();
     return;
@@ -1147,14 +1219,19 @@ var DEFAULT_STOCK = [
 function iconForName(name) {
   var n = (name || '').toLowerCase();
   if (n.indexOf('biogesic') >= 0 || n.indexOf('paracetamol') >= 0) return '💊';
-  if (n.indexOf('bioflu') >= 0 || n.indexOf('neozep') >= 0) return '🤧';
+  if (n.indexOf('bioflu') >= 0 || n.indexOf('neozep') >= 0 || n.indexOf('symdex') >= 0) return '🤧';
   if (n.indexOf('lagundi') >= 0 || n.indexOf('solmux') >= 0 || n.indexOf('cough') >= 0) return '🌿';
-  if (n.indexOf('kremil') >= 0 || n.indexOf('buscopan') >= 0 || n.indexOf('stomach') >= 0) return '🤢';
-  if (n.indexOf('cetirizine') >= 0 || n.indexOf('allergy') >= 0) return '🌸';
+  if (n.indexOf('kremil') >= 0 || n.indexOf('buscopan') >= 0 || n.indexOf('diatabs') >= 0 || n.indexOf('loperamide') >= 0) return '🤢';
+  if (n.indexOf('cetirizine') >= 0 || n.indexOf('levocetirizine') >= 0 || n.indexOf('allecure') >= 0 || n.indexOf('allergy') >= 0) return '🌸';
+  if (n.indexOf('mefenamic') >= 0 || n.indexOf('mecid') >= 0) return '💊';
   if (n.indexOf('oresol') >= 0 || n.indexOf('rehydrat') >= 0) return '💧';
-  if (n.indexOf('betadine') >= 0 || n.indexOf('alcohol') >= 0) return '🧴';
+  if (n.indexOf('betadine') >= 0 || n.indexOf('povidone') >= 0 || n.indexOf('alcohol') >= 0 || n.indexOf('swab') >= 0) return '🧴';
+  if (n.indexOf('silver') >= 0 || n.indexOf('sulfadiazine') >= 0) return '🧴';
   if (n.indexOf('band') >= 0 || n.indexOf('gauze') >= 0 || n.indexOf('cotton') >= 0) return '🩹';
-  if (n.indexOf('ice') >= 0) return '🧊';
+  if (n.indexOf('salonpas') >= 0 || n.indexOf('compress') >= 0 || n.indexOf('ice') >= 0) return '🧊';
+  if (n.indexOf('vicks') >= 0 || n.indexOf('white flower') >= 0 || n.indexOf('efficas') >= 0 || n.indexOf('manzanilla') >= 0) return '🌿';
+  if (n.indexOf('glucose') >= 0 || n.indexOf('strip') >= 0) return '🩸';
+  if (n.indexOf('mask') >= 0 || n.indexOf('facemask') >= 0) return '😷';
   if (n.indexOf('sanitary') >= 0) return '🩸';
   return '💊';
 }
@@ -1286,23 +1363,44 @@ function addMedicine() {
 }
 
 function renderStock() {
-  var list = stockCache && stockCache.length ? stockCache : [];
+  var list = stockCache && stockCache.length ? stockCache.slice() : [];
   var el = document.getElementById('stockList');
   if (!el) return;
   if (!list.length) {
     el.innerHTML = '<div class="rec-empty">No stock data.<br>Open the dashboard to manage inventory.</div>';
     return;
   }
+  var maxQ = 0;
+  for (var m0 = 0; m0 < list.length; m0++) {
+    var q0 = typeof list[m0].qty === 'number' ? list[m0].qty : 0;
+    if (q0 > maxQ) maxQ = q0;
+  }
+  if (maxQ < 10) maxQ = 10;
   var out = '';
   for (var i = 0; i < list.length; i++) {
     var m = list[i];
     var qty = typeof m.qty === 'number' ? m.qty : 0;
-    var cls = (m.status === 'critical' || qty === 0) ? 'out' : ((m.status === 'low' || qty <= 25) ? 'low' : 'ok');
+    var cls = (m.status === 'critical' || qty === 0) ? 'out' : ((m.status === 'low' || qty <= 15) ? 'low' : 'ok');
+    var rowCls = 'stock-item' + (cls === 'out' ? ' is-out' : cls === 'low' ? ' is-low' : '');
     var icon = m.icon || iconForName(m.name);
-    out += '<div class="stock-item">' +
-      '<div class="si-info"><div class="si-name">' + icon + ' ' + esc(m.name || '') + '</div>' +
-      '<div class="si-cat">' + esc(m.status || m.cat || '') + '</div></div>' +
-      '<div class="si-qty ' + cls + '">' + qty + '</div></div>';
+    var pct = Math.min(100, Math.round((qty / maxQ) * 100));
+    var bf = cls === 'out' ? '#8b2e2b' : cls === 'low' ? '#a3690f' : '#0f5c3d';
+    var bt = cls === 'out' ? '#ff7a7a' : cls === 'low' ? '#ffb84d' : '#7dffb0';
+    var badge = cls === 'out' ? 'Out / Critical' : cls === 'low' ? 'Low stock' : 'Available';
+    var delay = (i * 0.045).toFixed(2);
+    out += '<div class="' + rowCls + '" style="animation-delay:' + delay + 's">' +
+      '<div class="si-icon">' + icon + '</div>' +
+      '<div class="si-info">' +
+        '<div class="si-name">' + esc(m.name || '') + '</div>' +
+        '<div class="si-cat">View only · synced from dashboard</div>' +
+        '<div class="si-bar-wrap"><div class="si-bar-bg">' +
+          '<div class="si-bar-fill" style="width:' + pct + '%;--bf:' + bf + ';--bt:' + bt + ';"></div>' +
+        '</div></div>' +
+      '</div>' +
+      '<div class="si-right">' +
+        '<div class="si-qty ' + cls + '">' + qty + '</div>' +
+        '<span class="si-badge ' + cls + '">' + badge + '</span>' +
+      '</div></div>';
   }
   el.innerHTML = out;
 }
