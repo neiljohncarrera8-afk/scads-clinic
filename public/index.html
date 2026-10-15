@@ -925,6 +925,140 @@
     min-height:200px;
   }
 
+
+  /* ===== Inventory stocks — enhanced visuals ===== */
+  #stockListFull{
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .stock-item{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    padding:14px 16px;border-radius:16px;
+    background:linear-gradient(145deg,#ffffff 0%,#f4faf6 100%);
+    border:1px solid rgba(27,122,77,0.1);
+    box-shadow:0 4px 14px rgba(15,61,46,0.05);
+    transition:transform 0.28s cubic-bezier(.22,1,.36,1), box-shadow 0.28s ease, border-color 0.2s ease;
+    animation:stockIn 0.5s cubic-bezier(.22,1,.36,1) both;
+  }
+  .stock-item:hover{
+    transform:translateY(-3px);
+    box-shadow:0 12px 28px rgba(15,61,46,0.1);
+    border-color:rgba(27,122,77,0.22);
+  }
+  .stock-item.is-critical{
+    background:linear-gradient(145deg,#fff8f8,#fdeeee);
+    border-color:rgba(224,92,92,0.25);
+  }
+  .stock-item.is-low{
+    background:linear-gradient(145deg,#fffdf6,#fbf3de);
+    border-color:rgba(232,185,63,0.3);
+  }
+  @keyframes stockIn{
+    from{opacity:0;transform:translateY(12px) scale(0.98);}
+    to{opacity:1;transform:none;}
+  }
+  .stock-item .si-name{
+    font-weight:800;font-size:0.92rem;flex:1;min-width:120px;
+    letter-spacing:-0.01em;
+  }
+  .stock-item .si-badge{
+    font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;
+    padding:3px 8px;border-radius:999px;margin-left:8px;vertical-align:middle;
+  }
+  .si-badge.ok{background:#dcf3e6;color:#0f5c3d;}
+  .si-badge.low{background:#fbf1de;color:#a3690f;}
+  .si-badge.critical{background:#fde8e8;color:#b8433f;}
+  .stock-item .si-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .stock-bar-bg{
+    width:88px;height:12px;border-radius:999px;
+    background:linear-gradient(180deg,#e8eee9,#f4f7f5);
+    overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);
+    position:relative;
+  }
+  .stock-bar-fill{
+    height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--bar-from,#1b7a4d),var(--bar-to,#39e88f));
+    box-shadow:0 0 12px rgba(27,122,77,0.35);
+    transition:width 0.7s cubic-bezier(.22,1,.36,1);
+    position:relative;
+  }
+  .stock-bar-fill::after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,0.35),transparent 55%);
+    border-radius:inherit;pointer-events:none;
+  }
+  .stock-item .si-level{
+    font-weight:800;min-width:42px;text-align:right;
+    font-variant-numeric:tabular-nums;font-size:1rem;
+  }
+  .stock-item .si-btn{
+    width:34px;height:34px;border:none;border-radius:10px;cursor:pointer;
+    font-weight:800;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;
+    transition:transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .stock-item .si-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+  .stock-item .si-btn:active{transform:scale(0.92);}
+  .stock-item .si-btn.minus{background:#fde8e8;color:var(--red);}
+  .stock-item .si-btn.plus{background:var(--primary-light);color:var(--primary-dark);}
+  .stock-item .si-btn.addn{
+    background:linear-gradient(135deg,#c8f0d8,#9fe0b8);color:#0b4530;
+    font-size:0.7rem;min-width:40px;width:auto;padding:0 10px;
+  }
+  .stock-item .si-btn.subn{
+    background:linear-gradient(135deg,#fdd,#f5b0b0);color:#8b2e2b;
+    font-size:0.7rem;min-width:40px;width:auto;padding:0 10px;
+  }
+  .stock-item .si-btn.del{
+    background:#fde8e8;color:var(--red);font-size:0.85rem;
+  }
+  .stock-item .si-qty-input{
+    width:56px;padding:7px 8px;border:1.5px solid var(--border);border-radius:10px;
+    font-family:inherit;font-size:0.85rem;font-weight:700;text-align:center;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  .stock-item .si-qty-input:focus{
+    outline:none;border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(27,122,77,0.14);
+  }
+
+
+  /* ===== Compact dashboard layout + richer chart panels ===== */
+  .stats-grid{gap:12px;margin-bottom:16px;}
+  .stat-card{padding:14px 16px;border-radius:16px;}
+  .stat-card .value{font-size:1.45rem;}
+  .grid2{gap:14px;margin-bottom:14px;}
+  .grid1{gap:14px;margin-bottom:14px;}
+  .panel{
+    padding:14px 16px 12px !important;
+    border-radius:16px !important;
+    min-height:0 !important;
+  }
+  .panel h2{
+    font-size:0.88rem !important;
+    margin-bottom:10px !important;
+  }
+  .panel canvas,
+  canvas{
+    max-height:190px !important;
+    width:100% !important;
+  }
+  .panel-accent{
+    padding:14px 16px 12px !important;
+  }
+  .insights{gap:10px;margin-bottom:14px;}
+  .insight{padding:12px 14px;border-radius:14px;}
+  .topbar{margin-bottom:16px;}
+  .topbar h1{font-size:1.45rem;}
+  /* Chart container frame */
+  .panel .chart-wrap{
+    position:relative;
+    border-radius:14px;
+    background:radial-gradient(120% 80% at 50% 0%, rgba(27,122,77,0.06), transparent 55%);
+    padding:4px 2px 2px;
+  }
+  .range button{
+    padding:5px 11px;font-size:0.72rem;border-radius:999px;
+  }
+
 </style>
 </head>
 <body>
@@ -1299,6 +1433,9 @@ Chart.defaults.elements.bar.borderRadius = 10;
 Chart.defaults.elements.bar.borderSkipped = false;
 Chart.defaults.elements.line.borderWidth = 3;
 Chart.defaults.elements.point.hoverRadius = 7;
+Chart.defaults.plugins.legend.labels.padding = 12;
+Chart.defaults.plugins.legend.labels.font = { size: 10, weight: "600" };
+
 
 
 function doughnutAnimOpts() {
@@ -1315,11 +1452,11 @@ function doughnutAnimOpts() {
 }
 function barAnimOpts() {
   return {
-    duration: 900,
+    duration: 850,
     easing: "easeOutQuart",
     delay: function (ctx) {
       if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-      return (ctx.dataIndex || 0) * 70;
+      return (ctx.dataIndex || 0) * 60;
     }
   };
 }
@@ -1483,7 +1620,7 @@ for (var n = 0; n < navItems.length; n++) {
     if (tabName === "more") renderIllnessGuide();
     if (tabName === "inventory") refreshInventoryOnly();
     setTimeout(bindPanelSpotlights, 50);
-    setTimeout(bindAllChartTips, 80);
+    setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 80);
     if (tabName === "trends" || tabName === "dashboard") {
       var panels = document.querySelectorAll("#tab-" + tabName + " .panel");
       for (var pi = 0; pi < panels.length; pi++) {
@@ -1562,7 +1699,7 @@ function refreshDashboard() {
   setSyncStatus("Updating…", false);
   return Promise.all([loadAll(), loadTrendAndReports()]).then(function () {
     setSyncStatus("Updated " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), false);
-    setTimeout(bindAllChartTips, 150);
+    setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 150);
   }).catch(function (err) {
     setSyncStatus("Update failed: " + (err && err.message ? err.message : "server unavailable"), true);
     console.error("Dashboard refresh failed:", err);
@@ -1661,6 +1798,21 @@ function bindCanvasTip(canvas) {
     }
   });
 }
+
+function wrapChartCanvases() {
+  try {
+    var canvases = document.querySelectorAll(".panel > canvas");
+    for (var i = 0; i < canvases.length; i++) {
+      var c = canvases[i];
+      if (c.parentNode && c.parentNode.classList && c.parentNode.classList.contains("chart-wrap")) continue;
+      var wrap = document.createElement("div");
+      wrap.className = "chart-wrap";
+      c.parentNode.insertBefore(wrap, c);
+      wrap.appendChild(c);
+    }
+  } catch (e) {}
+}
+
 function bindAllChartTips() {
   var canvases = document.querySelectorAll("canvas");
   for (var i = 0; i < canvases.length; i++) bindCanvasTip(canvases[i]);
@@ -1742,7 +1894,7 @@ function loadAll() {
     renderCampaign(campaign);
     renderPeakHours(visits);
     renderSeverityBreakdown(visits);
-    setTimeout(bindAllChartTips, 150);
+    setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 150);
   });
 }
 
@@ -1905,21 +2057,32 @@ function renderTable(visits) {
   tbody.innerHTML = html;
 }
 
-function stockRowHTML(item, maxLevel) {
-  var color = item.status === "critical" ? "var(--red)" : item.status === "low" ? "var(--yellow)" : "var(--primary)";
+function stockRowHTML(item, maxLevel, index) {
+  var status = item.status || "ok";
+  if (status !== "critical" && status !== "low") status = item.level <= 5 ? "critical" : item.level <= 15 ? "low" : "ok";
+  var color = status === "critical" ? "#e05c5c" : status === "low" ? "#c9920a" : "#1b7a4d";
+  var barFrom = status === "critical" ? "#c73f3f" : status === "low" ? "#d4a017" : "#0f5c3d";
+  var barTo = status === "critical" ? "#ff8a8a" : status === "low" ? "#f0d060" : "#39e88f";
+  var badge = status === "critical" ? "critical" : status === "low" ? "low" : "ok";
+  var badgeLabel = status === "critical" ? "Low" : status === "low" ? "Watch" : "OK";
   var id = item.id;
   var maxL = maxLevel && maxLevel > 0 ? maxLevel : 100;
   var pct = Math.min(100, Math.round((Math.max(0, item.level) / maxL) * 100));
-  return '<div class="stock-item" data-id="' + id + '">' +
-    '<span class="si-name">' + escapeHTML(item.item_name) + '</span>' +
+  var delay = (typeof index === "number" ? index : 0) * 0.04;
+  var rowClass = "stock-item" + (status === "critical" ? " is-critical" : status === "low" ? " is-low" : "");
+  return '<div class="' + rowClass + '" data-id="' + id + '" style="animation-delay:' + delay + 's">' +
+    '<span class="si-name">' + escapeHTML(item.item_name) +
+      ' <span class="si-badge ' + badge + '">' + badgeLabel + '</span></span>' +
     '<div class="si-controls">' +
       '<button type="button" class="si-btn minus" onclick="adjustInventory(' + id + ',-1)" title="-1">−</button>' +
-      '<div class="stock-bar-bg" title="' + item.level + ' units"><div class="stock-bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div>' +
+      '<div class="stock-bar-bg" title="' + item.level + ' units">' +
+        '<div class="stock-bar-fill" style="width:' + pct + '%;--bar-from:' + barFrom + ';--bar-to:' + barTo + ';"></div>' +
+      '</div>' +
       '<span class="si-level" style="color:' + color + ';">' + item.level + '</span>' +
       '<button type="button" class="si-btn plus" onclick="adjustInventory(' + id + ',1)" title="+1">+</button>' +
       '<input type="number" min="1" value="10" class="si-qty-input" id="qtyAdd' + id + '" title="Custom amount">' +
-      '<button type="button" class="si-btn eq addn" onclick="addInventoryAmount(' + id + ')" title="Add this amount">+N</button>' +
-      '<button type="button" class="si-btn eq subn" onclick="subInventoryAmount(' + id + ')" title="Subtract this amount">−N</button>' +
+      '<button type="button" class="si-btn addn" onclick="addInventoryAmount(' + id + ')" title="Add this amount">+N</button>' +
+      '<button type="button" class="si-btn subn" onclick="subInventoryAmount(' + id + ')" title="Subtract this amount">−N</button>' +
       '<button type="button" class="si-btn del" onclick="deleteInventoryItem(' + id + ')" title="Delete item">✕</button>' +
     '</div></div>';
 }
@@ -1938,7 +2101,7 @@ function renderStockFull(stock) {
   if (maxLevel < 10) maxLevel = 10;
   var html = "";
   for (var i = 0; i < stock.length; i++) {
-    html = html + stockRowHTML(stock[i], maxLevel);
+    html = html + stockRowHTML(stock[i], maxLevel, i);
   }
   el.innerHTML = html;
 }
@@ -2662,7 +2825,7 @@ listenForVisitUpdates();
 loadMeta().then(function () {
   return refreshDashboard();
 }).then(function () {
-  setTimeout(bindAllChartTips, 200);
+  setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 200);
 }).catch(function (err) {
   setSyncStatus("Could not load clinic settings: " + err.message, true);
   console.error("Could not load clinic settings:", err);
