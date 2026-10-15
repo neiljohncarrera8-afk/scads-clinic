@@ -338,7 +338,7 @@
   .range{margin-left:auto;display:inline-flex;gap:4px;background:var(--bg);padding:3px;border-radius:10px;}
   .range button{border:none;background:none;padding:5px 10px;border-radius:8px;font:700 .7rem 'Manrope';color:var(--muted);cursor:pointer;transition:all .3s var(--ease);}
   .range button.on{background:var(--primary);color:#fff;box-shadow:0 3px 8px rgba(27,122,77,.35);}
-  .heat{display:grid;grid-template-columns:32px repeat(13,minmax(0,1fr));gap:3px;font-size:.58rem;color:var(--muted);font-weight:700;align-items:center;max-width:680px;}
+  .heat{display:grid;grid-template-columns:38px repeat(13,1fr);gap:4px;font-size:.62rem;color:var(--muted);font-weight:700;align-items:center;}
   .hc{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;
     animation:cellIn .5s var(--ease) both;transition:transform .2s;}
   .hc:hover{transform:scale(1.25);z-index:2;}
@@ -922,8 +922,7 @@
     letter-spacing:-0.02em;
   }
   #heatmap{
-    min-height:0;
-    max-width:720px;
+    min-height:200px;
   }
 
 
@@ -1072,20 +1071,6 @@
     color:#fff;
   }
 
-
-  /* heatmap compact */
-  .heat .hc{
-    aspect-ratio: auto !important;
-    height: 24px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-    border-radius: 5px !important;
-    font-size: 0.55rem !important;
-  }
-  #tab-trends #heatmap{
-    max-width: 640px;
-  }
-
   /* ===== FULL POLISH v240 ===== */
   :root{
     --ease-out: cubic-bezier(.22,1,.36,1);
@@ -1162,6 +1147,30 @@
     letter-spacing: -0.01em;
   }
 
+
+  /* heatmap restored polish */
+  #heatmap{ min-height: 200px; max-width: none; }
+  .heat{
+    grid-template-columns: 38px repeat(13, 1fr) !important;
+    gap: 4px !important;
+    font-size: 0.62rem !important;
+    max-width: none !important;
+  }
+  .heat .hc{
+    aspect-ratio: 1 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    border-radius: 7px !important;
+    font-size: 0.62rem !important;
+  }
+  .heat-legend{ margin-top: 14px !important; }
+  .heat-legend i{ width: 110px !important; height: 8px !important; }
+
+  /* polish keep */
+  .panel:hover, .panel-accent:hover{
+    transform: translateY(-2px);
+  }
 </style>
 </head>
 <body>
@@ -2804,8 +2813,7 @@ function renderHeatmap(v) {
       var bg = n ? "rgba(27,122,77," + a.toFixed(2) + ")" : "#f0f4f2";
       html += '<div class="hc" title="' + DAY_NAMES[day] + " " + hourLabel(h2) + ": " + n + ' visits" style="background:' + bg +
         ";color:" + (a > 0.55 ? "#fff" : "#1b7a4d") +
-        ";animation-delay:" + ((r * 13 + h2 - 6) * 6) + 'ms;height:22px;min-height:22px;line-height:22px;border-radius:6px;font-size:0.55rem;">' +
-        (n || "") + "</div>";
+        ";animation-delay:" + ((r * 13 + h2 - 6) * 8) + 'ms">' + (n || "") + "</div>";
     }
   });
   document.getElementById("heatmap").innerHTML = '<div class="heat">' + html + '</div><div class="heat-legend">Less <i></i> More</div>';
