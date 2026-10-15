@@ -190,7 +190,7 @@
   .panel:hover{box-shadow:var(--shadow-md);}
   .panel h2{font-size:0.98rem;margin-bottom:16px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;}
   .panel h2::before{content:'';display:inline-block;width:4px;height:14px;background:var(--primary);border-radius:2px;margin-right:9px;}
-  canvas{max-height:235px;}
+  canvas{max-height:238px;}
 
   .alert-panel{
     background:linear-gradient(135deg,#fdeeee,#fff5f5);border:1px solid #f3c8c8;border-radius:18px;padding:18px;
@@ -338,7 +338,7 @@
   .range{margin-left:auto;display:inline-flex;gap:4px;background:var(--bg);padding:3px;border-radius:10px;}
   .range button{border:none;background:none;padding:5px 10px;border-radius:8px;font:700 .7rem 'Manrope';color:var(--muted);cursor:pointer;transition:all .3s var(--ease);}
   .range button.on{background:var(--primary);color:#fff;box-shadow:0 3px 8px rgba(27,122,77,.35);}
-  .heat{display:grid;grid-template-columns:38px repeat(13,1fr);gap:4px;font-size:.62rem;color:var(--muted);font-weight:700;align-items:center;}
+  .heat{display:grid;grid-template-columns:32px repeat(13,minmax(0,1fr));gap:3px;font-size:.58rem;color:var(--muted);font-weight:700;align-items:center;max-width:680px;}
   .hc{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;
     animation:cellIn .5s var(--ease) both;transition:transform .2s;}
   .hc:hover{transform:scale(1.25);z-index:2;}
@@ -886,7 +886,7 @@
   .inv-hint{font-size:0.8rem;color:var(--muted);margin-top:12px;}
   /* Chart panel polish */
   .panel canvas{
-    max-height:235px;
+    max-height:238px;
   }
   #tab-trends .panel, #tab-dashboard .panel{
     transition:transform 0.35s ease, box-shadow 0.35s ease;
@@ -922,8 +922,10 @@
     letter-spacing:-0.02em;
   }
   #heatmap{
-    min-height:200px;
+    min-height:0;
+    max-width:720px;
   }
+
 
 
   /* ===== Inventory stocks — enhanced visuals ===== */
@@ -1037,7 +1039,7 @@
   }
   .panel canvas,
   canvas{
-    max-height:235px !important;
+    max-height:238px !important;
     width:100% !important;
   }
   .panel-accent{
@@ -1068,6 +1070,96 @@
   .range button.on{
     background:linear-gradient(135deg,#1b7a4d,#0f5c3d);
     color:#fff;
+  }
+
+
+  /* heatmap compact */
+  .heat .hc{
+    aspect-ratio: auto !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    border-radius: 5px !important;
+    font-size: 0.55rem !important;
+  }
+  #tab-trends #heatmap{
+    max-width: 640px;
+  }
+
+  /* ===== FULL POLISH v240 ===== */
+  :root{
+    --ease-out: cubic-bezier(.22,1,.36,1);
+    --glow-green: 0 8px 28px rgba(27,122,77,0.14);
+  }
+  .panel, .panel-accent{
+    transition: transform 0.35s var(--ease-out), box-shadow 0.35s ease, border-color 0.25s ease !important;
+  }
+  .panel:hover, .panel-accent:hover{
+    transform: translateY(-3px);
+    box-shadow: var(--glow-green), 0 1px 0 rgba(255,255,255,0.9) inset !important;
+    border-color: rgba(27,122,77,0.18) !important;
+  }
+  .panel h2::before{
+    box-shadow: 0 0 10px rgba(27,122,77,0.45);
+  }
+  .stat-card{
+    transition: transform 0.35s var(--ease-out), box-shadow 0.35s ease !important;
+  }
+  .stat-card:hover{
+    box-shadow: var(--glow-green) !important;
+  }
+  .panel canvas, canvas{
+    max-height: 238px !important;
+  }
+  .panel .chart-wrap{
+    background:
+      radial-gradient(100% 80% at 50% -10%, rgba(27,122,77,0.1), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,0.65), transparent 40%) !important;
+  }
+  .nav-item{
+    transition: background 0.25s ease, transform 0.25s var(--ease-out), color 0.2s ease !important;
+  }
+  .nav-item:hover{
+    transform: translateX(4px);
+  }
+  .nav-item.active{
+    box-shadow: inset 3px 0 0 var(--primary), 0 4px 14px rgba(27,122,77,0.08);
+  }
+  .insight, .illness-card{
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease !important;
+  }
+  .insight:hover, .illness-card:hover{
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(15,61,46,0.1);
+  }
+  .range button{
+    transition: transform 0.25s var(--ease-out), background 0.25s ease, box-shadow 0.25s ease !important;
+  }
+  .range button.on{
+    box-shadow: 0 4px 14px rgba(27,122,77,0.35) !important;
+  }
+  tbody tr{
+    transition: background 0.2s ease, transform 0.2s ease !important;
+  }
+  /* Soft scrollbar */
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:rgba(27,122,77,0.25);border-radius:8px;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(27,122,77,0.4);}
+
+
+  /* ===== FINAL 238 ===== */
+  .panel canvas, canvas{ max-height: 238px !important; }
+  .panel .chart-wrap{
+    border-radius: 18px;
+  }
+  .stat-card .stat-icon{
+    transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease;
+  }
+  .range button.on{
+    transform: scale(1.04);
+  }
+  .panel h2{
+    letter-spacing: -0.01em;
   }
 
 </style>
@@ -1395,11 +1487,11 @@ var brandPalette = ["#1b7a4d", "#3b82c4", "#8b6bd1", "#d97ba8", "#e8b93f", "#2f9
 Chart.defaults.font.family = "'Manrope', sans-serif";
 Chart.defaults.color = "#6b7c76";
 Chart.defaults.animation = {
-  duration: 1000,
+  duration: 1050,
   easing: "easeOutQuart",
   delay: function (ctx) {
     if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-    return (ctx.dataIndex || 0) * 90;
+    return (ctx.dataIndex || 0) * 85;
   }
 };
 Chart.defaults.animations = {
@@ -1419,7 +1511,10 @@ Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
 Chart.defaults.plugins.tooltip.titleColor = "#fff";
 Chart.defaults.plugins.tooltip.bodyColor = "#e8f5ee";
 Chart.defaults.plugins.tooltip.padding = 12;
-Chart.defaults.plugins.tooltip.cornerRadius = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 12;
+Chart.defaults.plugins.tooltip.caretSize = 6;
+Chart.defaults.plugins.tooltip.titleFont = { weight: "700", size: 12 };
+Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
 Chart.defaults.plugins.tooltip.displayColors = true;
 Chart.defaults.plugins.tooltip.callbacks = {
   label: function (ctx) {
@@ -1451,11 +1546,11 @@ Chart.defaults.plugins.legend.labels.font = { size: 10, weight: "600" };
 
 function doughnutAnimOpts() {
   return {
-    duration: 1200,
+    duration: 1250,
     easing: "easeOutQuart",
     delay: function (ctx) {
       if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-      return (ctx.dataIndex || 0) * 100;
+      return (ctx.dataIndex || 0) * 95;
     },
     animateRotate: true,
     animateScale: true
@@ -1498,11 +1593,11 @@ var DEPTH_PALETTE = ["#0f5c3d", "#1b7a4d", "#2f9e68", "#3b82c4", "#5b6bcf", "#8b
 
 function lineAnimOpts() {
   return {
-    duration: 1000,
+    duration: 1100,
     easing: "easeOutQuart",
     delay: function (ctx) {
       if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-      return (ctx.dataIndex || 0) * 40;
+      return (ctx.dataIndex || 0) * 35;
     }
   };
 }
@@ -1562,9 +1657,9 @@ Chart.register({
       var type = chart.config && chart.config.type;
       if (type !== 'bar' && type !== 'line') return;
       ctx.save();
-      ctx.shadowColor = 'rgba(15, 61, 46, 0.22)';
-      ctx.shadowBlur = 16;
-      ctx.shadowOffsetY = 8;
+      ctx.shadowColor = 'rgba(15, 61, 46, 0.28)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 10;
       ctx.shadowOffsetX = 0;
     } catch (e) {}
   },
@@ -2326,7 +2421,7 @@ function renderPurposeChart(rows) {
     data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0, spacing: 3 }] },
     options: {
       animation: doughnutAnimOpts(),
-      cutout: "64%",
+      cutout: "68%",
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 10 } },
@@ -2421,7 +2516,7 @@ function severityChartConfig(counts) {
           }
         }
       },
-      cutout: "64%",
+      cutout: "68%",
       onHover: function (e, els) {
         var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
         if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
@@ -2530,7 +2625,7 @@ function renderCharts(daily, illness, grade) {
           }
         }
       },
-      cutout: "64%",
+      cutout: "68%",
       onHover: function (e, els) {
         var t = (e && e.native && e.native.target) || (e && e.chart && e.chart.canvas) || null;
         if (t && t.style) t.style.cursor = els && els.length ? "pointer" : "default";
@@ -2707,8 +2802,10 @@ function renderHeatmap(v) {
     for (var h2 = 6; h2 <= 18; h2++) {
       var n = grid[day + "-" + h2] || 0, a = n ? 0.15 + 0.85 * (n / max) : 0;
       var bg = n ? "rgba(27,122,77," + a.toFixed(2) + ")" : "#f0f4f2";
-      html += '<div class="hc" title="' + DAY_NAMES[day] + " " + hourLabel(h2) + ": " + n + ' visits" style="background:' + bg + ";color:" + (a > 0.55 ? "#fff" : "#1b7a4d") +
-        ";animation-delay:" + ((r * 13 + h2 - 6) * 9) + 'ms">' + (n || "") + "</div>";
+      html += '<div class="hc" title="' + DAY_NAMES[day] + " " + hourLabel(h2) + ": " + n + ' visits" style="background:' + bg +
+        ";color:" + (a > 0.55 ? "#fff" : "#1b7a4d") +
+        ";animation-delay:" + ((r * 13 + h2 - 6) * 6) + 'ms;height:22px;min-height:22px;line-height:22px;border-radius:6px;font-size:0.55rem;">' +
+        (n || "") + "</div>";
     }
   });
   document.getElementById("heatmap").innerHTML = '<div class="heat">' + html + '</div><div class="heat-legend">Less <i></i> More</div>';
@@ -2844,4 +2941,3 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
-
