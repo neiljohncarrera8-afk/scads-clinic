@@ -190,7 +190,7 @@
   .panel:hover{box-shadow:var(--shadow-md);}
   .panel h2{font-size:0.98rem;margin-bottom:16px;color:var(--primary-dark);font-weight:700;display:flex;align-items:center;}
   .panel h2::before{content:'';display:inline-block;width:4px;height:14px;background:var(--primary);border-radius:2px;margin-right:9px;}
-  canvas{max-height:230px;}
+  canvas{max-height:220px;}
 
   .alert-panel{
     background:linear-gradient(135deg,#fdeeee,#fff5f5);border:1px solid #f3c8c8;border-radius:18px;padding:18px;
@@ -886,7 +886,7 @@
   .inv-hint{font-size:0.8rem;color:var(--muted);margin-top:12px;}
   /* Chart panel polish */
   .panel canvas{
-    max-height:280px;
+    max-height:220px;
   }
   #tab-trends .panel, #tab-dashboard .panel{
     transition:transform 0.35s ease, box-shadow 0.35s ease;
@@ -1021,42 +1021,53 @@
   }
 
 
-  /* ===== Compact dashboard layout + richer chart panels ===== */
-  .stats-grid{gap:12px;margin-bottom:16px;}
-  .stat-card{padding:14px 16px;border-radius:16px;}
-  .stat-card .value{font-size:1.45rem;}
-  .grid2{gap:14px;margin-bottom:14px;}
-  .grid1{gap:14px;margin-bottom:14px;}
+  /* ===== Restored chart size + richer panel visuals ===== */
+  .stats-grid{gap:16px;margin-bottom:22px;}
+  .stat-card{padding:18px 20px;border-radius:18px;}
+  .stat-card .value{font-size:1.7rem;}
+  .grid2{gap:18px;margin-bottom:20px;}
+  .grid1{gap:18px;margin-bottom:20px;}
   .panel{
-    padding:14px 16px 12px !important;
-    border-radius:16px !important;
-    min-height:0 !important;
+    padding:20px 22px 18px !important;
+    border-radius:20px !important;
   }
   .panel h2{
-    font-size:0.88rem !important;
-    margin-bottom:10px !important;
+    font-size:0.98rem !important;
+    margin-bottom:14px !important;
   }
   .panel canvas,
   canvas{
-    max-height:190px !important;
+    max-height:220px !important;
     width:100% !important;
   }
   .panel-accent{
-    padding:14px 16px 12px !important;
+    padding:20px 22px 18px !important;
   }
-  .insights{gap:10px;margin-bottom:14px;}
-  .insight{padding:12px 14px;border-radius:14px;}
-  .topbar{margin-bottom:16px;}
-  .topbar h1{font-size:1.45rem;}
-  /* Chart container frame */
+  .insights{gap:12px;margin-bottom:18px;}
+  .insight{padding:14px 16px;border-radius:16px;}
+  .topbar{margin-bottom:22px;}
+  /* Soft glow frame under charts */
   .panel .chart-wrap{
     position:relative;
-    border-radius:14px;
-    background:radial-gradient(120% 80% at 50% 0%, rgba(27,122,77,0.06), transparent 55%);
-    padding:4px 2px 2px;
+    border-radius:16px;
+    background:
+      radial-gradient(90% 70% at 50% 0%, rgba(27,122,77,0.08), transparent 60%),
+      linear-gradient(180deg, rgba(255,255,255,0.5), transparent);
+    padding:8px 4px 4px;
   }
+  .panel .chart-wrap::before{
+    content:"";
+    position:absolute;left:12%;right:12%;bottom:6px;height:14px;
+    background:radial-gradient(ellipse at center, rgba(15,61,46,0.12), transparent 70%);
+    filter:blur(6px);pointer-events:none;z-index:0;
+  }
+  .panel .chart-wrap canvas{position:relative;z-index:1;}
   .range button{
-    padding:5px 11px;font-size:0.72rem;border-radius:999px;
+    padding:6px 12px;font-size:0.75rem;border-radius:999px;
+  }
+  .range button.on{
+    background:linear-gradient(135deg,#1b7a4d,#0f5c3d);
+    color:#fff;
   }
 
 </style>
@@ -1551,9 +1562,9 @@ Chart.register({
       var type = chart.config && chart.config.type;
       if (type !== 'bar' && type !== 'line') return;
       ctx.save();
-      ctx.shadowColor = 'rgba(15, 61, 46, 0.18)';
-      ctx.shadowBlur = 12;
-      ctx.shadowOffsetY = 6;
+      ctx.shadowColor = 'rgba(15, 61, 46, 0.22)';
+      ctx.shadowBlur = 16;
+      ctx.shadowOffsetY = 8;
       ctx.shadowOffsetX = 0;
     } catch (e) {}
   },
@@ -2833,3 +2844,4 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+
