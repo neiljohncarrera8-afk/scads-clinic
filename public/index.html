@@ -1934,18 +1934,35 @@ function bindAllChartTips() {
 }
 
 function listenForVisitUpdates() {
+  function softRefresh() {
+    clearTimeout(window._dashRefreshT);
+    window._dashRefreshT = setTimeout(function () {
+      refreshDashboard().catch(function () {});
+    }, 300);
+  }
+
+  // Backup poll — Cloudflare tunnels often drop/buffer SSE
+  if (!window._dashPollTimer) {
+    window._dashPollTimer = setInterval(function () {
+      if (document.hidden) return;
+      softRefresh();
+    }, 12000);
+  }
+
   if (typeof EventSource === "undefined") return;
   var retryMs = 2000;
   var es = null;
   function connect() {
     try { if (es) es.close(); } catch (e1) {}
-    es = new EventSource(API + "/api/events");
+    try {
+      es = new EventSource(API + "/api/events");
+    } catch (e0) {
+      setTimeout(connect, retryMs);
+      return;
+    }
     es.addEventListener("visits-updated", function () {
       retryMs = 2000;
-      clearTimeout(window._dashRefreshT);
-      window._dashRefreshT = setTimeout(function () {
-        refreshDashboard().catch(function () {});
-      }, 400);
+      softRefresh();
     });
     es.onopen = function () {
       retryMs = 2000;
@@ -1959,7 +1976,6 @@ function listenForVisitUpdates() {
     };
   }
   connect();
-  // No aggressive timer refresh — SSE + Refresh button only (prevents charts vanishing)
 }
 
 function loadAll() {

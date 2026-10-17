@@ -277,12 +277,19 @@ app.get('/api/events', (req, res) => {
     'X-Accel-Buffering': 'no'
   });
   if (typeof res.flushHeaders === 'function') res.flushHeaders();
-  res.write('retry: 5000\n\n');
+  // Cloudflare-friendly: short retry + immediate comment so the stream is not buffered idle
+  res.write('retry: 3000\n\n');
+  res.write(': connected\n\n');
   visitEventClients.add(res);
 
   const heartbeat = setInterval(() => {
-    if (!res.writableEnded) res.write(': keep-alive\n\n');
-  }, 25000);
+    try {
+      if (!res.writableEnded) res.write(': keep-alive\n\n');
+    } catch (e) {
+      clearInterval(heartbeat);
+      visitEventClients.delete(res);
+    }
+  }, 12000);
 
   res.on('close', () => {
     clearInterval(heartbeat);
@@ -776,4 +783,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ SCADS running at http://localhost:${PORT}`);
 });
-

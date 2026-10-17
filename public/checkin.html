@@ -735,9 +735,12 @@ function render() {
         '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
-    // Auto-print disabled — user taps "Print slip" only when needed (Windows + XP-58IIH)
     burst();
     startAutoReset();
+    // Soft auto-print once (iframe — will not freeze kiosk UI)
+    setTimeout(function () {
+      try { printReceipt(); } catch (e) {}
+    }, 900);
     return;
   }
 
@@ -799,106 +802,123 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  var line = '--------------------------------\n';
+  // 32-char width works well on 58mm XP-58IIH
+  var W = 32;
+  function padLine(label, value) {
+    var L = safeForPrinter(label);
+    var V = safeForPrinter(value);
+    var gap = Math.max(1, W - L.length - V.length);
+    return L + Array(gap + 1).join(' ') + V + '\n';
+  }
+  function center(s) {
+    s = safeForPrinter(s);
+    if (s.length >= W) return s.slice(0, W) + '\n';
+    var left = Math.floor((W - s.length) / 2);
+    return Array(left + 1).join(' ') + s + '\n';
+  }
+  var line = Array(W + 1).join('-') + '\n';
   var isFeeding = r.purpose === 'Feeding';
   var t = '';
-  t += '    ALANGILAN SHS CLINIC\n';
-  t += isFeeding ? '       Feeding Check-In\n' : '      Visit Check-In Slip\n';
+  t += center('ALANGILAN SHS CLINIC');
+  t += center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip');
   t += line;
-  t += 'Purpose:  ' + safeForPrinter(r.purpose) + '\n';
+  t += padLine('Purpose', r.purpose);
   if (isFeeding) {
-    t += r.nameSaveFailed
-      ? 'Student:  NAME NOT CONFIRMED - CONTACT STAFF\n'
-      : 'Student:  ' + safeForPrinter(r.name) + '\n';
+    t += padLine('Student', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-'));
   }
-  t += 'Grade:    ' + safeForPrinter(r.grade) + '\n';
-  t += 'Section:  ' + safeForPrinter(r.section) + '\n';
+  t += padLine('Grade', r.grade);
+  t += padLine('Section', r.section);
   if (!isFeeding) {
-    t += 'Concern:  ' + safeForPrinter(r.illness) + '\n';
-    t += 'Severity: ' + safeForPrinter(r.severity) + '\n';
+    t += padLine('Concern', r.illness);
+    t += padLine('Severity', r.severity);
   }
-  t += 'Time:     ' + safeForPrinter(r.time) + '\n';
+  t += padLine('Time', r.time);
   t += line;
-  t += '   Ref: ' + safeForPrinter(r.ref) + '\n';
-  t += isFeeding
-    ? '\nPlease proceed to the feeding area.\n\n\n'
-    : '\nPlease proceed to the clinic staff.\n\n\n';
+  t += center('Ref: ' + (r.ref || ''));
+  t += '\n';
+  t += center(isFeeding ? 'Proceed to feeding area' : 'Proceed to clinic staff');
+  t += '\n\n\n';
   return t;
 }
 
 function buildReceiptHTML(r) {
-  var isFeeding = r.purpose === 'Feeding';
-  var rows = '';
-  rows += '<tr><td>Purpose</td><td><b>' + esc(r.purpose) + '</b></td></tr>';
-  if (isFeeding) {
-    rows += '<tr><td>Student</td><td><b>' + esc(r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '—')) + '</b></td></tr>';
-  }
-  rows += '<tr><td>Grade</td><td>' + esc(r.grade) + '</td></tr>';
-  rows += '<tr><td>Section</td><td>' + esc(r.section) + '</td></tr>';
-  if (!isFeeding) {
-    rows += '<tr><td>Concern</td><td>' + esc(r.illness) + '</td></tr>';
-    rows += '<tr><td>Severity</td><td>' + esc(r.severity) + '</td></tr>';
-  }
-  rows += '<tr><td>Time</td><td>' + esc(r.time) + '</td></tr>';
-  rows += '<tr><td>Ref</td><td>' + esc(r.ref) + '</td></tr>';
-  var note = isFeeding ? 'Please proceed to the feeding area.' : 'Please proceed to the clinic staff.';
+  // Plain monospace text — best spacing for XP-58IIH + Generic/Text Only
+  var text = buildReceiptText(r);
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Clinic Receipt</title>' +
     '<style>' +
-    '@page{size:58mm auto;margin:4mm;}' +
-    'body{font-family:Consolas,"Courier New",monospace;font-size:12px;color:#000;margin:0;padding:0;}' +
-    '.wrap{width:48mm;max-width:100%;margin:0 auto;}' +
-    'h1{font-size:14px;text-align:center;margin:0 0 4px;font-weight:700;}' +
-    'h2{font-size:12px;text-align:center;margin:0 0 8px;font-weight:600;}' +
-    'hr{border:none;border-top:1px dashed #000;margin:8px 0;}' +
-    'table{width:100%;border-collapse:collapse;}' +
-    'td{padding:2px 0;vertical-align:top;}' +
-    'td:first-child{width:38%;color:#333;}' +
-    '.note{text-align:center;margin-top:10px;font-size:11px;}' +
-    '.ref{text-align:center;font-size:11px;margin-top:6px;}' +
-    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}' +
-    '</style></head><body><div class="wrap">' +
-    '<h1>ALANGILAN SHS CLINIC</h1>' +
-    '<h2>' + (isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip') + '</h2>' +
-    '<hr><table>' + rows + '</table><hr>' +
-    '<div class="ref">Ref: ' + esc(r.ref) + '</div>' +
-    '<div class="note">' + note + '</div>' +
-    '</div></body></html>';
+    '@page{size:58mm auto;margin:2mm 3mm;}' +
+    'html,body{margin:0;padding:0;background:#fff;}' +
+    'body{font-family:"Courier New",Consolas,monospace;font-size:13px;line-height:1.45;' +
+    'letter-spacing:0.06em;color:#000;font-weight:600;}' +
+    'pre{margin:0;padding:0;white-space:pre;font-family:inherit;font-size:inherit;' +
+    'line-height:inherit;letter-spacing:inherit;font-weight:inherit;}' +
+    '@media print{' +
+    '  body{font-size:12px;letter-spacing:0.08em;line-height:1.5;}' +
+    '  @page{margin:2mm;}' +
+    '}' +
+    '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
 
+var printBusy = false;
+
 function printReceipt() {
+  if (printBusy) return;
+  printBusy = true;
+  // Re-enable UI after a short time even if print dialog is open
+  setTimeout(function () { printBusy = false; }, 2500);
+
   try {
     var isAndroid = /Android/i.test(navigator.userAgent || '');
-    // Android + RawBT (optional)
     if (isAndroid) {
       try {
         var text = buildReceiptText(answers);
         var b64 = window.btoa(unescape(encodeURIComponent(text)));
         window.location.href = 'rawbt:base64,' + b64;
+        printBusy = false;
         return;
       } catch (e1) {
         console.log('RawBT failed, falling back to browser print', e1);
       }
     }
-    // Windows / Edge / Chrome — browser print dialog
+
+    // Hidden iframe — does not freeze / navigate the kiosk page
     var html = buildReceiptHTML(answers);
-    var w = window.open('', '_blank', 'width=320,height=480');
-    if (!w) {
-      alert('Please allow pop-ups to print the receipt, or press Ctrl+P.');
-      return;
-    }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
-    // Wait for content then print
-    setTimeout(function () {
+    var old = document.getElementById('printFrame');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+
+    var iframe = document.createElement('iframe');
+    iframe.id = 'printFrame';
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+    document.body.appendChild(iframe);
+
+    var doc = iframe.contentWindow || iframe.contentDocument;
+    var idoc = doc.document || doc;
+    idoc.open();
+    idoc.write(html);
+    idoc.close();
+
+    function doPrint() {
       try {
-        w.focus();
-        w.print();
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
       } catch (e2) {
         console.log('Print dialog error', e2);
+        try { window.print(); } catch (e3) {}
       }
-    }, 350);
+      // Cleanup later — do not block buttons on main page
+      setTimeout(function () {
+        printBusy = false;
+        try {
+          var f = document.getElementById('printFrame');
+          if (f && f.parentNode) f.parentNode.removeChild(f);
+        } catch (e4) {}
+      }, 1500);
+    }
+
+    setTimeout(doPrint, 400);
   } catch (e) {
+    printBusy = false;
     console.log('Print failed:', e);
     alert('Print failed. You can press Ctrl+P on this page.');
   }
