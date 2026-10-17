@@ -1934,45 +1934,60 @@ function bindAllChartTips() {
 }
 
 function listenForVisitUpdates() {
-  function softRefresh() {
+  // Prevent double-start (would stack timers / EventSources and spam refresh)
+  if (window._liveUpdatesStarted) return;
+  window._liveUpdatesStarted = true;
+  window._sseAlive = false;
+  window._lastDashRefreshAt = 0;
+
+  function softRefresh(force) {
+    var now = Date.now();
+    // Hard throttle: at most one full refresh every 8s (stops "reset every second")
+    if (!force && now - window._lastDashRefreshAt < 8000) return;
     clearTimeout(window._dashRefreshT);
     window._dashRefreshT = setTimeout(function () {
+      window._lastDashRefreshAt = Date.now();
       refreshDashboard().catch(function () {});
-    }, 300);
+    }, 500);
   }
 
-  // Backup poll — Cloudflare tunnels often drop/buffer SSE
+  // Backup poll only when SSE is down — every 20s, not aggressive
   if (!window._dashPollTimer) {
     window._dashPollTimer = setInterval(function () {
       if (document.hidden) return;
-      softRefresh();
-    }, 12000);
+      if (window._sseAlive) return;
+      softRefresh(false);
+    }, 20000);
   }
 
   if (typeof EventSource === "undefined") return;
-  var retryMs = 2000;
+  var retryMs = 3000;
   var es = null;
   function connect() {
     try { if (es) es.close(); } catch (e1) {}
     try {
       es = new EventSource(API + "/api/events");
     } catch (e0) {
+      window._sseAlive = false;
       setTimeout(connect, retryMs);
       return;
     }
     es.addEventListener("visits-updated", function () {
-      retryMs = 2000;
-      softRefresh();
+      retryMs = 3000;
+      softRefresh(true); // real new visit — allow refresh
     });
     es.onopen = function () {
-      retryMs = 2000;
+      retryMs = 3000;
+      window._sseAlive = true;
       console.log("Live updates connected");
     };
     es.onerror = function () {
+      window._sseAlive = false;
+      // Do NOT refresh on error — only reconnect (avoids constant data reset)
       console.warn("Live visit updates disconnected; retrying…");
       try { es.close(); } catch (e2) {}
       setTimeout(connect, retryMs);
-      retryMs = Math.min(retryMs * 1.5, 15000);
+      retryMs = Math.min(retryMs * 1.5, 20000);
     };
   }
   connect();
