@@ -1939,25 +1939,39 @@ function listenForVisitUpdates() {
   window._liveUpdatesStarted = true;
   window._sseAlive = false;
   window._lastDashRefreshAt = 0;
+  window._visitSig = "";
+
+  function visitSignature(list) {
+    if (!list || !list.length) return "0";
+    var first = list[0] || {};
+    var last = list[list.length - 1] || {};
+    return String(list.length) + ":" + (first.id || first.visit_time || "") + ":" + (last.id || last.visit_time || "");
+  }
 
   function softRefresh(force) {
     var now = Date.now();
-    // Hard throttle: at most one full refresh every 8s (stops "reset every second")
-    if (!force && now - window._lastDashRefreshAt < 8000) return;
+    if (!force && now - window._lastDashRefreshAt < 4000) return;
     clearTimeout(window._dashRefreshT);
     window._dashRefreshT = setTimeout(function () {
       window._lastDashRefreshAt = Date.now();
       refreshDashboard().catch(function () {});
-    }, 500);
+    }, 200);
   }
 
-  // Backup poll only when SSE is down — every 20s, not aggressive
+  // Lightweight poll every 5s — Cloudflare often drops SSE events even when "connected"
+  // Only full-refresh when visit data actually changed (no visual reset spam)
   if (!window._dashPollTimer) {
     window._dashPollTimer = setInterval(function () {
       if (document.hidden) return;
-      if (window._sseAlive) return;
-      softRefresh(false);
-    }, 20000);
+      apiJSONSoft("/api/visits", null).then(function (visits) {
+        if (visits === null || visits === undefined) return;
+        if (!Array.isArray(visits)) return;
+        var sig = visitSignature(visits);
+        if (sig === window._visitSig) return;
+        window._visitSig = sig;
+        softRefresh(true);
+      }).catch(function () {});
+    }, 5000);
   }
 
   if (typeof EventSource === "undefined") return;
@@ -1974,7 +1988,8 @@ function listenForVisitUpdates() {
     }
     es.addEventListener("visits-updated", function () {
       retryMs = 3000;
-      softRefresh(true); // real new visit — allow refresh
+      window._visitSig = ""; // force next compare to refresh
+      softRefresh(true);
     });
     es.onopen = function () {
       retryMs = 3000;
@@ -1983,8 +1998,6 @@ function listenForVisitUpdates() {
     };
     es.onerror = function () {
       window._sseAlive = false;
-      // Do NOT refresh on error — only reconnect (avoids constant data reset)
-      console.warn("Live visit updates disconnected; retrying…");
       try { es.close(); } catch (e2) {}
       setTimeout(connect, retryMs);
       retryMs = Math.min(retryMs * 1.5, 20000);
@@ -2018,6 +2031,11 @@ function loadAll() {
     // Keep previous charts if a soft API failure returned empty
     if ((!visits || !visits.length) && lastGoodVisits.length) visits = lastGoodVisits;
     else if (visits && visits.length) lastGoodVisits = visits;
+    try {
+      if (visits && visits.length) {
+        window._visitSig = String(visits.length) + ":" + ((visits[0] && (visits[0].id || visits[0].visit_time)) || "") + ":" + ((visits[visits.length-1] && (visits[visits.length-1].id || visits[visits.length-1].visit_time)) || "");
+      }
+    } catch (eSig) {}
     if ((!illness || !illness.length) && lastGoodIllness.length) illness = lastGoodIllness;
     else if (illness && illness.length) lastGoodIllness = illness;
     if ((!daily || !daily.length) && lastGoodDaily.length) daily = lastGoodDaily;
