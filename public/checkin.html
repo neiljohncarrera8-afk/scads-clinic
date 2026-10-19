@@ -803,7 +803,7 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  // 2-column + clear top/bottom feed so slips do not stick together
+  // Please proceed at TOP so XP-58 never cuts it off
   var W = 32;
   function S(s) {
     return safeForPrinter(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim();
@@ -817,7 +817,6 @@ function buildReceiptText(r) {
   function col(label, value) {
     var L = S(label);
     var V = S(value || '-');
-    // label max 9, gap, value rest
     if (L.length > 9) L = L.slice(0, 9);
     while (L.length < 9) L += ' ';
     var maxV = W - 11;
@@ -827,14 +826,14 @@ function buildReceiptText(r) {
   var dash = Array(W + 1).join('-');
   var isFeeding = r.purpose === 'Feeding';
   var lines = [];
-  // TOP feed — separates from previous slip when torn
-  lines.push('');
-  lines.push('');
   lines.push('');
   lines.push(center('* * *'));
-  lines.push('');
   lines.push(center('ALANGILAN SHS CLINIC'));
   lines.push(center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip'));
+  lines.push(dash);
+  // TOP — always visible
+  lines.push(center('Please proceed to'));
+  lines.push(center('clinic personnel'));
   lines.push(dash);
   lines.push(col('Purpose', r.purpose));
   if (isFeeding) {
@@ -849,11 +848,7 @@ function buildReceiptText(r) {
   lines.push(col('Time', r.time));
   lines.push(col('Ref', r.ref || ''));
   lines.push(dash);
-  lines.push(center('Please proceed to'));
-  lines.push(center('clinic personnel'));
-  lines.push('');
   lines.push(center('* * *'));
-  // Moderate feed — enough for cutter, not a long blank tail
   lines.push('');
   lines.push('');
   lines.push('');
@@ -868,7 +863,7 @@ function buildReceiptHTML(r) {
     '<style>' +
     '@page{size:58mm auto;margin:0;}' +
     'html,body{margin:0;padding:0;background:#fff;}' +
-    'pre{margin:0;padding:1mm 1mm;font-family:"Courier New",Courier,monospace;' +
+    'pre{margin:0;padding:1mm;font-family:"Courier New",Courier,monospace;' +
     'font-size:11px;line-height:1.25;letter-spacing:0;font-weight:bold;white-space:pre;color:#000;}' +
     '@media print{pre{font-size:11px;line-height:1.25;}}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
