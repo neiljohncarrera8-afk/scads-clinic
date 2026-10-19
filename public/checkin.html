@@ -802,73 +802,65 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  // Fixed 32-column layout for XP-58IIH (Generic/Text Only) — no fancy spacing
-  var W = 32;
+  // Two-column look, fixed width, left margin — clean on XP-58IIH
+  var W = 30;
+  var IND = ' '; // left margin so first letters are not clipped
   function S(s) { return safeForPrinter(String(s == null ? '' : s)); }
   function center(s) {
     s = S(s);
     if (s.length > W) s = s.slice(0, W);
     var pad = Math.floor((W - s.length) / 2);
-    return Array(pad + 1).join(' ') + s;
+    return IND + Array(pad + 1).join(' ') + s;
   }
-  function pair(label, value) {
+  function col(label, value) {
     var L = S(label);
     var V = S(value || '-');
-    var line = L + V;
-    if (line.length <= W) {
-      var gap = W - L.length - V.length;
-      if (gap < 1) gap = 1;
-      return L + Array(gap + 1).join(' ') + V;
-    }
-    // Value too long: label then value on next line(s)
-    var out = L;
-    var rest = V;
-    while (rest.length) {
-      out += '\n' + rest.slice(0, W);
-      rest = rest.slice(W);
-    }
-    return out;
+    if (V.length > 16) V = V.slice(0, 16);
+    var gap = W - L.length - V.length;
+    if (gap < 2) gap = 2;
+    var line = L + Array(gap + 1).join(' ') + V;
+    if (line.length > W) line = line.slice(0, W);
+    return IND + line;
   }
-  var dash = Array(W + 1).join('-');
+  var dash = IND + Array(W + 1).join('-');
   var isFeeding = r.purpose === 'Feeding';
-  var lines = [];
-  lines.push(center('ALANGILAN SHS CLINIC'));
-  lines.push(center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip'));
-  lines.push(dash);
-  lines.push(pair('Purpose: ', r.purpose));
+  var Lns = [];
+  Lns.push(center('ALANGILAN SHS CLINIC'));
+  Lns.push(center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip'));
+  Lns.push(dash);
+  Lns.push(col('Purpose', r.purpose));
   if (isFeeding) {
-    lines.push(pair('Student: ', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-')));
+    Lns.push(col('Student', r.nameSaveFailed ? 'NOT CONFIRMED' : (r.name || '-')));
   }
-  lines.push(pair('Grade:   ', r.grade));
-  lines.push(pair('Section: ', r.section));
+  Lns.push(col('Grade', r.grade));
+  Lns.push(col('Section', r.section));
   if (!isFeeding) {
-    lines.push(pair('Concern: ', r.illness));
-    lines.push(pair('Severity:', r.severity));
+    Lns.push(col('Concern', r.illness));
+    Lns.push(col('Severity', r.severity));
   }
-  lines.push(pair('Time:    ', r.time));
-  lines.push(dash);
-  lines.push(center('Ref: ' + (r.ref || '')));
-  lines.push('');
-  lines.push(center('Please proceed to'));
-  lines.push(center('clinic personnel'));
-  lines.push('');
-  lines.push('');
-  return lines.join('\n') + '\n';
+  Lns.push(col('Time', r.time));
+  Lns.push(dash);
+  Lns.push(center('Ref: ' + S(r.ref || '')));
+  Lns.push(IND);
+  Lns.push(center('Please proceed to'));
+  Lns.push(center('clinic personnel'));
+  // Many feed lines so XP-58 advances past cutter — last lines not cut off
+  for (var fi = 0; fi < 10; fi++) Lns.push(IND);
+  return Lns.join('\n') + '\n';
 }
 
 function buildReceiptHTML(r) {
-  // Plain <pre> — most reliable for Windows Generic/Text Only + 58mm
   var text = buildReceiptText(r);
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>' +
     '<style>' +
-    '@page{size:58mm auto;margin:2mm;}' +
+    '@page{size:58mm auto;margin:0;}' +
     'html,body{margin:0;padding:0;background:#fff;}' +
-    'pre{margin:0;padding:0;font-family:"Courier New",Courier,monospace;' +
-    'font-size:11px;line-height:1.25;letter-spacing:0;font-weight:bold;' +
+    'pre{margin:0;padding:4mm 2mm 18mm 2mm;font-family:"Courier New",Courier,monospace;' +
+    'font-size:12px;line-height:1.35;letter-spacing:0;font-weight:bold;' +
     'white-space:pre;color:#000;}' +
     '@media print{' +
-    '  @page{size:58mm auto;margin:2mm;}' +
-    '  pre{font-size:11px;line-height:1.25;letter-spacing:0;}' +
+    '  @page{size:58mm auto;margin:0;}' +
+    '  pre{padding:4mm 2mm 20mm 2mm;font-size:12px;line-height:1.35;}' +
     '}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
