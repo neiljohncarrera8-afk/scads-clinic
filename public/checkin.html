@@ -731,8 +731,8 @@ function render() {
       '<div class="ticket">' + rows + '</div>' +
       '<div class="refcode">' + esc(r.ref) + '</div>' +
       '<div class="actions">' +
-        '<button class="btn btn-primary" onclick="printReceipt()">OK</button>' +
-        '<button class="btn btn-ghost" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
+        '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print slip</button>' +
+        '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
     burst();
@@ -802,19 +802,32 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  // 32-char width works well on 58mm XP-58IIH
-  var W = 32;
-  function padLine(label, value) {
-    var L = safeForPrinter(label);
-    var V = safeForPrinter(value);
-    var gap = Math.max(1, W - L.length - V.length);
-    return L + Array(gap + 1).join(' ') + V + '\n';
-  }
+  // 28-char safe width for larger font on 58mm XP-58IIH (avoids cut-off words)
+  var W = 28;
+  function safe(s) { return safeForPrinter(s); }
   function center(s) {
-    s = safeForPrinter(s);
-    if (s.length >= W) return s.slice(0, W) + '\n';
-    var left = Math.floor((W - s.length) / 2);
+    s = safe(s);
+    if (s.length > W) s = s.slice(0, W);
+    var left = Math.max(0, Math.floor((W - s.length) / 2));
     return Array(left + 1).join(' ') + s + '\n';
+  }
+  function row(label, value) {
+    var L = safe(label);
+    var V = safe(value || '-');
+    var out = '';
+    // Label on its own line if value is long — prevents missing/cut words
+    if (L.length + 1 + V.length > W) {
+      out += L + '\n';
+      while (V.length > W) {
+        out += V.slice(0, W) + '\n';
+        V = V.slice(W);
+      }
+      out += V + '\n';
+    } else {
+      var gap = Math.max(1, W - L.length - V.length);
+      out += L + Array(gap + 1).join(' ') + V + '\n';
+    }
+    return out;
   }
   var line = Array(W + 1).join('-') + '\n';
   var isFeeding = r.purpose === 'Feeding';
@@ -822,39 +835,42 @@ function buildReceiptText(r) {
   t += center('ALANGILAN SHS CLINIC');
   t += center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip');
   t += line;
-  t += padLine('Purpose', r.purpose);
+  t += row('Purpose', r.purpose);
   if (isFeeding) {
-    t += padLine('Student', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-'));
+    t += row('Student', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-'));
   }
-  t += padLine('Grade', r.grade);
-  t += padLine('Section', r.section);
+  t += row('Grade', r.grade);
+  t += row('Section', r.section);
   if (!isFeeding) {
-    t += padLine('Concern', r.illness);
-    t += padLine('Severity', r.severity);
+    t += row('Concern', r.illness);
+    t += row('Severity', r.severity);
   }
-  t += padLine('Time', r.time);
+  t += row('Time', r.time);
   t += line;
   t += center('Ref: ' + (r.ref || ''));
   t += '\n';
-  t += center('Please proceed to clinic personnel');
+  t += center('Please proceed to');
+  t += center('clinic personnel');
   t += '\n\n';
   return t;
 }
 
 function buildReceiptHTML(r) {
-  // Slightly larger monospace for XP-58IIH readability (still 58mm-safe)
+  // XP-58IIH: 58mm roll, full-width use, larger type, safe spacing
   var text = buildReceiptText(r);
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Clinic Receipt</title>' +
     '<style>' +
-    '@page{size:58mm auto;margin:2mm 2.5mm;}' +
-    'html,body{margin:0;padding:0;background:#fff;}' +
-    'body{font-family:"Courier New",Consolas,monospace;font-size:15px;line-height:1.4;' +
-    'letter-spacing:0.05em;color:#000;font-weight:700;}' +
-    'pre{margin:0;padding:0;white-space:pre;font-family:inherit;font-size:inherit;' +
-    'line-height:inherit;letter-spacing:inherit;font-weight:inherit;}' +
+    '@page{size:58mm auto;margin:4mm 1.5mm;}' +
+    'html,body{margin:0;padding:0;width:58mm;max-width:58mm;background:#fff;}' +
+    'body{font-family:"Courier New",Consolas,monospace;font-size:16px;line-height:1.4;' +
+    'letter-spacing:0.04em;color:#000;font-weight:700;width:55mm;max-width:55mm;margin:0 auto;}' +
+    'pre{margin:0;padding:4px 0 8px;width:100%;box-sizing:border-box;' +
+    'white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;' +
+    'font-family:inherit;font-size:inherit;line-height:inherit;letter-spacing:inherit;font-weight:inherit;}' +
     '@media print{' +
-    '  body{font-size:14px;letter-spacing:0.06em;line-height:1.42;font-weight:700;}' +
-    '  @page{margin:2mm;}' +
+    '  html,body{width:58mm;max-width:58mm;}' +
+    '  body{font-size:15px;letter-spacing:0.04em;line-height:1.42;font-weight:700;width:55mm;}' +
+    '  @page{size:58mm auto;margin:4mm 1.5mm;}' +
     '}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
