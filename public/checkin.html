@@ -721,8 +721,8 @@ function render() {
     var subHtml = isFeeding
       ? (r.nameSaveFailed
         ? '<p class="sub" style="text-align:center;color:var(--red);">This record may be missing its name. Do not submit again; notify clinic staff to update/restart the server.</p>'
-        : '<p class="sub" style="text-align:center;">Please show this slip / proceed to the feeding area.</p>')
-      : '<p class="sub" style="text-align:center;">Please proceed to the clinic staff.</p>';
+        : '<p class="sub" style="text-align:center;">Please proceed to clinic personnel.</p>')
+      : '<p class="sub" style="text-align:center;">Please proceed to clinic personnel.</p>';
 
     stage.innerHTML =
       '<div class="checkwrap" id="burst"><svg class="check" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28"/><path d="M22 36l9 9 17-19"/></svg></div>' +
@@ -731,16 +731,16 @@ function render() {
       '<div class="ticket">' + rows + '</div>' +
       '<div class="refcode">' + esc(r.ref) + '</div>' +
       '<div class="actions">' +
-        '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print slip</button>' +
-        '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
+        '<button class="btn btn-primary" onclick="printReceipt()">OK</button>' +
+        '<button class="btn btn-ghost" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
     burst();
     startAutoReset();
-    // Soft auto-print once (iframe — will not freeze kiosk UI)
+    // Fast auto-print once (iframe — will not freeze kiosk UI)
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 900);
+    }, 120);
     return;
   }
 
@@ -836,24 +836,24 @@ function buildReceiptText(r) {
   t += line;
   t += center('Ref: ' + (r.ref || ''));
   t += '\n';
-  t += center(isFeeding ? 'Proceed to feeding area' : 'Proceed to clinic staff');
-  t += '\n\n\n';
+  t += center('Please proceed to clinic personnel');
+  t += '\n\n';
   return t;
 }
 
 function buildReceiptHTML(r) {
-  // Plain monospace text — best spacing for XP-58IIH + Generic/Text Only
+  // Slightly larger monospace for XP-58IIH readability (still 58mm-safe)
   var text = buildReceiptText(r);
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Clinic Receipt</title>' +
     '<style>' +
-    '@page{size:58mm auto;margin:2mm 3mm;}' +
+    '@page{size:58mm auto;margin:2mm 2.5mm;}' +
     'html,body{margin:0;padding:0;background:#fff;}' +
-    'body{font-family:"Courier New",Consolas,monospace;font-size:13px;line-height:1.45;' +
-    'letter-spacing:0.06em;color:#000;font-weight:600;}' +
+    'body{font-family:"Courier New",Consolas,monospace;font-size:15px;line-height:1.4;' +
+    'letter-spacing:0.05em;color:#000;font-weight:700;}' +
     'pre{margin:0;padding:0;white-space:pre;font-family:inherit;font-size:inherit;' +
     'line-height:inherit;letter-spacing:inherit;font-weight:inherit;}' +
     '@media print{' +
-    '  body{font-size:12px;letter-spacing:0.08em;line-height:1.5;}' +
+    '  body{font-size:14px;letter-spacing:0.06em;line-height:1.42;font-weight:700;}' +
     '  @page{margin:2mm;}' +
     '}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
@@ -906,17 +906,22 @@ function printReceipt() {
         console.log('Print dialog error', e2);
         try { window.print(); } catch (e3) {}
       }
-      // Cleanup later — do not block buttons on main page
       setTimeout(function () {
         printBusy = false;
         try {
           var f = document.getElementById('printFrame');
           if (f && f.parentNode) f.parentNode.removeChild(f);
         } catch (e4) {}
-      }, 1500);
+      }, 800);
     }
 
-    setTimeout(doPrint, 400);
+    // Print as soon as iframe document is ready
+    if (iframe.contentWindow && iframe.contentWindow.document && iframe.contentWindow.document.readyState === 'complete') {
+      setTimeout(doPrint, 30);
+    } else {
+      iframe.onload = function () { setTimeout(doPrint, 30); };
+      setTimeout(doPrint, 80);
+    }
   } catch (e) {
     printBusy = false;
     console.log('Print failed:', e);
