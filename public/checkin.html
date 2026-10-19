@@ -845,7 +845,9 @@ function buildReceiptText(r) {
   lines.push('');
   lines.push(center('Please proceed to'));
   lines.push(center('clinic personnel'));
-  // 4 feed lines only — enough to show last text, not huge blank
+  // Small feed so last lines clear the cutter (not too much blank)
+  lines.push('');
+  lines.push('');
   lines.push('');
   lines.push('');
   lines.push('');
@@ -859,12 +861,12 @@ function buildReceiptHTML(r) {
     '<style>' +
     '@page{size:58mm auto;margin:0;}' +
     'html,body{margin:0;padding:0;background:#fff;}' +
-    'pre{margin:0;padding:3mm 2mm 6mm 2mm;font-family:"Courier New",Courier,monospace;' +
+    'pre{margin:0;padding:3mm 2mm 8mm 2mm;font-family:"Courier New",Courier,monospace;' +
     'font-size:12px;line-height:1.3;letter-spacing:0;font-weight:bold;' +
     'white-space:pre;color:#000;}' +
     '@media print{' +
     '  @page{size:58mm auto;margin:0;}' +
-    '  pre{padding:3mm 2mm 6mm 2mm;font-size:12px;line-height:1.3;letter-spacing:0;}' +
+    '  pre{padding:3mm 2mm 8mm 2mm;font-size:12px;line-height:1.3;letter-spacing:0;}' +
     '}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
