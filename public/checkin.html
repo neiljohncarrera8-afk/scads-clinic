@@ -737,11 +737,11 @@ function render() {
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
     burst();
     startAutoReset();
-    // Auto-print once per successful check-in
+    // Auto-print once — slightly delayed so receipt is complete
     lastPrintedRef = '';
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 200);
+    }, 800);
     return;
   }
 
@@ -803,71 +803,50 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  // Clean 2-column, no word doubling, short feed for XP-58IIH
-  var W = 32;
+  // Ultra-simple receipt for XP-58 — all critical lines early, long feed at end
   function S(s) {
     return safeForPrinter(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim();
   }
-  function center(s) {
-    s = S(s);
-    if (s.length > W) s = s.slice(0, W);
-    var pad = Math.max(0, Math.floor((W - s.length) / 2));
-    return Array(pad + 1).join(' ') + s;
-  }
-  function col(label, value) {
-    // Fixed label width 10, then value — clear gap, no overlap
-    var L = S(label);
-    var V = S(value || '-');
-    if (L.length > 10) L = L.slice(0, 10);
-    while (L.length < 10) L += ' ';
-    if (V.length > 20) V = V.slice(0, 20);
-    return (L + '  ' + V).slice(0, W);
-  }
-  var dash = Array(W + 1).join('-');
   var isFeeding = r.purpose === 'Feeding';
   var lines = [];
-  lines.push(center('ALANGILAN SHS CLINIC'));
-  lines.push(center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip'));
-  lines.push(dash);
-  lines.push(col('Purpose', r.purpose));
+  lines.push('ALANGILAN SHS CLINIC');
+  lines.push(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip');
+  lines.push('------------------------');
+  lines.push('Purpose: ' + S(r.purpose));
   if (isFeeding) {
-    lines.push(col('Student', r.nameSaveFailed ? 'NOT CONFIRMED' : (r.name || '-')));
+    lines.push('Student: ' + S(r.nameSaveFailed ? 'NOT CONFIRMED' : (r.name || '-')));
   }
-  lines.push(col('Grade', r.grade));
-  lines.push(col('Section', r.section));
+  lines.push('Grade: ' + S(r.grade));
+  lines.push('Section: ' + S(r.section));
   if (!isFeeding) {
-    lines.push(col('Concern', r.illness));
-    lines.push(col('Severity', r.severity));
+    lines.push('Concern: ' + S(r.illness));
+    lines.push('Severity: ' + S(r.severity));
   }
-  lines.push(col('Time', r.time));
-  lines.push(dash);
-  lines.push(center('Ref: ' + S(r.ref || '')));
-  lines.push('');
-  lines.push(center('Please proceed to'));
-  lines.push(center('clinic personnel'));
-  // Small feed so last lines clear the cutter (not too much blank)
-  lines.push('');
-  lines.push('');
-  lines.push('');
-  lines.push('');
-  lines.push('');
-  lines.push('');
+  lines.push('Time: ' + S(r.time));
+  lines.push('Ref: ' + S(r.ref || ''));
+  lines.push('------------------------');
+  lines.push('Please proceed to');
+  lines.push('clinic personnel');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
+  lines.push('.');
   return lines.join('\n') + '\n';
 }
 
 function buildReceiptHTML(r) {
   var text = buildReceiptText(r);
-  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>' +
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>R</title>' +
     '<style>' +
     '@page{size:58mm auto;margin:0;}' +
-    'html,body{margin:0;padding:0;background:#fff;}' +
-    'pre{margin:0;padding:3mm 2mm 8mm 2mm;font-family:"Courier New",Courier,monospace;' +
-    'font-size:12px;line-height:1.3;letter-spacing:0;font-weight:bold;' +
-    'white-space:pre;color:#000;}' +
-    '@media print{' +
-    '  @page{size:58mm auto;margin:0;}' +
-    '  pre{padding:3mm 2mm 8mm 2mm;font-size:12px;line-height:1.3;letter-spacing:0;}' +
-    '}' +
+    'html,body{margin:0;padding:0;}' +
+    'pre{margin:0;padding:2mm;font-family:monospace;font-size:11px;' +
+    'line-height:1.2;letter-spacing:0;font-weight:bold;white-space:pre;}' +
+    '@media print{pre{font-size:11px;line-height:1.2;padding:2mm;}}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
 
@@ -875,67 +854,43 @@ var printBusy = false;
 var lastPrintedRef = '';
 
 function printReceipt() {
-  // One print per ref — stops double words / double slips
   var ref = (answers && answers.ref) ? String(answers.ref) : '';
   if (printBusy) return;
   if (ref && ref === lastPrintedRef) return;
   printBusy = true;
   if (ref) lastPrintedRef = ref;
-  setTimeout(function () { printBusy = false; }, 4000);
 
   try {
-    var isAndroid = /Android/i.test(navigator.userAgent || '');
-    if (isAndroid) {
-      try {
-        var text = buildReceiptText(answers);
-        var b64 = window.btoa(unescape(encodeURIComponent(text)));
-        window.location.href = 'rawbt:base64,' + b64;
-        printBusy = false;
-        return;
-      } catch (e1) {
-        console.log('RawBT failed, falling back to browser print', e1);
-      }
-    }
-
     var html = buildReceiptHTML(answers);
     var old = document.getElementById('printFrame');
     if (old && old.parentNode) old.parentNode.removeChild(old);
 
     var iframe = document.createElement('iframe');
     iframe.id = 'printFrame';
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;';
     document.body.appendChild(iframe);
 
-    var doc = iframe.contentWindow || iframe.contentDocument;
-    var idoc = doc.document || doc;
+    var idoc = iframe.contentWindow.document;
     idoc.open();
     idoc.write(html);
     idoc.close();
 
-    var printed = false;
+    var done = false;
     function doPrint() {
-      if (printed) return;
-      printed = true;
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (e2) {
-        console.log('Print dialog error', e2);
-      }
+      if (done) return;
+      done = true;
+      try { iframe.contentWindow.print(); } catch (e) {}
       setTimeout(function () {
         printBusy = false;
         try {
           var f = document.getElementById('printFrame');
-          if (f && f.parentNode) f.parentNode.removeChild(f);
-        } catch (e4) {}
-      }, 1000);
+          if (f) f.parentNode.removeChild(f);
+        } catch (e2) {}
+      }, 2500);
     }
-
-    setTimeout(doPrint, 50);
+    setTimeout(doPrint, 600);
   } catch (e) {
     printBusy = false;
-    console.log('Print failed:', e);
   }
 }
 
