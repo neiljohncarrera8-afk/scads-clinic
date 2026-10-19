@@ -802,75 +802,73 @@ function safeForPrinter(str) {
 }
 
 function buildReceiptText(r) {
-  // 28-char safe width for larger font on 58mm XP-58IIH (avoids cut-off words)
-  var W = 28;
-  function safe(s) { return safeForPrinter(s); }
+  // Fixed 32-column layout for XP-58IIH (Generic/Text Only) — no fancy spacing
+  var W = 32;
+  function S(s) { return safeForPrinter(String(s == null ? '' : s)); }
   function center(s) {
-    s = safe(s);
+    s = S(s);
     if (s.length > W) s = s.slice(0, W);
-    var left = Math.max(0, Math.floor((W - s.length) / 2));
-    return Array(left + 1).join(' ') + s + '\n';
+    var pad = Math.floor((W - s.length) / 2);
+    return Array(pad + 1).join(' ') + s;
   }
-  function row(label, value) {
-    var L = safe(label);
-    var V = safe(value || '-');
-    var out = '';
-    // Label on its own line if value is long — prevents missing/cut words
-    if (L.length + 1 + V.length > W) {
-      out += L + '\n';
-      while (V.length > W) {
-        out += V.slice(0, W) + '\n';
-        V = V.slice(W);
-      }
-      out += V + '\n';
-    } else {
-      var gap = Math.max(1, W - L.length - V.length);
-      out += L + Array(gap + 1).join(' ') + V + '\n';
+  function pair(label, value) {
+    var L = S(label);
+    var V = S(value || '-');
+    var line = L + V;
+    if (line.length <= W) {
+      var gap = W - L.length - V.length;
+      if (gap < 1) gap = 1;
+      return L + Array(gap + 1).join(' ') + V;
+    }
+    // Value too long: label then value on next line(s)
+    var out = L;
+    var rest = V;
+    while (rest.length) {
+      out += '\n' + rest.slice(0, W);
+      rest = rest.slice(W);
     }
     return out;
   }
-  var line = Array(W + 1).join('-') + '\n';
+  var dash = Array(W + 1).join('-');
   var isFeeding = r.purpose === 'Feeding';
-  var t = '';
-  t += center('ALANGILAN SHS CLINIC');
-  t += center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip');
-  t += line;
-  t += row('Purpose', r.purpose);
+  var lines = [];
+  lines.push(center('ALANGILAN SHS CLINIC'));
+  lines.push(center(isFeeding ? 'Feeding Check-In' : 'Visit Check-In Slip'));
+  lines.push(dash);
+  lines.push(pair('Purpose: ', r.purpose));
   if (isFeeding) {
-    t += row('Student', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-'));
+    lines.push(pair('Student: ', r.nameSaveFailed ? 'NAME NOT CONFIRMED' : (r.name || '-')));
   }
-  t += row('Grade', r.grade);
-  t += row('Section', r.section);
+  lines.push(pair('Grade:   ', r.grade));
+  lines.push(pair('Section: ', r.section));
   if (!isFeeding) {
-    t += row('Concern', r.illness);
-    t += row('Severity', r.severity);
+    lines.push(pair('Concern: ', r.illness));
+    lines.push(pair('Severity:', r.severity));
   }
-  t += row('Time', r.time);
-  t += line;
-  t += center('Ref: ' + (r.ref || ''));
-  t += '\n';
-  t += center('Please proceed to');
-  t += center('clinic personnel');
-  t += '\n\n';
-  return t;
+  lines.push(pair('Time:    ', r.time));
+  lines.push(dash);
+  lines.push(center('Ref: ' + (r.ref || '')));
+  lines.push('');
+  lines.push(center('Please proceed to'));
+  lines.push(center('clinic personnel'));
+  lines.push('');
+  lines.push('');
+  return lines.join('\n') + '\n';
 }
 
 function buildReceiptHTML(r) {
-  // XP-58IIH: 58mm roll, full-width use, larger type, safe spacing
+  // Plain <pre> — most reliable for Windows Generic/Text Only + 58mm
   var text = buildReceiptText(r);
-  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Clinic Receipt</title>' +
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Receipt</title>' +
     '<style>' +
-    '@page{size:58mm auto;margin:4mm 1.5mm;}' +
-    'html,body{margin:0;padding:0;width:58mm;max-width:58mm;background:#fff;}' +
-    'body{font-family:"Courier New",Consolas,monospace;font-size:16px;line-height:1.4;' +
-    'letter-spacing:0.04em;color:#000;font-weight:700;width:55mm;max-width:55mm;margin:0 auto;}' +
-    'pre{margin:0;padding:4px 0 8px;width:100%;box-sizing:border-box;' +
-    'white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;' +
-    'font-family:inherit;font-size:inherit;line-height:inherit;letter-spacing:inherit;font-weight:inherit;}' +
+    '@page{size:58mm auto;margin:2mm;}' +
+    'html,body{margin:0;padding:0;background:#fff;}' +
+    'pre{margin:0;padding:0;font-family:"Courier New",Courier,monospace;' +
+    'font-size:11px;line-height:1.25;letter-spacing:0;font-weight:bold;' +
+    'white-space:pre;color:#000;}' +
     '@media print{' +
-    '  html,body{width:58mm;max-width:58mm;}' +
-    '  body{font-size:15px;letter-spacing:0.04em;line-height:1.42;font-weight:700;width:55mm;}' +
-    '  @page{size:58mm auto;margin:4mm 1.5mm;}' +
+    '  @page{size:58mm auto;margin:2mm;}' +
+    '  pre{font-size:11px;line-height:1.25;letter-spacing:0;}' +
     '}' +
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
