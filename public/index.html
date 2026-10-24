@@ -1171,6 +1171,92 @@
   .panel:hover, .panel-accent:hover{
     transform: translateY(-2px);
   }
+
+/* === Dashboard polish (charts / alerts / QR) === */
+.stat-card{
+  transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease, border-color .28s ease;
+}
+.stat-card:hover{
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 14px 32px -12px rgba(15,61,46,.22);
+}
+.stat-card .stat-icon{
+  transition: transform .35s cubic-bezier(.22,1,.36,1);
+}
+.stat-card:hover .stat-icon{ transform: scale(1.08) rotate(-3deg); }
+
+.panel{
+  transition: transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease;
+}
+.panel:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px -16px rgba(15,61,46,.2);
+}
+.panel canvas{
+  transition: transform .4s cubic-bezier(.22,1,.36,1), filter .3s ease;
+}
+.panel:hover canvas{
+  transform: scale(1.015);
+  filter: saturate(1.08);
+}
+
+.alert-panel{
+  border-left: 4px solid #e05c5c;
+  transition: transform .28s ease, box-shadow .28s ease;
+}
+.alert-panel:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -10px rgba(224,92,92,.35);
+}
+.campaign-panel{
+  border-left: 4px solid #1b7a4d;
+  transition: transform .28s ease, box-shadow .28s ease;
+}
+.campaign-panel:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -10px rgba(27,122,77,.28);
+}
+
+#qrcode{
+  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
+  border: 1px solid rgba(15,61,46,.08);
+}
+#qrcode:hover{
+  transform: scale(1.04);
+  box-shadow: 0 12px 28px -10px rgba(15,61,46,.25);
+}
+.qr-section{
+  background: linear-gradient(145deg, #ffffff 0%, #f3faf6 100%);
+  border-radius: 18px;
+  padding: 18px;
+  border: 1px solid rgba(15,61,46,.06);
+}
+
+.insight{
+  transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease;
+}
+.insight:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -12px rgba(15,61,46,.18);
+}
+
+@keyframes chartGlow {
+  0%, 100% { box-shadow: var(--shadow-sm); }
+  50% { box-shadow: 0 8px 28px -8px rgba(27,122,77,.18); }
+}
+.panel-accent{
+  animation: fadeInUp .7s var(--ease) both, chartGlow 4s ease-in-out 1.2s infinite;
+}
+
+
+/* Chart 3D-ish depth without breaking Chart.js */
+.panel canvas {
+  filter: drop-shadow(0 8px 14px rgba(15, 61, 46, 0.12));
+  transition: filter .35s ease, transform .35s cubic-bezier(.22,1,.36,1);
+}
+.panel:hover canvas {
+  filter: drop-shadow(0 12px 20px rgba(15, 61, 46, 0.2)) saturate(1.06);
+}
 </style>
 </head>
 <body>
@@ -1513,7 +1599,7 @@ Chart.defaults.animations = {
 };
 Chart.defaults.hover = { mode: "nearest", intersect: false };
 Chart.defaults.interaction = { mode: "nearest", intersect: false };
-Chart.defaults.elements.arc.hoverOffset = 10;
+Chart.defaults.elements.arc.hoverOffset = 14;
 Chart.defaults.plugins.legend.labels.usePointStyle = true;
 Chart.defaults.plugins.tooltip.enabled = true;
 Chart.defaults.plugins.tooltip.backgroundColor = "#0f3d2e";
@@ -1544,7 +1630,7 @@ Chart.defaults.plugins.tooltip.callbacks = {
   }
 };
 Chart.defaults.borderColor = "#eef2f0";
-Chart.defaults.elements.bar.borderRadius = 10;
+Chart.defaults.elements.bar.borderRadius = 12;
 Chart.defaults.elements.bar.borderSkipped = false;
 Chart.defaults.elements.line.borderWidth = 3;
 Chart.defaults.elements.point.hoverRadius = 7;
@@ -1567,14 +1653,33 @@ function doughnutAnimOpts() {
 }
 function barAnimOpts() {
   return {
-    duration: 850,
+    duration: 950,
     easing: "easeOutQuart",
     delay: function (ctx) {
       if (ctx.type !== "data" || ctx.mode !== "default") return 0;
-      return (ctx.dataIndex || 0) * 60;
+      return (ctx.dataIndex || 0) * 55;
     }
   };
 }
+
+/* Soft 3D depth shadow under bars/arcs (Chart.js plugin) */
+var chartDepthPlugin = {
+  id: "chartDepth",
+  beforeDatasetsDraw: function (chart) {
+    try {
+      var ctx = chart.ctx;
+      ctx.save();
+      ctx.shadowColor = "rgba(15, 61, 46, 0.22)";
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 6;
+    } catch (e) {}
+  },
+  afterDatasetsDraw: function (chart) {
+    try { chart.ctx.restore(); } catch (e) {}
+  }
+};
+try { Chart.register(chartDepthPlugin); } catch (eReg) {}
 
 /* Rich chart visuals — gradients + soft depth (safe Chart.js 4) */
 function barGradient(ctx, colorTop, colorBottom) {
@@ -2459,13 +2564,29 @@ function renderSectionChart(rows) {
     type: "bar",
     data: {
       labels: top.map(function (r) { return r.grade + " · " + r.section; }),
-      datasets: [{ label: "Visits", data: top.map(function (r) { return r.count; }), backgroundColor: "#1b7a4d", borderRadius: 7 }]
+      datasets: [{
+        label: "Visits",
+        data: top.map(function (r) { return r.count; }),
+        backgroundColor: function (ctx) {
+          var tops = ["#2f9e68", "#1b7a4d", "#0f5c3d", "#3b82c4", "#5b6bcf"];
+          var bots = ["#0f5c3d", "#0b4530", "#083528", "#1e4a8c", "#3d3f8f"];
+          var i = ctx.dataIndex || 0;
+          return barGradient(ctx, tops[i % tops.length], bots[i % bots.length]);
+        },
+        borderRadius: 10,
+        borderSkipped: false,
+        borderWidth: 0,
+        barThickness: 14
+      }]
     },
     options: {
       indexAxis: "y",
+      animation: barAnimOpts(),
       plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true, ticks: { precision: 0 } }, y: { grid: { display: false } } },
-      animation: { duration: 700 }
+      scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "rgba(18,36,29,0.06)" } },
+        y: { grid: { display: false } }
+      }
     }
   });
 }
@@ -2476,10 +2597,18 @@ function renderPurposeChart(rows) {
   if (purposeChartInstance) purposeChartInstance.destroy();
   purposeChartInstance = new Chart(document.getElementById("purposeChart"), {
     type: "doughnut",
-    data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#1b7a4d", "#e8a317"], borderWidth: 4, borderColor: "#fffdf6", hoverOffset: 16, hoverBorderWidth: 0, spacing: 3 }] },
+    data: { labels: labels, datasets: [{
+      data: values,
+      backgroundColor: ["#1b7a4d", "#e8a317"],
+      borderWidth: 5,
+      borderColor: "#fffdf6",
+      hoverOffset: 18,
+      hoverBorderWidth: 0,
+      spacing: 4
+    }] },
     options: {
       animation: doughnutAnimOpts(),
-      cutout: "68%",
+      cutout: "66%",
       interaction: { mode: "nearest", intersect: false },
       plugins: {
         legend: { position: "bottom", labels: { usePointStyle: true, pointStyle: "circle", boxWidth: 10 } },
@@ -2620,7 +2749,8 @@ function renderCharts(daily, illness, grade) {
   var visitsCanvas = document.getElementById("visitsChart");
   var visitsCtx = visitsCanvas.getContext("2d");
   var gradient = visitsCtx.createLinearGradient(0, 0, 0, 220);
-  gradient.addColorStop(0, "rgba(27,122,77,0.35)");
+  gradient.addColorStop(0, "rgba(27,122,77,0.45)");
+  gradient.addColorStop(0.45, "rgba(27,122,77,0.18)");
   gradient.addColorStop(1, "rgba(27,122,77,0.02)");
 
   if (visitsChartInstance) { visitsChartInstance.destroy(); }
@@ -2954,16 +3084,33 @@ function deleteVisit(id) {
   });
 }
 
-var checkinUrl = window.location.origin + "/checkin.html";
-document.getElementById("qrUrlText").textContent = checkinUrl;
-new QRCode(document.getElementById("qrcode"), {
-  text: checkinUrl,
-  width: 120,
-  height: 120,
-  colorDark: "#0f3d2e",
-  colorLight: "#ffffff",
-  correctLevel: QRCode.CorrectLevel.H
-});
+(function setupQrCheckin() {
+  // Prefer /checkin (Express route). Fallback /checkin.html for static hosts.
+  var origin = window.location.origin || "";
+  var checkinUrl = origin + "/checkin";
+  var qrEl = document.getElementById("qrcode");
+  var urlEl = document.getElementById("qrUrlText");
+  if (urlEl) {
+    urlEl.textContent = checkinUrl;
+    if (/localhost|127\.0\.0\.1/i.test(origin)) {
+      urlEl.textContent = checkinUrl + "  ⚠ Open dashboard via Tailscale IP (not localhost) so phones can scan.";
+      urlEl.style.color = "#b8433f";
+    }
+  }
+  if (qrEl) {
+    qrEl.innerHTML = "";
+    try {
+      new QRCode(qrEl, {
+        text: checkinUrl,
+        width: 140,
+        height: 140,
+        colorDark: "#0f3d2e",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (e) { console.warn("QR failed", e); }
+  }
+})();
 
 
 (function staggerSidebar(){

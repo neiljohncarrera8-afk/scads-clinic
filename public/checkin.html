@@ -15,7 +15,7 @@
     --ease:cubic-bezier(.22,1,.36,1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;}
+  html,body{height:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
   body{
     font-family:'Manrope',sans-serif;color:var(--ink);background:var(--paper);
     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
@@ -65,6 +65,7 @@
   .field-error{color:var(--red);font-size:.8rem;min-height:1.2em;margin-top:7px;}
 
   .actions{margin-top:auto;padding-top:22px;display:flex;gap:10px;}
+  .opt,.btn{min-height:48px;-webkit-tap-highlight-color:transparent;}
   .btn{flex:1;border:none;border-radius:16px;padding:16px;font-family:'Manrope',sans-serif;font-weight:800;
     font-size:.95rem;cursor:pointer;transition:transform .15s var(--ease), filter .2s;}
   .btn:active{transform:scale(.97);}
@@ -132,7 +133,8 @@
   .eyebrow{display:inline-block;align-self:flex-start;background:var(--mint);color:var(--forest-dark);padding:4px 11px;border-radius:20px;font-weight:700;}
   .dot.now{transform-origin:left;animation:dotGrow .6s var(--ease);}
   @keyframes dotGrow{from{transform:scaleX(.2);}to{transform:none;}}
-  .opt,.btn{position:relative;overflow:hidden;}
+  .opt,.opt,.btn{min-height:48px;-webkit-tap-highlight-color:transparent;}
+  .btn{position:relative;overflow:hidden;}
   .opt{animation:optIn .6s var(--ease) backwards;font-size:1.05rem;}
   @keyframes optIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
   .opt.picked{animation:none;box-shadow:0 0 0 4px rgba(15,92,61,.12);}
