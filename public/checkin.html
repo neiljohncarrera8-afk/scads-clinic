@@ -47,10 +47,12 @@
   .options.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);
     background:#fff;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:.95rem;color:var(--ink);
-    transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease);text-align:left;}
-  .opt .ic{font-size:1.3rem;flex-shrink:0;}
-  .opt:active{transform:scale(.97);}
-  .opt:hover{border-color:var(--forest);}
+    transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease);
+    text-align:left;position:relative;overflow:hidden;isolation:isolate;}
+  .opt .ic{font-size:1.3rem;flex-shrink:0;position:relative;z-index:1;}
+  .opt > span:not(.ripple), .opt > div{position:relative;z-index:1;}
+  .opt:active{transform:scale(0.99);}
+  .opt:hover{border-color:var(--forest);box-shadow:0 4px 14px -6px rgba(15,92,61,.18);}
   .opt.picked{background:var(--mint);border-color:var(--forest);color:var(--forest-dark);}
   .opt.tone-mild.picked{background:var(--mint);border-color:var(--forest);}
   .opt.tone-moderate.picked{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
@@ -133,18 +135,27 @@
   .eyebrow{display:inline-block;align-self:flex-start;background:var(--mint);color:var(--forest-dark);padding:4px 11px;border-radius:20px;font-weight:700;}
   .dot.now{transform-origin:left;animation:dotGrow .6s var(--ease);}
   @keyframes dotGrow{from{transform:scaleX(.2);}to{transform:none;}}
-  .opt,.opt,.btn{min-height:48px;-webkit-tap-highlight-color:transparent;}
+  .opt,
   .btn{position:relative;overflow:hidden;}
-  .opt{animation:optIn .6s var(--ease) backwards;font-size:1.05rem;}
-  @keyframes optIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+  .opt{animation:optIn .5s var(--ease) both;font-size:1.05rem;}
+  @keyframes optIn{
+    from{opacity:0;transform:translateY(12px);}
+    to{opacity:1;transform:none;}
+  }
   .opt.picked{animation:none;box-shadow:0 0 0 4px rgba(15,92,61,.12);}
   .opt.picked::after{content:'✓';margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;
     display:flex;align-items:center;justify-content:center;font-size:.85rem;animation:pop .45s cubic-bezier(.34,1.56,.64,1);}
   .opt.tone-moderate.picked::after{background:var(--amber);} .opt.tone-severe.picked::after{background:var(--red);}
   @keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
-  .ripple{position:absolute;border-radius:50%;background:rgba(15,92,61,.22);transform:scale(0);animation:rip .65s ease-out forwards;pointer-events:none;}
-  .btn-primary .ripple{background:rgba(255,255,255,.35);}
-  @keyframes rip{to{transform:scale(2.6);opacity:0;}}
+  .ripple{
+    position:absolute;border-radius:50%;background:rgba(15,92,61,.2);
+    transform:scale(0);animation:rip .55s ease-out forwards;pointer-events:none;
+    z-index:0;will-change:transform,opacity;
+  }
+  .btn-primary .ripple{background:rgba(255,255,255,.32);}
+  @keyframes rip{
+    to{transform:scale(2.2);opacity:0;}
+  }
   textarea:focus{box-shadow:0 0 0 4px rgba(15,92,61,.12);}
 
   #idleScreen{background:linear-gradient(-45deg,#0b4530,#0f5c3d,#12395e,#0b4530);background-size:400% 400%;animation:bgShift 14s ease infinite;}
@@ -945,11 +956,22 @@ function pick(key, value, btn) {
 document.addEventListener('pointerdown', function (e) {
   var t = e.target.closest('.opt, .btn');
   if (!t) return;
-  var r = t.getBoundingClientRect(), d = Math.max(r.width, r.height), sp = document.createElement('span');
+  // Contain ripple inside the button only
+  if (getComputedStyle(t).position === 'static') t.style.position = 'relative';
+  var r = t.getBoundingClientRect();
+  var x = e.clientX - r.left;
+  var y = e.clientY - r.top;
+  var d = Math.max(r.width, r.height) * 1.1;
+  var sp = document.createElement('span');
   sp.className = 'ripple';
-  sp.style.cssText = 'width:' + d + 'px;height:' + d + 'px;left:' + (e.clientX - r.left - d / 2) + 'px;top:' + (e.clientY - r.top - d / 2) + 'px';
+  sp.style.width = d + 'px';
+  sp.style.height = d + 'px';
+  sp.style.left = (x - d / 2) + 'px';
+  sp.style.top = (y - d / 2) + 'px';
   t.appendChild(sp);
-  setTimeout(function () { sp.remove(); }, 650);
+  setTimeout(function () {
+    if (sp.parentNode) sp.parentNode.removeChild(sp);
+  }, 560);
 });
 
 function burst() {
