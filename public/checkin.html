@@ -45,15 +45,45 @@
 
   .options{margin-top:24px;display:flex;flex-direction:column;gap:10px;flex:1;overflow-y:auto;max-height:52vh;-webkit-overflow-scrolling:touch;}
   .options.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  /* Force equal button size (fix + back) */
+  .options{width:100%;align-items:stretch !important;}
+  .options .opt,
+  button.opt{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:56px !important;
+    align-self:stretch !important;
+    flex-shrink:0 !important;
+    transform:none !important;
+    scale:1 !important;
+  }
+  .options .opt.picked,
+  button.opt.picked{
+    width:100% !important;
+    transform:none !important;
+    scale:1 !important;
+    min-height:56px !important;
+  }
+  .opt:active{
+    filter:none;
+    background:var(--mint) !important;
+    box-shadow:inset 0 2px 10px rgba(15,92,61,.14), 0 0 0 3px rgba(15,92,61,.12) !important;
+  }
+  .opt.picked:active{background:var(--mint) !important;}
+  .opt.pressing{
+    box-shadow:0 0 0 4px rgba(15,92,61,.18), inset 0 1px 0 rgba(255,255,255,.4) !important;
+  }
+
   .opt{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;border:1.5px solid var(--line);
     background:#fff;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;font-size:.95rem;color:var(--ink);
-    transition:border-color .2s var(--ease), background .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease);
-    text-align:left;position:relative;overflow:hidden;isolation:isolate;}
+    transition:border-color .2s var(--ease), background .2s var(--ease), box-shadow .2s var(--ease);
+    text-align:left;position:relative;overflow:hidden;isolation:isolate;
+    width:100%;box-sizing:border-box;min-height:52px;transform:none !important;}
   .opt .ic{font-size:1.3rem;flex-shrink:0;position:relative;z-index:1;}
   .opt > span:not(.ripple), .opt > div{position:relative;z-index:1;}
-  .opt:active{transform:scale(0.99);}
+  .opt:active{filter:brightness(0.97);}
   .opt:hover{border-color:var(--forest);box-shadow:0 4px 14px -6px rgba(15,92,61,.18);}
-  .opt.picked{background:var(--mint);border-color:var(--forest);color:var(--forest-dark);}
+  .opt.picked{background:var(--mint);border-color:var(--forest);color:var(--forest-dark);transform:none !important;}
   .opt.tone-mild.picked{background:var(--mint);border-color:var(--forest);}
   .opt.tone-moderate.picked{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);}
   .opt.tone-severe.picked{background:var(--red-bg);border-color:var(--red);color:var(--red);}
@@ -137,16 +167,17 @@
   @keyframes dotGrow{from{transform:scaleX(.2);}to{transform:none;}}
   .opt,
   .btn{position:relative;overflow:hidden;}
-  .opt{animation:optIn .5s var(--ease) both;font-size:1.05rem;}
+  .opt{animation:optIn .45s var(--ease) both;font-size:1.05rem;}
   @keyframes optIn{
-    from{opacity:0;transform:translateY(12px);}
-    to{opacity:1;transform:none;}
+    from{opacity:0;}
+    to{opacity:1;}
   }
-  .opt.picked{animation:none;box-shadow:0 0 0 4px rgba(15,92,61,.12);}
-  .opt.picked::after{content:'✓';margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;
+  .opt.picked{animation:none;}
+  .opt.picked{animation:none;box-shadow:0 0 0 4px rgba(15,92,61,.12);transform:none !important;width:100%;}
+  .opt.picked::after{content:'✓';margin-left:auto;flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--forest);color:#fff;
     display:flex;align-items:center;justify-content:center;font-size:.85rem;animation:pop .45s cubic-bezier(.34,1.56,.64,1);}
   .opt.tone-moderate.picked::after{background:var(--amber);} .opt.tone-severe.picked::after{background:var(--red);}
-  @keyframes pop{from{transform:scale(0);}to{transform:scale(1);}}
+  @keyframes pop{from{opacity:0;transform:scale(0.6);}to{opacity:1;transform:scale(1);}}
   .ripple{
     position:absolute;border-radius:50%;background:rgba(15,92,61,.2);
     transform:scale(0);animation:rip .55s ease-out forwards;pointer-events:none;
@@ -693,7 +724,7 @@ function optHTML(step, o, i) {
   var picked = answers[step.key] === o.v ? ' picked' : '';
   var tone = o.tone ? ' tone-' + o.tone : '';
   var icon = o.ic ? '<span class="ic">' + o.ic + '</span>' : '';
-  return '<button class="opt' + picked + tone + '" style="animation-delay:' + (0.1 + (i || 0) * 0.05) + 's" onclick="pick(\'' + step.key + '\',\'' + o.v + '\',this)">' + icon + (o.label || o.v) + '</button>';
+  return '<button type="button" class="opt' + picked + tone + '" style="width:100%;transform:none;" onclick="pick(\'' + step.key + '\',\'' + o.v + '\',this)">' + icon + (o.label || o.v) + '</button>';
 }
 
 function render() {
@@ -935,7 +966,13 @@ function pick(key, value, btn) {
 
   var all = document.querySelectorAll('.opt');
   for (var i = 0; i < all.length; i++) all[i].style.pointerEvents = 'none';
-  if (btn) btn.classList.add('picked');
+  if (btn) {
+    btn.classList.add('picked');
+    btn.classList.add('pressing');
+    btn.style.transform = 'none';
+    btn.style.width = '100%';
+    setTimeout(function () { btn.classList.remove('pressing'); }, 280);
+  }
 
   setTimeout(function () {
     var steps = getSteps();
