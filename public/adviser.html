@@ -94,7 +94,6 @@ tr:hover td{background:#f7fbf8;}
         <input type="password" id="password" placeholder="Section password" autocomplete="current-password">
         <p class="err" id="loginError"></p>
         <button class="btn btn-primary" id="loginBtn" type="button">Unlock dashboard</button>
-        <p class="hint">Default password format: <strong>sectionname2026</strong> (example: Laplace → <code>laplace2026</code>). You can change these in <code>server.js</code> → <code>SECTION_PASSWORDS</code>.</p>
       </div>
     </div>
 
@@ -441,10 +440,11 @@ tr:hover td{background:#f7fbf8;}
       bootSections(FALLBACK_SECTIONS);
       var err = document.getElementById('loginError');
       if (err) {
-        err.textContent = 'Sections loaded offline. Update server.js + restart Node so login works.';
+        err.textContent = '';
       }
     });
 })();
 </script>
 </body>
 </html>
+
