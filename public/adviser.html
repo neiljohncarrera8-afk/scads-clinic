@@ -8,16 +8,15 @@
 <style>
 :root{
   --ink:#12241d; --bg:#f3f7f4; --card:#fff; --line:#e2e9e4; --muted:#66766d;
-  --forest:#0f5c3d; --forest2:#1b7a4d; --mint:#dcf3e6;
-  --ease:cubic-bezier(.22,1,.36,1);
+  --forest:#0f5c3d; --mint:#dcf3e6;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
 .app{display:flex;min-height:100vh;}
 .sidebar{
   width:280px;background:linear-gradient(180deg,#0b2a4a,#0e3d6e);
-  color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:12px;
-  box-shadow:8px 0 28px rgba(0,0,0,.12);
+  color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:8px;
+  box-shadow:8px 0 28px rgba(0,0,0,.12);overflow-y:auto;
 }
 .brand{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:700;padding:8px 10px 16px;}
 .brand small{display:block;font-family:'Manrope',sans-serif;font-size:.72rem;opacity:.75;font-weight:600;margin-top:4px;}
@@ -25,7 +24,7 @@ body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--ink);min-
 .sec-btn{
   width:100%;text-align:left;border:none;background:rgba(255,255,255,.06);
   color:#e8f0fa;padding:11px 12px;border-radius:12px;font-weight:700;font-size:.88rem;
-  cursor:pointer;transition:background .2s,transform .2s;font-family:inherit;
+  cursor:pointer;font-family:inherit;
 }
 .sec-btn:hover{background:rgba(255,255,255,.12);}
 .sec-btn.active{background:#2a3fc9;box-shadow:0 6px 16px rgba(42,63,201,.4);}
@@ -38,28 +37,25 @@ h1{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:700;}
 .sub{color:var(--muted);font-size:.9rem;margin-top:6px;line-height:1.5;}
 .login-box{max-width:420px;margin:8vh auto 0;}
 label{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
-input[type=password],input[type=text]{
+input[type=password],input[type=text],select{
   width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;
-  font:600 1rem 'Manrope';margin-bottom:14px;
+  font:600 1rem 'Manrope';margin-bottom:14px;background:#fff;
 }
-input:focus{outline:none;border-color:var(--forest);box-shadow:0 0 0 4px rgba(15,92,61,.12);}
+input:focus,select:focus{outline:none;border-color:var(--forest);box-shadow:0 0 0 4px rgba(15,92,61,.12);}
 .btn{
   border:none;border-radius:14px;padding:14px 18px;font:800 .95rem 'Manrope';
-  cursor:pointer;transition:transform .15s,filter .2s;
+  cursor:pointer;
 }
 .btn-primary{background:var(--forest);color:#fff;width:100%;box-shadow:0 10px 24px -8px rgba(15,92,61,.45);}
-.btn-primary:hover{filter:brightness(1.06);}
 .btn-ghost{background:var(--mint);color:var(--forest);font-weight:800;}
 .err{color:#b8433f;font-size:.85rem;min-height:1.2em;margin-bottom:8px;font-weight:700;}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
-.pill{display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--forest);padding:8px 14px;border-radius:999px;font-weight:800;font-size:.82rem;}
+.pill{display:inline-flex;background:var(--mint);color:var(--forest);padding:8px 14px;border-radius:999px;font-weight:800;font-size:.82rem;}
 table{width:100%;border-collapse:collapse;font-size:.88rem;}
 th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);}
 th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;}
 tr:hover td{background:#f7fbf8;}
-.badge{
-  display:inline-block;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:800;
-}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:800;}
 .badge-feed{background:#e8f6ee;color:var(--forest);}
 .badge-cons{background:#fff4e0;color:#a3690f;}
 .badge-mild{background:#e8f6ee;color:var(--forest);}
@@ -70,23 +66,19 @@ tr:hover td{background:#f7fbf8;}
 .stat{background:linear-gradient(165deg,#fff,#f5faf7);border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
 .stat b{font-family:'Fraunces',serif;font-size:1.4rem;display:block;}
 .stat span{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;}
-.hint{font-size:.78rem;color:var(--muted);margin-top:12px;line-height:1.45;}
-@media(max-width:860px){
-  .app{flex-direction:column;}
-  .sidebar{width:100%;}
-}
+@media(max-width:860px){.app{flex-direction:column;}.sidebar{width:100%;max-height:40vh;}}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">Adviser Portal<small>Section dashboards · SCADS</small></div>
-    <div id="sectionList">Loading sections…</div>
+    <div id="sectionList"></div>
   </aside>
   <main class="main">
     <div id="viewLogin" class="card login-box">
       <h1>Section login</h1>
-      <p class="sub">Select your section on the left, then enter the adviser password to view clinic visits of your students only.</p>
+      <p class="sub">Select your section, then enter the password.</p>
       <div style="margin-top:22px;">
         <label>Selected section</label>
         <input type="text" id="selectedSection" readonly placeholder="Click a section on the left">
@@ -101,10 +93,10 @@ tr:hover td{background:#f7fbf8;}
       <div class="topbar">
         <div>
           <h1 id="dashTitle">Section</h1>
-          <p class="sub" id="dashSub">Students from this section who visited the clinic</p>
+          <p class="sub" id="dashSub">Clinic visits of students in this section</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <span class="pill" id="livePill">● Live</span>
+          <span class="pill" id="livePill">● Section only</span>
           <button class="btn btn-ghost" type="button" id="refreshBtn">Refresh</button>
           <button class="btn btn-ghost" type="button" id="logoutBtn">Log out</button>
         </div>
@@ -112,7 +104,7 @@ tr:hover td{background:#f7fbf8;}
       <div class="stats" id="stats"></div>
       <div class="card" style="margin-bottom:16px;">
         <h2 style="font-family:Fraunces,serif;font-size:1.15rem;margin-bottom:6px;">Add student visit</h2>
-        <p class="sub" style="margin-bottom:14px;">Ilagay ang pangalan ng estudyante mula sa section mo na pumunta sa clinic (Feeding o Consultation).</p>
+        <p class="sub" style="margin-bottom:14px;">Ilagay ang pangalan ng estudyante mula sa section mo.</p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
           <div style="grid-column:1/-1;">
             <label>Student name</label>
@@ -120,14 +112,14 @@ tr:hover td{background:#f7fbf8;}
           </div>
           <div>
             <label>Purpose</label>
-            <select id="addPurpose" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font:600 .95rem Manrope;">
+            <select id="addPurpose">
               <option value="Consultation">Consultation</option>
               <option value="Feeding">Feeding</option>
             </select>
           </div>
           <div>
-            <label>Illness (consultation)</label>
-            <select id="addIllness" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font:600 .95rem Manrope;">
+            <label>Illness</label>
+            <select id="addIllness">
               <option>Headache</option><option>Fever</option><option>Stomachache</option>
               <option>Minor Injury</option><option>Cough/Colds</option><option>Allergy</option>
               <option>Dizziness</option><option>Menstrual Cramps</option><option>Vomiting</option>
@@ -136,7 +128,7 @@ tr:hover td{background:#f7fbf8;}
           </div>
           <div>
             <label>Severity</label>
-            <select id="addSeverity" style="width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:14px;font:600 .95rem Manrope;">
+            <select id="addSeverity">
               <option value="mild">Mild</option>
               <option value="moderate">Moderate</option>
               <option value="severe">Severe</option>
@@ -159,7 +151,6 @@ tr:hover td{background:#f7fbf8;}
                 <th>Purpose</th>
                 <th>Illness</th>
                 <th>Severity</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody id="visitRows">
@@ -173,11 +164,35 @@ tr:hover td{background:#f7fbf8;}
 </div>
 <script>
 (function () {
+  /* Works with EXISTING /api/visits — no new server routes required */
   var API = '';
-  var token = sessionStorage.getItem('adviserToken') || '';
-  var section = sessionStorage.getItem('adviserSection') || '';
+  var SECTIONS = {
+    'Grade 11': [
+      'Advocates', 'Ambassadors', 'Analysts', 'Aspirers', 'Builders',
+      'Catalysists', 'Conquerors', 'Designers', 'Developers', 'Diplomats',
+      'Empericists', 'Innovators', 'Luminaries', 'Pathfinders', 'Practitioners',
+      'Strategists', 'Thinkers', 'Voyagers'
+    ],
+    'Grade 12': [
+      'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
+      'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
+      'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+      'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
+    ]
+  };
+  var GRADES = ['Grade 11', 'Grade 12'];
+
+  /* password = sectionname + 2026 (lowercase) */
+  var PASSWORDS = {};
+  GRADES.forEach(function (g) {
+    (SECTIONS[g] || []).forEach(function (sec) {
+      PASSWORDS[sec] = String(sec).toLowerCase().replace(/\s+/g, '') + '2026';
+    });
+  });
+
   var selected = '';
-  var sectionsData = { GRADES: [], SECTIONS: {} };
+  var sessionSection = sessionStorage.getItem('advSection') || '';
+  var sessionGrade = sessionStorage.getItem('advGrade') || '';
 
   function esc(s) {
     var d = document.createElement('div');
@@ -185,10 +200,16 @@ tr:hover td{background:#f7fbf8;}
     return d.innerHTML;
   }
 
+  function gradeOf(section) {
+    for (var i = 0; i < GRADES.length; i++) {
+      if ((SECTIONS[GRADES[i]] || []).indexOf(section) >= 0) return GRADES[i];
+    }
+    return '';
+  }
+
   function fmtTime(iso) {
     try {
-      var d = new Date(iso);
-      return d.toLocaleString('en-US', {
+      return new Date(iso).toLocaleString('en-US', {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: 'numeric', minute: '2-digit', hour12: true
       });
@@ -196,16 +217,16 @@ tr:hover td{background:#f7fbf8;}
   }
 
   function renderSectionList() {
-    var box = document.getElementById('sectionList');
     var html = '';
-    (sectionsData.GRADES || []).forEach(function (g) {
+    GRADES.forEach(function (g) {
       html += '<div class="grade-label">' + esc(g) + '</div>';
-      (sectionsData.SECTIONS[g] || []).forEach(function (sec) {
-        var active = (selected === sec || section === sec) ? ' active' : '';
+      (SECTIONS[g] || []).forEach(function (sec) {
+        var active = (selected === sec || sessionSection === sec) ? ' active' : '';
         html += '<button type="button" class="sec-btn' + active + '" data-sec="' + esc(sec) + '">' + esc(sec) + '</button>';
       });
     });
-    box.innerHTML = html || '<p style="opacity:.7;padding:10px;font-size:.85rem;">Could not load sections.</p>';
+    var box = document.getElementById('sectionList');
+    box.innerHTML = html;
     box.querySelectorAll('.sec-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         selected = btn.getAttribute('data-sec');
@@ -226,16 +247,14 @@ tr:hover td{background:#f7fbf8;}
     document.getElementById('viewDash').hidden = false;
   }
 
-  function renderVisits(payload) {
-    var visits = (payload && payload.visits) || [];
-    document.getElementById('dashTitle').textContent = (payload.section || section) + ' dashboard';
+  function renderVisits(visits) {
+    document.getElementById('dashTitle').textContent = sessionSection + ' dashboard';
     document.getElementById('dashSub').textContent =
-      (payload.grade || '') + ' · Clinic visits of students in this section only';
+      (sessionGrade || '') + ' · Students from this section only';
 
     var feed = 0, cons = 0, sev = 0;
     visits.forEach(function (v) {
-      if (v.purpose === 'Feeding') feed++;
-      else cons++;
+      if (v.purpose === 'Feeding') feed++; else cons++;
       if (v.severity === 'severe') sev++;
     });
     document.getElementById('stats').innerHTML =
@@ -246,7 +265,7 @@ tr:hover td{background:#f7fbf8;}
 
     var tb = document.getElementById('visitRows');
     if (!visits.length) {
-      tb.innerHTML = '<tr><td colspan="7" class="empty">No clinic visits for this section yet.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" class="empty">No clinic visits for this section yet.</td></tr>';
       return;
     }
     var rows = '';
@@ -254,42 +273,36 @@ tr:hover td{background:#f7fbf8;}
       var purposeCls = v.purpose === 'Feeding' ? 'badge-feed' : 'badge-cons';
       var sev = v.severity || '—';
       var sevCls = sev === 'severe' ? 'badge-severe' : (sev === 'moderate' ? 'badge-moderate' : (sev === 'mild' ? 'badge-mild' : ''));
-      var nameShow = v.student_name && String(v.student_name).trim() ? v.student_name : '—';
-      rows += '<tr data-id="' + v.id + '">' +
-        '<td><strong class="nm">' + esc(nameShow) + '</strong></td>' +
+      rows += '<tr>' +
+        '<td><strong>' + esc(v.student_name || '—') + '</strong></td>' +
         '<td>' + esc(v.grade || '—') + '</td>' +
         '<td>' + esc(fmtTime(v.visit_time)) + '</td>' +
         '<td><span class="badge ' + purposeCls + '">' + esc(v.purpose || '—') + '</span></td>' +
         '<td>' + esc(v.illness || '—') + '</td>' +
         '<td>' + (sev !== '—' ? '<span class="badge ' + sevCls + '">' + esc(sev) + '</span>' : '—') + '</td>' +
-        '<td><button type="button" class="btn btn-ghost edit-name" data-id="' + v.id + '" style="padding:8px 12px;font-size:.75rem;">Edit name</button></td>' +
         '</tr>';
     });
     tb.innerHTML = rows;
   }
 
   function loadVisits() {
-    if (!token) return;
-    fetch(API + '/api/adviser/visits?token=' + encodeURIComponent(token), { cache: 'no-store' })
+    if (!sessionSection) return;
+    fetch(API + '/api/visits', { cache: 'no-store' })
       .then(function (res) {
-        return res.json().then(function (data) {
-          if (!res.ok) throw new Error(data.error || 'Failed to load visits');
-          return data;
-        });
+        if (!res.ok) throw new Error('Could not load visits');
+        return res.json();
       })
-      .then(function (data) {
-        section = data.section;
-        sessionStorage.setItem('adviserSection', section);
+      .then(function (all) {
+        var list = (all || []).filter(function (v) {
+          return v.section === sessionSection;
+        });
         showDash();
-        renderVisits(data);
+        renderVisits(list);
         renderSectionList();
       })
       .catch(function (err) {
-        token = '';
-        sessionStorage.removeItem('adviserToken');
-        sessionStorage.removeItem('adviserSection');
+        document.getElementById('loginError').textContent = err.message || 'Failed to load data. Is node server running?';
         showLogin();
-        document.getElementById('loginError').textContent = err.message || 'Please log in again.';
       });
   }
 
@@ -300,42 +313,32 @@ tr:hover td{background:#f7fbf8;}
     err.textContent = '';
     if (!sec) { err.textContent = 'Select a section first.'; return; }
     if (!pw) { err.textContent = 'Enter the password.'; return; }
-    fetch(API + '/api/adviser/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ section: sec, password: pw })
-    }).then(function (res) {
-      return res.json().then(function (data) {
-        if (!res.ok) throw new Error(data.error || 'Login failed');
-        return data;
-      });
-    }).then(function (data) {
-      token = data.token;
-      section = data.section;
-      sessionStorage.setItem('adviserToken', token);
-      sessionStorage.setItem('adviserSection', section);
-      document.getElementById('password').value = '';
-      loadVisits();
-    }).catch(function (e) {
-      err.textContent = e.message || 'Login failed';
-    });
+    if (PASSWORDS[sec] !== pw) {
+      err.textContent = 'Incorrect password.';
+      return;
+    }
+    sessionSection = sec;
+    sessionGrade = gradeOf(sec);
+    sessionStorage.setItem('advSection', sessionSection);
+    sessionStorage.setItem('advGrade', sessionGrade);
+    document.getElementById('password').value = '';
+    loadVisits();
   });
 
   document.getElementById('logoutBtn').addEventListener('click', function () {
-    fetch(API + '/api/adviser/logout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token })
-    }).catch(function () {});
-    token = '';
-    section = '';
-    sessionStorage.removeItem('adviserToken');
-    sessionStorage.removeItem('adviserSection');
+    sessionSection = '';
+    sessionGrade = '';
+    sessionStorage.removeItem('advSection');
+    sessionStorage.removeItem('advGrade');
     showLogin();
     renderSectionList();
   });
 
   document.getElementById('refreshBtn').addEventListener('click', loadVisits);
+
+  document.getElementById('password').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
 
   document.getElementById('addBtn').addEventListener('click', function () {
     var err = document.getElementById('addError');
@@ -343,17 +346,23 @@ tr:hover td{background:#f7fbf8;}
     var name = document.getElementById('addName').value.trim();
     var purpose = document.getElementById('addPurpose').value;
     if (!name) { err.textContent = 'Enter student name.'; return; }
-    if (!token) { err.textContent = 'Please log in first.'; return; }
-    fetch(API + '/api/adviser/visits', {
+    if (!sessionSection) { err.textContent = 'Please log in first.'; return; }
+
+    var payload = {
+      purpose: purpose,
+      student_name: name,
+      grade: sessionGrade,
+      section: sessionSection,
+      strand: '',
+      illness: purpose === 'Consultation' ? document.getElementById('addIllness').value : '',
+      severity: purpose === 'Consultation' ? document.getElementById('addSeverity').value : '',
+      action_taken: ''
+    };
+
+    fetch(API + '/api/visits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: token,
-        student_name: name,
-        purpose: purpose,
-        illness: document.getElementById('addIllness').value,
-        severity: document.getElementById('addSeverity').value
-      })
+      body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json().then(function (data) {
         if (!res.ok) throw new Error(data.error || 'Could not save');
@@ -367,84 +376,20 @@ tr:hover td{background:#f7fbf8;}
     });
   });
 
-  document.getElementById('visitRows').addEventListener('click', function (e) {
-    var btn = e.target.closest('.edit-name');
-    if (!btn) return;
-    var id = btn.getAttribute('data-id');
-    var current = '';
-    var cell = btn.closest('tr').querySelector('.nm');
-    if (cell) current = cell.textContent === '—' ? '' : cell.textContent;
-    var name = prompt('Student name for this visit:', current || '');
-    if (name === null) return;
-    name = String(name).trim();
-    fetch(API + '/api/adviser/visits/' + id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: token, student_name: name })
-    }).then(function (res) {
-      return res.json().then(function (data) {
-        if (!res.ok) throw new Error(data.error || 'Update failed');
-        return data;
-      });
-    }).then(function () { loadVisits(); })
-      .catch(function (err) { alert(err.message || 'Update failed'); });
-  });
-
-
-
-  document.getElementById('password').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter') document.getElementById('loginBtn').click();
-  });
-
-  // Live updates when clinic check-ins happen
+  // Live refresh when clinic updates (existing SSE)
   try {
     var es = new EventSource(API + '/api/events');
     es.addEventListener('visits-updated', function () {
-      if (token) loadVisits();
+      if (sessionSection) loadVisits();
     });
   } catch (e) {}
 
-  var FALLBACK_SECTIONS = {
-    GRADES: ['Grade 11', 'Grade 12'],
-    SECTIONS: {
-      'Grade 11': [
-        'Advocates', 'Ambassadors', 'Analysts', 'Aspirers', 'Builders',
-        'Catalysists', 'Conquerors', 'Designers', 'Developers', 'Diplomats',
-        'Empericists', 'Innovators', 'Luminaries', 'Pathfinders', 'Practitioners',
-        'Strategists', 'Thinkers', 'Voyagers'
-      ],
-      'Grade 12': [
-        'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
-        'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
-        'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
-        'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
-      ]
-    }
-  };
-
-  function bootSections(data) {
-    sectionsData = data || FALLBACK_SECTIONS;
-    renderSectionList();
-    if (token) loadVisits();
-    else showLogin();
-  }
-
-  fetch(API + '/api/adviser/sections', { cache: 'no-store' })
-    .then(function (r) {
-      if (!r.ok) throw new Error('no api');
-      return r.json();
-    })
-    .then(function (data) { bootSections(data); })
-    .catch(function () {
-      // Show sections even if API route missing; login still needs updated server.js
-      bootSections(FALLBACK_SECTIONS);
-      var err = document.getElementById('loginError');
-      if (err) {
-        err.textContent = '';
-      }
-    });
+  renderSectionList();
+  if (sessionSection) loadVisits();
+  else showLogin();
 })();
 </script>
 </body>
 </html>
+
 
