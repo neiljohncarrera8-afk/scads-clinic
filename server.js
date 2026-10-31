@@ -937,6 +937,111 @@ app.get('/adviser', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'adviser.html'));
 });
 
+/* ============== ADVISER PORTAL ============== */
+
+app.get('/api/adviser/sections', (req, res) => {
+  res.json({ GRADES, SECTIONS });
+});
+
+app.post('/api/adviser/login', (req, res) => {
+  cleanExpiredAdviserSessions();
+  const section = String((req.body && req.body.section) || '').trim();
+  const password = String((req.body && req.body.password) || '');
+  if (!section || !SECTION_PASSWORDS[section]) {
+    return res.status(400).json({ error: 'Unknown section.' });
+  }
+  if (password !== SECTION_PASSWORDS[section]) {
+    return res.status(401).json({ error: 'Incorrect password.' });
+  }
+  const token = createAdviserToken();
+  const grade = getGradeForSection(section);
+  adviserSessions.set(token, {
+    section,
+    grade,
+    exp: Date.now() + 8 * 60 * 60 * 1000
+  });
+  res.json({ token, section, grade });
+});
+
+app.post('/api/adviser/logout', (req, res) => {
+  const token = String((req.body && req.body.token) || req.headers['x-adviser-token'] || '');
+  if (token) adviserSessions.delete(token);
+  res.json({ ok: true });
+});
+
+app.get('/api/adviser/visits', (req, res) => {
+  cleanExpiredAdviserSessions();
+  const token = String(req.query.token || req.headers['x-adviser-token'] || '');
+  const session = adviserSessions.get(token);
+  if (!session || session.exp < Date.now()) {
+    if (token) adviserSessions.delete(token);
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+  const rows = db.prepare(
+    `SELECT id, purpose, student_name, grade, section, illness, severity, action_taken, visit_time
+     FROM visits WHERE section = ? ORDER BY visit_time DESC LIMIT 500`
+  ).all(session.section);
+  res.json({ section: session.section, grade: session.grade, visits: rows });
+});
+
+app.patch('/api/adviser/visits/:id', (req, res) => {
+  cleanExpiredAdviserSessions();
+  const token = String(req.body.token || req.headers['x-adviser-token'] || req.query.token || '');
+  const session = adviserSessions.get(token);
+  if (!session || session.exp < Date.now()) {
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+  const id = Number(req.params.id);
+  const row = db.prepare('SELECT * FROM visits WHERE id = ?').get(id);
+  if (!row) return res.status(404).json({ error: 'Visit not found.' });
+  if (row.section !== session.section) {
+    return res.status(403).json({ error: 'This visit is not in your section.' });
+  }
+  let student_name = req.body.student_name !== undefined
+    ? String(req.body.student_name || '').trim()
+    : row.student_name;
+  if (student_name.length > 120) {
+    return res.status(400).json({ error: 'Student name must be 120 characters or fewer.' });
+  }
+  db.prepare('UPDATE visits SET student_name = ? WHERE id = ?').run(student_name, id);
+  publishVisitUpdate();
+  res.json(db.prepare('SELECT * FROM visits WHERE id = ?').get(id));
+});
+
+app.post('/api/adviser/visits', (req, res) => {
+  cleanExpiredAdviserSessions();
+  const token = String(req.body.token || req.headers['x-adviser-token'] || '');
+  const session = adviserSessions.get(token);
+  if (!session || session.exp < Date.now()) {
+    return res.status(401).json({ error: 'Session expired. Please log in again.' });
+  }
+  let purpose = req.body.purpose || 'Consultation';
+  if (!PURPOSES.includes(purpose)) {
+    return res.status(400).json({ error: 'purpose must be Feeding or Consultation.' });
+  }
+  const student_name = String(req.body.student_name || '').trim();
+  if (!student_name) {
+    return res.status(400).json({ error: 'Student name is required.' });
+  }
+  let illness = '', severity = '';
+  if (purpose === 'Consultation') {
+    illness = String(req.body.illness || 'Others');
+    if (!ILLNESSES.includes(illness)) illness = 'Others';
+    severity = String(req.body.severity || 'mild');
+    if (!['mild', 'moderate', 'severe'].includes(severity)) severity = 'mild';
+  }
+  const info = db.prepare(`
+    INSERT INTO visits
+    (purpose, student_name, grade, section, strand, illness, severity, action_taken)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(purpose, student_name, session.grade || '', session.section, '', illness, severity, String(req.body.action_taken || ''));
+  publishVisitUpdate();
+  res.status(201).json(db.prepare('SELECT * FROM visits WHERE id = ?').get(info.lastInsertRowid));
+});
+
+app.get('/adviser', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'adviser.html'));
+});
 
 /* ============== CHECK-IN ============== */
 
