@@ -405,17 +405,44 @@ tr:hover td{background:#f7fbf8;}
     });
   } catch (e) {}
 
+  var FALLBACK_SECTIONS = {
+    GRADES: ['Grade 11', 'Grade 12'],
+    SECTIONS: {
+      'Grade 11': [
+        'Advocates', 'Ambassadors', 'Analysts', 'Aspirers', 'Builders',
+        'Catalysists', 'Conquerors', 'Designers', 'Developers', 'Diplomats',
+        'Empericists', 'Innovators', 'Luminaries', 'Pathfinders', 'Practitioners',
+        'Strategists', 'Thinkers', 'Voyagers'
+      ],
+      'Grade 12': [
+        'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
+        'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
+        'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+        'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
+      ]
+    }
+  };
+
+  function bootSections(data) {
+    sectionsData = data || FALLBACK_SECTIONS;
+    renderSectionList();
+    if (token) loadVisits();
+    else showLogin();
+  }
+
   fetch(API + '/api/adviser/sections', { cache: 'no-store' })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      sectionsData = data;
-      renderSectionList();
-      if (token) loadVisits();
-      else showLogin();
+    .then(function (r) {
+      if (!r.ok) throw new Error('no api');
+      return r.json();
     })
+    .then(function (data) { bootSections(data); })
     .catch(function () {
-      document.getElementById('sectionList').innerHTML =
-        '<p style="opacity:.8;padding:10px;font-size:.85rem;">Server offline. Start node server.js</p>';
+      // Show sections even if API route missing; login still needs updated server.js
+      bootSections(FALLBACK_SECTIONS);
+      var err = document.getElementById('loginError');
+      if (err) {
+        err.textContent = 'Sections loaded offline. Update server.js + restart Node so login works.';
+      }
     });
 })();
 </script>
