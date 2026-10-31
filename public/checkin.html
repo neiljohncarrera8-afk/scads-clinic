@@ -683,7 +683,7 @@ var ACTION_STEP = {
   text: true
 };
 
-/* Feeding collects a name first; consultations stay anonymous. */
+/* Name required for Feeding only (kiosk). Consultation stays optional/anonymous. */
 function getSteps() {
   var steps = [PURPOSE_STEP];
   if (answers.purpose === 'Feeding') steps.push(NAME_STEP);
@@ -752,7 +752,7 @@ function render() {
 
     var rows = '';
     rows += '<div class="trow"><span>Purpose</span><span>' + esc(r.purpose) + '</span></div>';
-    if (isFeeding) {
+    if (isFeeding || (r.name && r.name.trim())) {
       rows += r.nameSaveFailed
         ? '<div class="trow"><span>Student</span><span style="color:var(--red);font-weight:700;">Name not confirmed — tell clinic staff</span></div>'
         : '<div class="trow"><span>Student</span><span>' + esc(r.name) + '</span></div>';
@@ -888,7 +888,7 @@ function buildReceiptText(r) {
   lines.push(center('clinic personnel'));
   lines.push(dash);
   lines.push(col('Purpose', r.purpose));
-  if (isFeeding) {
+  if (isFeeding || (r.name && String(r.name).trim())) {
     lines.push(col('Student', r.nameSaveFailed ? 'NOT CONFIRMED' : (r.name || '-')));
   }
   lines.push(col('Grade', r.grade));
@@ -1056,7 +1056,7 @@ function finishCheckInLocal(savedId) {
   answers.ref = 'AC-' + (savedId ? String(savedId).padStart(6, '0') : now.getTime().toString().slice(-6));
   answers.nameSaveFailed = false;
   addRecord({
-    name: answers.purpose === 'Feeding' ? (answers.name || '') : '(Consultation)',
+    name: answers.purpose === 'Feeding' ? (answers.name || '') : (answers.name || ''),
     purpose: answers.purpose || '',
     grade: answers.grade || '',
     section: answers.section || '',
@@ -1085,7 +1085,7 @@ function submitForm() {
 
   var payload = {
     purpose: answers.purpose,
-    student_name: answers.purpose === 'Feeding' ? answers.name : '',
+    student_name: (answers.name || '').trim(),
     grade: answers.grade,
     section: answers.section,
     strand: '',
@@ -1117,7 +1117,7 @@ function submitForm() {
     answers.ref = 'AC-' + (saved && saved.id ? String(saved.id).padStart(6, '0') : now.getTime().toString().slice(-6));
     // Save to local health records (works offline too)
     addRecord({
-      name: answers.purpose === 'Feeding' ? (answers.name || '') : '(Consultation)',
+      name: answers.purpose === 'Feeding' ? (answers.name || '') : (answers.name || ''),
       purpose: answers.purpose || '',
       grade: answers.grade || '',
       section: answers.section || '',
