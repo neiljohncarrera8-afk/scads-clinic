@@ -4,81 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Adviser Section Portal — SCADS</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --ink:#12241d; --bg:#f3f7f4; --card:#fff; --line:#e2e9e4; --muted:#66766d;
-  --forest:#0f5c3d; --mint:#dcf3e6;
+  --ink:#12241d; --bg:#eef5f0; --card:#fff; --line:#dce6df; --muted:#66766d;
+  --forest:#0f5c3d; --forest2:#1b7a4d; --mint:#dcf3e6; --amber:#a3690f;
+  --red:#b8433f; --ease:cubic-bezier(.22,1,.36,1);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
 .app{display:flex;min-height:100vh;}
 .sidebar{
-  width:280px;background:linear-gradient(180deg,#0b2a4a,#0e3d6e);
-  color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:8px;
-  box-shadow:8px 0 28px rgba(0,0,0,.12);overflow-y:auto;
+  width:280px;background:linear-gradient(175deg,#0a2744 0%,#0e3d6e 55%,#124a7a 100%);
+  color:#fff;padding:22px 14px;display:flex;flex-direction:column;gap:6px;
+  box-shadow:10px 0 32px rgba(0,0,0,.15);overflow-y:auto;flex-shrink:0;
+  transition:transform .45s var(--ease), opacity .35s ease, width .45s var(--ease);
 }
-.brand{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:700;padding:8px 10px 16px;}
-.brand small{display:block;font-family:'Manrope',sans-serif;font-size:.72rem;opacity:.75;font-weight:600;margin-top:4px;}
-.grade-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;opacity:.65;padding:10px 10px 4px;font-weight:800;}
+.app.logged-in .sidebar{
+  transform:translateX(-110%);
+  opacity:0;
+  width:0;padding:0;overflow:hidden;pointer-events:none;
+}
+.brand{font-family:'Fraunces',serif;font-size:1.28rem;font-weight:700;padding:6px 10px 14px;letter-spacing:-.02em;}
+.brand small{display:block;font-family:'Manrope',sans-serif;font-size:.7rem;opacity:.72;font-weight:600;margin-top:5px;letter-spacing:.02em;}
+.grade-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;opacity:.6;padding:12px 10px 4px;font-weight:800;}
 .sec-btn{
   width:100%;text-align:left;border:none;background:rgba(255,255,255,.06);
-  color:#e8f0fa;padding:11px 12px;border-radius:12px;font-weight:700;font-size:.88rem;
-  cursor:pointer;font-family:inherit;
+  color:#e8f0fa;padding:11px 12px;border-radius:12px;font-weight:700;font-size:.86rem;
+  cursor:pointer;font-family:inherit;transition:background .25s, transform .2s var(--ease);
 }
-.sec-btn:hover{background:rgba(255,255,255,.12);}
-.sec-btn.active{background:#2a3fc9;box-shadow:0 6px 16px rgba(42,63,201,.4);}
-.main{flex:1;padding:28px 32px;overflow:auto;}
+.sec-btn:hover{background:rgba(255,255,255,.13);transform:translateX(3px);}
+.sec-btn.active{background:linear-gradient(135deg,#2a3fc9,#3d5afe);box-shadow:0 8px 20px rgba(42,63,201,.45);}
+.main{flex:1;padding:28px 32px;overflow:auto;min-width:0;}
+.app.logged-in .main{padding:28px 36px 40px;}
 .card{
-  background:var(--card);border:1px solid var(--line);border-radius:18px;
-  box-shadow:0 10px 28px -14px rgba(15,40,30,.18);padding:22px 24px;
+  background:var(--card);border:1px solid var(--line);border-radius:20px;
+  box-shadow:0 1px 0 #fff inset, 0 12px 32px -14px rgba(15,40,30,.18);
+  padding:22px 24px;animation:rise .55s var(--ease) both;
 }
-h1{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:700;}
+@keyframes rise{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+h1{font-family:'Fraunces',serif;font-size:clamp(1.45rem,2.5vw,1.75rem);font-weight:700;letter-spacing:-.02em;}
+h2{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:600;margin-bottom:8px;}
 .sub{color:var(--muted);font-size:.9rem;margin-top:6px;line-height:1.5;}
-.login-box{max-width:420px;margin:8vh auto 0;}
-label{display:block;font-size:.78rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;}
+.login-box{max-width:440px;margin:10vh auto 0;}
+label{display:block;font-size:.72rem;font-weight:800;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
 input[type=password],input[type=text],select{
   width:100%;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;
-  font:600 1rem 'Manrope';margin-bottom:14px;background:#fff;
+  font:600 .95rem 'Manrope';margin-bottom:14px;background:#fff;transition:border-color .2s,box-shadow .2s;
 }
 input:focus,select:focus{outline:none;border-color:var(--forest);box-shadow:0 0 0 4px rgba(15,92,61,.12);}
 .btn{
-  border:none;border-radius:14px;padding:14px 18px;font:800 .95rem 'Manrope';
-  cursor:pointer;
+  border:none;border-radius:14px;padding:13px 18px;font:800 .9rem 'Manrope';
+  cursor:pointer;transition:transform .2s var(--ease), filter .2s, box-shadow .2s;
 }
-.btn-primary{background:var(--forest);color:#fff;width:100%;box-shadow:0 10px 24px -8px rgba(15,92,61,.45);}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:linear-gradient(160deg,var(--forest2),var(--forest));color:#fff;width:100%;
+  box-shadow:0 10px 24px -8px rgba(15,92,61,.5);}
+.btn-primary:hover{filter:brightness(1.06);}
 .btn-ghost{background:var(--mint);color:var(--forest);font-weight:800;}
-.err{color:#b8433f;font-size:.85rem;min-height:1.2em;margin-bottom:8px;font-weight:700;}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
-.pill{display:inline-flex;background:var(--mint);color:var(--forest);padding:8px 14px;border-radius:999px;font-weight:800;font-size:.82rem;}
-table{width:100%;border-collapse:collapse;font-size:.88rem;}
+.btn-danger{
+  background:#fdeeee;color:var(--red);padding:6px 10px;border-radius:10px;font-size:.75rem;font-weight:800;
+  border:none;cursor:pointer;line-height:1;
+}
+.btn-danger:hover{background:#f9d4d2;}
+.err{color:var(--red);font-size:.85rem;min-height:1.2em;margin-bottom:8px;font-weight:700;}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:20px;
+  animation:rise .5s var(--ease) both;}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--mint);color:var(--forest);
+  padding:8px 14px;border-radius:999px;font-weight:800;font-size:.78rem;}
+.charts{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;margin-bottom:18px;}
+.chart-card{min-height:280px;position:relative;}
+.chart-wrap{position:relative;height:220px;margin-top:8px;}
+table{width:100%;border-collapse:collapse;font-size:.86rem;}
 th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);}
-th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:800;}
-tr:hover td{background:#f7fbf8;}
-.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:800;}
+th{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:800;}
+tbody tr{animation:rowIn .45s var(--ease) both;}
+tbody tr:nth-child(1){animation-delay:.04s;} tbody tr:nth-child(2){animation-delay:.08s;}
+tbody tr:nth-child(3){animation-delay:.12s;} tbody tr:nth-child(4){animation-delay:.16s;}
+tbody tr:nth-child(5){animation-delay:.2s;}
+@keyframes rowIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+tr:hover td{background:#f6fbf8;}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:800;}
 .badge-feed{background:#e8f6ee;color:var(--forest);}
-.badge-cons{background:#fff4e0;color:#a3690f;}
+.badge-cons{background:#fff4e0;color:var(--amber);}
 .badge-mild{background:#e8f6ee;color:var(--forest);}
-.badge-moderate{background:#fff4e0;color:#a3690f;}
-.badge-severe{background:#fdeeee;color:#b8433f;}
+.badge-moderate{background:#fff4e0;color:var(--amber);}
+.badge-severe{background:#fdeeee;color:var(--red);}
 .empty{text-align:center;padding:40px 16px;color:var(--muted);font-weight:600;}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
-.stat{background:linear-gradient(165deg,#fff,#f5faf7);border:1px solid var(--line);border-radius:14px;padding:14px 16px;}
-.stat b{font-family:'Fraunces',serif;font-size:1.4rem;display:block;}
-.stat span{font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;}
-@media(max-width:860px){.app{flex-direction:column;}.sidebar{width:100%;max-height:40vh;}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;}
+.stat{
+  background:linear-gradient(165deg,#fff 0%,#f4faf6 100%);border:1px solid var(--line);
+  border-radius:16px;padding:14px 16px;animation:rise .55s var(--ease) both;
+  box-shadow:0 1px 0 #fff inset, 0 6px 16px -10px rgba(15,40,30,.12);
+  transition:transform .3s var(--ease), box-shadow .3s;
+}
+.stat:hover{transform:translateY(-3px);box-shadow:0 12px 28px -12px rgba(15,40,30,.2);}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}
+.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
+.stat b{font-family:'Fraunces',serif;font-size:1.45rem;display:block;color:var(--forest);}
+.stat span{font-size:.68rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.nm{font-weight:800;}
+@media(max-width:960px){
+  .charts{grid-template-columns:1fr;}
+  .app:not(.logged-in){flex-direction:column;}
+  .app:not(.logged-in) .sidebar{width:100%;max-height:38vh;}
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
     <div class="brand">Adviser Portal<small>Section dashboards · SCADS</small></div>
     <div id="sectionList"></div>
   </aside>
   <main class="main">
     <div id="viewLogin" class="card login-box">
       <h1>Section login</h1>
-      <p class="sub">Select your section, then enter the password.</p>
+      <p class="sub">Select your section on the left, then enter the adviser password.</p>
       <div style="margin-top:22px;">
         <label>Selected section</label>
         <input type="text" id="selectedSection" readonly placeholder="Click a section on the left">
@@ -96,16 +140,28 @@ tr:hover td{background:#f7fbf8;}
           <p class="sub" id="dashSub">Clinic visits of students in this section</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <span class="pill" id="livePill">● Section only</span>
+          <span class="pill" id="livePill">● Section data</span>
           <button class="btn btn-ghost" type="button" id="refreshBtn">Refresh</button>
           <button class="btn btn-ghost" type="button" id="logoutBtn">Log out</button>
         </div>
       </div>
       <div class="stats" id="stats"></div>
+      <div class="charts">
+        <div class="card chart-card">
+          <h2>Visits by purpose</h2>
+          <p class="sub">Feeding vs Consultation — this section only</p>
+          <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="card chart-card">
+          <h2>Illness mix</h2>
+          <p class="sub">Consultation illnesses in this section</p>
+          <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+        </div>
+      </div>
       <div class="card" style="margin-bottom:16px;">
-        <h2 style="font-family:Fraunces,serif;font-size:1.15rem;margin-bottom:6px;">Add student visit</h2>
+        <h2>Add student visit</h2>
         <p class="sub" style="margin-bottom:14px;">Ilagay ang pangalan ng estudyante mula sa section mo.</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-grid">
           <div style="grid-column:1/-1;">
             <label>Student name</label>
             <input type="text" id="addName" maxlength="120" placeholder="Full name">
@@ -151,10 +207,11 @@ tr:hover td{background:#f7fbf8;}
                 <th>Purpose</th>
                 <th>Illness</th>
                 <th>Severity</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="visitRows">
-              <tr><td colspan="6" class="empty">No visits yet.</td></tr>
+              <tr><td colspan="7" class="empty">No visits yet.</td></tr>
             </tbody>
           </table>
         </div>
@@ -164,7 +221,6 @@ tr:hover td{background:#f7fbf8;}
 </div>
 <script>
 (function () {
-  /* Works with EXISTING /api/visits — no new server routes required */
   var API = '';
   var SECTIONS = {
     'Grade 11': [
@@ -176,13 +232,11 @@ tr:hover td{background:#f7fbf8;}
     'Grade 12': [
       'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
       'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
-      'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+      'McGregor', 'Philip Crosby', 'Mayo', 'Luca Pacioli', 'Aquinas',
       'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
     ]
   };
   var GRADES = ['Grade 11', 'Grade 12'];
-
-  /* password = sectionname + 2026 (lowercase) */
   var PASSWORDS = {};
   GRADES.forEach(function (g) {
     (SECTIONS[g] || []).forEach(function (sec) {
@@ -193,20 +247,21 @@ tr:hover td{background:#f7fbf8;}
   var selected = '';
   var sessionSection = sessionStorage.getItem('advSection') || '';
   var sessionGrade = sessionStorage.getItem('advGrade') || '';
+  var barChart = null;
+  var pieChart = null;
+  var lastVisits = [];
 
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
     return d.innerHTML;
   }
-
   function gradeOf(section) {
     for (var i = 0; i < GRADES.length; i++) {
       if ((SECTIONS[GRADES[i]] || []).indexOf(section) >= 0) return GRADES[i];
     }
     return '';
   }
-
   function fmtTime(iso) {
     try {
       return new Date(iso).toLocaleString('en-US', {
@@ -237,49 +292,140 @@ tr:hover td{background:#f7fbf8;}
     });
   }
 
+  function setLoggedIn(on) {
+    document.getElementById('app').classList.toggle('logged-in', !!on);
+  }
+
   function showLogin() {
+    setLoggedIn(false);
     document.getElementById('viewLogin').hidden = false;
     document.getElementById('viewDash').hidden = true;
   }
 
   function showDash() {
+    setLoggedIn(true);
     document.getElementById('viewLogin').hidden = true;
     document.getElementById('viewDash').hidden = false;
   }
 
+  function destroyCharts() {
+    if (barChart) { barChart.destroy(); barChart = null; }
+    if (pieChart) { pieChart.destroy(); pieChart = null; }
+  }
+
+  function renderCharts(visits) {
+    destroyCharts();
+    if (typeof Chart === 'undefined') return;
+
+    var feed = 0, cons = 0;
+    var illnessMap = {};
+    visits.forEach(function (v) {
+      if (v.purpose === 'Feeding') feed++;
+      else {
+        cons++;
+        var ill = v.illness || 'Others';
+        illnessMap[ill] = (illnessMap[ill] || 0) + 1;
+      }
+    });
+
+    var barCtx = document.getElementById('barChart');
+    if (barCtx) {
+      barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Feeding', 'Consultation'],
+          datasets: [{
+            label: 'Visits',
+            data: [feed, cons],
+            backgroundColor: ['rgba(27,122,77,0.85)', 'rgba(163,105,15,0.8)'],
+            borderRadius: 10,
+            maxBarThickness: 56
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+            x: { grid: { display: false } }
+          },
+          animation: { duration: 700, easing: 'easeOutQuart' }
+        }
+      });
+    }
+
+    var labels = Object.keys(illnessMap);
+    var values = labels.map(function (k) { return illnessMap[k]; });
+    var colors = ['#1b7a4d','#3b82c4','#e8a317','#e05c5c','#8b5cf6','#14b8a6','#f97316','#64748b','#ec4899','#84cc16'];
+    var pieCtx = document.getElementById('pieChart');
+    if (pieCtx) {
+      if (!labels.length) {
+        labels = ['No data'];
+        values = [1];
+        colors = ['#dce6df'];
+      }
+      pieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+          },
+          animation: { animateRotate: true, duration: 800 }
+        }
+      });
+    }
+  }
+
   function renderVisits(visits) {
+    lastVisits = visits || [];
     document.getElementById('dashTitle').textContent = sessionSection + ' dashboard';
     document.getElementById('dashSub').textContent =
       (sessionGrade || '') + ' · Students from this section only';
 
     var feed = 0, cons = 0, sev = 0;
-    visits.forEach(function (v) {
+    lastVisits.forEach(function (v) {
       if (v.purpose === 'Feeding') feed++; else cons++;
       if (v.severity === 'severe') sev++;
     });
     document.getElementById('stats').innerHTML =
-      '<div class="stat"><span>Total visits</span><b>' + visits.length + '</b></div>' +
+      '<div class="stat"><span>Total visits</span><b>' + lastVisits.length + '</b></div>' +
       '<div class="stat"><span>Feeding</span><b>' + feed + '</b></div>' +
       '<div class="stat"><span>Consultation</span><b>' + cons + '</b></div>' +
       '<div class="stat"><span>Severe</span><b>' + sev + '</b></div>';
 
+    renderCharts(lastVisits);
+
     var tb = document.getElementById('visitRows');
-    if (!visits.length) {
-      tb.innerHTML = '<tr><td colspan="6" class="empty">No clinic visits for this section yet.</td></tr>';
+    if (!lastVisits.length) {
+      tb.innerHTML = '<tr><td colspan="7" class="empty">No clinic visits for this section yet.</td></tr>';
       return;
     }
     var rows = '';
-    visits.forEach(function (v) {
+    lastVisits.forEach(function (v) {
       var purposeCls = v.purpose === 'Feeding' ? 'badge-feed' : 'badge-cons';
       var sev = v.severity || '—';
       var sevCls = sev === 'severe' ? 'badge-severe' : (sev === 'moderate' ? 'badge-moderate' : (sev === 'mild' ? 'badge-mild' : ''));
-      rows += '<tr>' +
-        '<td><strong>' + esc(v.student_name || '—') + '</strong></td>' +
+      rows += '<tr data-id="' + v.id + '">' +
+        '<td><span class="nm">' + esc(v.student_name || '—') + '</span></td>' +
         '<td>' + esc(v.grade || '—') + '</td>' +
         '<td>' + esc(fmtTime(v.visit_time)) + '</td>' +
         '<td><span class="badge ' + purposeCls + '">' + esc(v.purpose || '—') + '</span></td>' +
         '<td>' + esc(v.illness || '—') + '</td>' +
         '<td>' + (sev !== '—' ? '<span class="badge ' + sevCls + '">' + esc(sev) + '</span>' : '—') + '</td>' +
+        '<td><button type="button" class="btn-danger del-btn" data-id="' + v.id + '" title="Delete">✕</button></td>' +
         '</tr>';
     });
     tb.innerHTML = rows;
@@ -301,7 +447,7 @@ tr:hover td{background:#f7fbf8;}
         renderSectionList();
       })
       .catch(function (err) {
-        document.getElementById('loginError').textContent = err.message || 'Failed to load data. Is node server running?';
+        document.getElementById('loginError').textContent = err.message || 'Failed to load data.';
         showLogin();
       });
   }
@@ -330,12 +476,12 @@ tr:hover td{background:#f7fbf8;}
     sessionGrade = '';
     sessionStorage.removeItem('advSection');
     sessionStorage.removeItem('advGrade');
+    destroyCharts();
     showLogin();
     renderSectionList();
   });
 
   document.getElementById('refreshBtn').addEventListener('click', loadVisits);
-
   document.getElementById('password').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') document.getElementById('loginBtn').click();
   });
@@ -348,21 +494,19 @@ tr:hover td{background:#f7fbf8;}
     if (!name) { err.textContent = 'Enter student name.'; return; }
     if (!sessionSection) { err.textContent = 'Please log in first.'; return; }
 
-    var payload = {
-      purpose: purpose,
-      student_name: name,
-      grade: sessionGrade,
-      section: sessionSection,
-      strand: '',
-      illness: purpose === 'Consultation' ? document.getElementById('addIllness').value : '',
-      severity: purpose === 'Consultation' ? document.getElementById('addSeverity').value : '',
-      action_taken: ''
-    };
-
     fetch(API + '/api/visits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        purpose: purpose,
+        student_name: name,
+        grade: sessionGrade,
+        section: sessionSection,
+        strand: '',
+        illness: purpose === 'Consultation' ? document.getElementById('addIllness').value : '',
+        severity: purpose === 'Consultation' ? document.getElementById('addSeverity').value : '',
+        action_taken: ''
+      })
     }).then(function (res) {
       return res.json().then(function (data) {
         if (!res.ok) throw new Error(data.error || 'Could not save');
@@ -376,7 +520,21 @@ tr:hover td{background:#f7fbf8;}
     });
   });
 
-  // Live refresh when clinic updates (existing SSE)
+  document.getElementById('visitRows').addEventListener('click', function (e) {
+    var btn = e.target.closest('.del-btn');
+    if (!btn) return;
+    var id = btn.getAttribute('data-id');
+    if (!id) return;
+    if (!confirm('Delete this visit record?')) return;
+    fetch(API + '/api/visits/' + id, { method: 'DELETE' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('Delete failed');
+        return res.json().catch(function () { return {}; });
+      })
+      .then(function () { loadVisits(); })
+      .catch(function (err) { alert(err.message || 'Delete failed'); });
+  });
+
   try {
     var es = new EventSource(API + '/api/events');
     es.addEventListener('visits-updated', function () {
@@ -391,5 +549,3 @@ tr:hover td{background:#f7fbf8;}
 </script>
 </body>
 </html>
-
-

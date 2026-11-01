@@ -157,7 +157,7 @@
   .live-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:livePulse 1.8s ease-in-out infinite;flex-shrink:0;}
 
   .tab{display:none;}
-  .tab.active{display:block;animation:fadeIn 0.4s ease both;}
+  .tab.active{display:block;animation:tabFadeIn 0.9s cubic-bezier(.22,1,.36,1) both;}
 
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
   .stat-card{
@@ -297,7 +297,7 @@
   @keyframes riseIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:none;}}
   .nav-item:active{transform:scale(.97);}
 
-  .tab.active{animation:tabIn .6s var(--ease) both;}
+  .tab.active{animation:tabFadeIn 0.85s var(--ease) both;}
   @keyframes tabIn{from{opacity:0;transform:translateY(18px);filter:blur(5px);}to{opacity:1;transform:none;filter:blur(0);}}
 
   .stat-card,.panel,.personnel-card,.alert-panel,.campaign-panel{animation-timing-function:var(--ease);animation-duration:.7s;}
@@ -716,12 +716,9 @@
 
   /* Tab content enter */
   .tab.active{
-    animation: tabIn 0.45s var(--ease-out) both !important;
+    animation: tabFadeIn 0.9s cubic-bezier(.22,1,.36,1) both !important;
   }
-  @keyframes tabIn{
-    from{ opacity:0; transform: translateY(12px); }
-    to{ opacity:1; transform: none; }
-  }
+
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce){
@@ -1612,6 +1609,32 @@
   transform: scale(1.08) rotate(-6deg) !important;
 }
 
+
+
+/* Personnel cards: subtle from below / from above (not extreme) */
+@keyframes cardFromBelow {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cardFromAbove {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.tab.active .personnel-card {
+  animation: cardFromBelow 0.85s cubic-bezier(.22,1,.36,1) both;
+}
+.tab.active .personnel-card:nth-child(odd) {
+  animation-name: cardFromBelow;
+}
+.tab.active .personnel-card:nth-child(even) {
+  animation-name: cardFromAbove;
+}
+.tab.active .personnel-card:nth-child(1) { animation-delay: 0.12s; }
+.tab.active .personnel-card:nth-child(2) { animation-delay: 0.22s; }
+.tab.active .personnel-card:nth-child(3) { animation-delay: 0.32s; }
+.tab.active .personnel-card:nth-child(4) { animation-delay: 0.42s; }
+.tab.active .personnel-card:nth-child(5) { animation-delay: 0.52s; }
+.tab.active .personnel-card:nth-child(6) { animation-delay: 0.62s; }
 </style>
 </head>
 <body>
@@ -1630,8 +1653,7 @@
     <div class="nav-item" data-tab="more"><span class="emoji">📚</span> More</div>
     <div class="nav-item" data-tab="personnel"><span class="emoji">🧑‍⚕️</span> Clinic Personnel</div>
     <div class="nav-item" data-tab="about"><span class="emoji">ℹ️</span> About System</div>
-
-    <div class="sidebar-divider"></div>
+<div class="sidebar-divider"></div>
     <div class="sidebar-label">Clinic Personnel</div>
 
     <!-- Clinic personnel quick list -->
@@ -2191,23 +2213,39 @@ for (var n = 0; n < navItems.length; n++) {
     for (var y = 0; y < tabs.length; y++) { tabs[y].classList.remove("active"); }
     this.classList.add("active");
     var tabName = this.getAttribute("data-tab");
-    document.getElementById("tab-" + tabName).classList.add("active");
+    var tabEl = document.getElementById("tab-" + tabName);
+    if (!tabEl) return;
+    tabEl.classList.add("active");
     if (tabName === "more") renderIllnessGuide();
     if (tabName === "inventory") refreshInventoryOnly();
-    setTimeout(bindPanelSpotlights, 50);
-    setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 80);
-    if (tabName === "trends" || tabName === "dashboard") {
-      var panels = document.querySelectorAll("#tab-" + tabName + " .panel");
-      for (var pi = 0; pi < panels.length; pi++) {
-        panels[pi].style.opacity = "0";
-        panels[pi].style.transform = "translateY(14px) scale(0.98)";
-        (function (el, delay) {
-          setTimeout(function () {
-            el.style.transition = "opacity 0.45s ease, transform 0.45s cubic-bezier(.22,1,.36,1)";
-            el.style.opacity = "1";
-            el.style.transform = "none";
-          }, 80 + delay);
-        })(panels[pi], pi * 90);
+    setTimeout(bindPanelSpotlights, 80);
+    setTimeout(function(){ wrapChartCanvases(); bindAllChartTips(); }, 120);
+
+    /* Smooth staggered intro — personnel uses CSS from-above/from-below */
+    var sel = "#tab-" + tabName + " .panel, #tab-" + tabName + " .stat-card, #tab-" + tabName +
+      " .insight, #tab-" + tabName + " .illness-card, #tab-" +
+      tabName + " .alert-panel, #tab-" + tabName + " .campaign-panel, #tab-" + tabName + " .stock-item";
+    var items = tabEl.querySelectorAll(sel);
+    for (var pi = 0; pi < items.length; pi++) {
+      var fromTop = (pi % 2 === 1);
+      items[pi].style.opacity = "0";
+      items[pi].style.transform = fromTop ? "translateY(-16px)" : "translateY(18px)";
+      (function (el, delay) {
+        setTimeout(function () {
+          el.style.transition = "opacity 0.8s cubic-bezier(.22,1,.36,1), transform 0.8s cubic-bezier(.22,1,.36,1)";
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0)";
+        }, 120 + delay);
+      })(items[pi], pi * 100);
+    }
+    /* Reset personnel cards so CSS animation can replay */
+    if (tabName === "personnel") {
+      var cards = tabEl.querySelectorAll(".personnel-card");
+      for (var c = 0; c < cards.length; c++) {
+        var card = cards[c];
+        card.style.animation = "none";
+        void card.offsetWidth;
+        card.style.animation = "";
       }
     }
   });
@@ -3500,3 +3538,4 @@ loadMeta().then(function () {
 </script>
 </body>
 </html>
+

@@ -53,7 +53,7 @@ const SECTIONS = {
   'Grade 12': [
     'Einstein', 'Fibonacci', 'Laplace', 'Leibniz', 'Euler',
     'Descartes', 'Euclid', 'Pascal', 'Pearson', 'Newton',
-    'McGregor', 'Crosby', 'Mayo', 'Pacioli', 'Aquinas',
+    'McGregor', 'Philip Crosby', 'Mayo', 'Luca Pacioli', 'Aquinas',
     'Aurelius', 'Confucius', 'Mencius', 'Freud', 'Shakespeare'
   ]
 };
@@ -271,7 +271,7 @@ if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM 
     ['Consultation', 'Grade 11', 'Innovators', 'STEM', 'Headache', 'mild', 'Rested, given water', 3],
     ['Consultation', 'Grade 12', 'Einstein', 'STEM', 'Fever', 'moderate', 'Temp checked, sent home', 6],
     ['Consultation', 'Grade 11', 'Thinkers', 'HUMSS', 'Minor Injury', 'mild', 'Cleaned & bandaged', 9],
-    ['Consultation', 'Grade 12', 'Pacioli', 'ABM', 'Stomachache', 'moderate', 'Given rest, monitored', 20],
+    ['Consultation', 'Grade 12', 'Luca Pacioli', 'ABM', 'Stomachache', 'moderate', 'Given rest, monitored', 20],
     ['Feeding', 'Grade 11', 'Builders', '', '', '', '', 25],
     ['Feeding', 'Grade 12', 'Newton', '', '', '', '', 30],
     ['Consultation', 'Grade 12', 'Shakespeare', 'HUMSS', 'Headache', 'mild', 'Rested 15 mins', 50],
