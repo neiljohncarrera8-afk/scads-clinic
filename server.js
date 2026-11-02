@@ -289,7 +289,24 @@ if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM 
 
 function isValidSection(grade, section) {
   const list = SECTIONS[grade] || [];
-  return list.includes(section);
+  if (list.includes(section)) return true;
+  // Aliases for renamed sections (old short names still accepted)
+  const aliases = {
+    'Crosby': 'Philip Crosby',
+    'Philip Crosby': 'Philip Crosby',
+    'Pacioli': 'Luca Pacioli',
+    'Luca Pacioli': 'Luca Pacioli'
+  };
+  const normalized = aliases[section] || section;
+  return list.includes(normalized);
+}
+
+function normalizeSectionName(section) {
+  const aliases = {
+    'Crosby': 'Philip Crosby',
+    'Pacioli': 'Luca Pacioli'
+  };
+  return aliases[section] || section;
 }
 
 /* ============== VISITS ============== */
@@ -379,6 +396,7 @@ app.post('/api/visits', (req, res) => {
       error: 'invalid section for the selected grade.'
     });
   }
+  section = normalizeSectionName(section);
 
   strand = strand || '';
   if (strand && !STRANDS.includes(strand)) {
