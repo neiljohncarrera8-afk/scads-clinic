@@ -157,7 +157,7 @@
   .live-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);animation:livePulse 1.8s ease-in-out infinite;flex-shrink:0;}
 
   .tab{display:none;}
-  .tab.active{display:block;animation:tabFadeIn 0.9s cubic-bezier(.22,1,.36,1) both;}
+  .tab.active{display:block;animation:tabContentFade 1.6s cubic-bezier(.22,1,.36,1) both;}
 
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:24px;}
   .stat-card{
@@ -297,7 +297,7 @@
   @keyframes riseIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:none;}}
   .nav-item:active{transform:scale(.97);}
 
-  .tab.active{animation:tabFadeIn 0.85s var(--ease) both;}
+  .tab.active{animation: tabContentFade 1.6s cubic-bezier(.22,1,.36,1) both;}
   @keyframes tabIn{from{opacity:0;transform:translateY(18px);filter:blur(5px);}to{opacity:1;transform:none;filter:blur(0);}}
 
   .stat-card,.panel,.personnel-card,.alert-panel,.campaign-panel{animation-timing-function:var(--ease);animation-duration:.7s;}
@@ -716,7 +716,7 @@
 
   /* Tab content enter */
   .tab.active{
-    animation: tabFadeIn 0.9s cubic-bezier(.22,1,.36,1) both !important;
+    animation: tabContentFade 1.6s cubic-bezier(.22,1,.36,1) both;
   }
 
 
@@ -1611,30 +1611,59 @@
 
 
 
-/* Personnel cards: subtle from below / from above (not extreme) */
-@keyframes cardFromBelow {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
+
+
+
+/* ===== Clinic Personnel card intros (distinct, not plain fade) ===== */
+@keyframes pc1 {
+  0% { opacity:0; transform: perspective(900px) translateY(48px) rotateX(22deg) scale(.9); filter:blur(8px); }
+  100% { opacity:1; transform: perspective(900px) translateY(0) rotateX(0) scale(1); filter:blur(0); }
 }
-@keyframes cardFromAbove {
-  from { opacity: 0; transform: translateY(-24px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes pc2 {
+  0% { opacity:0; transform: translateY(-42px) scale(.88) rotate(3deg); filter:blur(7px); }
+  100% { opacity:1; transform: translateY(0) scale(1) rotate(0); filter:blur(0); }
 }
-.tab.active .personnel-card {
-  animation: cardFromBelow 0.85s cubic-bezier(.22,1,.36,1) both;
+@keyframes pc3 {
+  0% { opacity:0; transform: perspective(1000px) rotateY(-40deg) translateX(-36px); filter:blur(6px); }
+  100% { opacity:1; transform: perspective(1000px) rotateY(0) translateX(0); filter:blur(0); }
 }
-.tab.active .personnel-card:nth-child(odd) {
-  animation-name: cardFromBelow;
+@keyframes pc4 {
+  0% { opacity:0; transform: scale(.55); filter:blur(10px); }
+  65% { opacity:1; transform: scale(1.06); filter:blur(0); }
+  100% { opacity:1; transform: scale(1); filter:blur(0); }
 }
-.tab.active .personnel-card:nth-child(even) {
-  animation-name: cardFromAbove;
+@keyframes pc5 {
+  0% { opacity:0; transform: translateX(-50px) rotate(-4deg) scale(.92); filter:blur(6px); }
+  100% { opacity:1; transform: translateX(0) rotate(0) scale(1); filter:blur(0); }
 }
-.tab.active .personnel-card:nth-child(1) { animation-delay: 0.12s; }
-.tab.active .personnel-card:nth-child(2) { animation-delay: 0.22s; }
-.tab.active .personnel-card:nth-child(3) { animation-delay: 0.32s; }
-.tab.active .personnel-card:nth-child(4) { animation-delay: 0.42s; }
-.tab.active .personnel-card:nth-child(5) { animation-delay: 0.52s; }
-.tab.active .personnel-card:nth-child(6) { animation-delay: 0.62s; }
+@keyframes pc6 {
+  0% { opacity:0; transform: translateX(50px) rotate(4deg) scale(.92); filter:blur(6px); }
+  100% { opacity:1; transform: translateX(0) rotate(0) scale(1); filter:blur(0); }
+}
+
+#tab-personnel.tab.active .personnel-card {
+  opacity: 0;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
+  animation-duration: 1s;
+  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+  animation-fill-mode: both;
+}
+#tab-personnel.tab.active .personnel-card:nth-child(1) { animation-name: pc1; animation-delay: .1s; }
+#tab-personnel.tab.active .personnel-card:nth-child(2) { animation-name: pc2; animation-delay: .28s; }
+#tab-personnel.tab.active .personnel-card:nth-child(3) { animation-name: pc3; animation-delay: .46s; }
+#tab-personnel.tab.active .personnel-card:nth-child(4) { animation-name: pc4; animation-delay: .64s; }
+#tab-personnel.tab.active .personnel-card:nth-child(5) { animation-name: pc5; animation-delay: .82s; }
+#tab-personnel.tab.active .personnel-card:nth-child(6) { animation-name: pc6; animation-delay: 1s; }
+#tab-personnel.tab.active .personnel-card:nth-child(n+7) { animation-name: pc1; animation-delay: 1.15s; }
+
+#tab-personnel .personnel-card {
+  transition: transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease;
+}
+#tab-personnel .personnel-card:hover {
+  transform: translateY(-8px) scale(1.03);
+}
+
 </style>
 </head>
 <body>
@@ -2229,14 +2258,14 @@ for (var n = 0; n < navItems.length; n++) {
     for (var pi = 0; pi < items.length; pi++) {
       var fromTop = (pi % 2 === 1);
       items[pi].style.opacity = "0";
-      items[pi].style.transform = fromTop ? "translateY(-16px)" : "translateY(18px)";
+      items[pi].style.transform = fromTop ? "translateY(-10px)" : "translateY(12px)";
       (function (el, delay) {
         setTimeout(function () {
-          el.style.transition = "opacity 0.8s cubic-bezier(.22,1,.36,1), transform 0.8s cubic-bezier(.22,1,.36,1)";
+          el.style.transition = "opacity 1.5s cubic-bezier(.22,1,.36,1), transform 1.5s cubic-bezier(.22,1,.36,1)";
           el.style.opacity = "1";
           el.style.transform = "translateY(0)";
-        }, 120 + delay);
-      })(items[pi], pi * 100);
+        }, 320 + delay);
+      })(items[pi], pi * 280);
     }
     /* Reset personnel cards so CSS animation can replay */
     if (tabName === "personnel") {
@@ -2244,6 +2273,8 @@ for (var n = 0; n < navItems.length; n++) {
       for (var c = 0; c < cards.length; c++) {
         var card = cards[c];
         card.style.animation = "none";
+        card.style.opacity = "";
+        card.style.transform = "";
         void card.offsetWidth;
         card.style.animation = "";
       }
