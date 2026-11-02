@@ -791,9 +791,12 @@ function render() {
     startAutoReset();
     // Auto-print once — slightly delayed so receipt is complete
     lastPrintedRef = '';
+    /* Countdown starts immediately (wall-clock). Print is deferred so the timer
+       can paint at least once before Chrome's print() freezes the main thread.
+       While the print dialog is open, numbers pause; after OK they jump to real time left. */
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 80);
+    }, 600);
     return;
   }
 
@@ -932,29 +935,46 @@ function printReceipt() {
     var html = buildReceiptHTML(answers);
     var old = document.getElementById('printFrame');
     if (old && old.parentNode) old.parentNode.removeChild(old);
+
     var iframe = document.createElement('iframe');
     iframe.id = 'printFrame';
-    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;';
+    /* Keep a real layout size so slow tablets still compose print content */
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText = 'position:fixed;left:0;top:0;width:58mm;height:1px;border:0;opacity:0.01;pointer-events:none;z-index:-1;';
     document.body.appendChild(iframe);
+
     var idoc = iframe.contentWindow.document;
     idoc.open();
     idoc.write(html);
     idoc.close();
+
     var done = false;
     function doPrint() {
       if (done) return;
       done = true;
-      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) {}
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) {}
+      /* Slow Windows tablets: do NOT remove iframe while dialog is opening */
+      setTimeout(function () { printBusy = false; }, 2500);
       setTimeout(function () {
-        printBusy = false;
         try {
           var f = document.getElementById('printFrame');
           if (f && f.parentNode) f.parentNode.removeChild(f);
         } catch (e2) {}
-      }, 800);
+      }, 12000);
     }
-    // Fast print — minimal wait for iframe ready
-    setTimeout(doPrint, 40);
+
+    /* Give laggy tablets time to layout receipt before opening print dialog */
+    setTimeout(function () {
+      try {
+        if (iframe.contentWindow.document.readyState === 'complete') doPrint();
+        else iframe.onload = doPrint;
+      } catch (e3) {
+        setTimeout(doPrint, 200);
+      }
+    }, 200);
   } catch (e) {
     printBusy = false;
   }
@@ -1143,21 +1163,36 @@ function submitForm() {
 }
 
 function startAutoReset() {
-  var seconds = 15;
-  var el = document.getElementById('timerText');
   clearTimeout(resetTimer);
-  function tick() {
-    if (!el) return;
-    el.textContent = 'Returning to start in ' + seconds + 's';
-    if (seconds <= 0) { showIdle(); return; }
-    seconds--;
-    resetTimer = setTimeout(tick, 1000);
+  if (window._resetInterval) {
+    try { clearInterval(window._resetInterval); } catch (e) {}
+    window._resetInterval = null;
   }
-  tick();
+  /* Wall-clock based: if Chrome print() freezes JS, when it resumes we jump to real remaining time */
+  var endAt = Date.now() + 15000;
+  function paint() {
+    var left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+    var el = document.getElementById('timerText');
+    if (el) el.textContent = 'Returning to start in ' + left + 's';
+    return left;
+  }
+  paint();
+  window._resetInterval = setInterval(function () {
+    var left = paint();
+    if (left <= 0) {
+      try { clearInterval(window._resetInterval); } catch (e1) {}
+      window._resetInterval = null;
+      showIdle();
+    }
+  }, 250);
 }
 
 function showIdle() {
   clearTimeout(resetTimer);
+  if (window._resetInterval) {
+    try { clearInterval(window._resetInterval); } catch (e) {}
+    window._resetInterval = null;
+  }
   answers = {};
   current = -1;
   var idle = document.getElementById('idleScreen');
