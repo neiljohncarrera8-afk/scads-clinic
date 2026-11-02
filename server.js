@@ -287,26 +287,27 @@ if (process.env.SEED_DEMO_DATA === 'true' && db.prepare('SELECT COUNT(*) c FROM 
 
 /* ============== HELPERS ============== */
 
-function isValidSection(grade, section) {
-  const list = SECTIONS[grade] || [];
-  if (list.includes(section)) return true;
-  // Aliases for renamed sections (old short names still accepted)
-  const aliases = {
-    'Crosby': 'Philip Crosby',
-    'Philip Crosby': 'Philip Crosby',
-    'Pacioli': 'Luca Pacioli',
-    'Luca Pacioli': 'Luca Pacioli'
-  };
-  const normalized = aliases[section] || section;
-  return list.includes(normalized);
-}
-
 function normalizeSectionName(section) {
   const aliases = {
     'Crosby': 'Philip Crosby',
     'Pacioli': 'Luca Pacioli'
   };
-  return aliases[section] || section;
+  const s = String(section || '').trim();
+  return aliases[s] || s;
+}
+
+function isValidSection(grade, section) {
+  const normalized = normalizeSectionName(section);
+  // Prefer match under selected grade
+  const list = SECTIONS[grade] || [];
+  if (list.includes(normalized)) return true;
+  // Fallback: accept if section exists under ANY grade (avoids rename mismatches)
+  for (const g of Object.keys(SECTIONS)) {
+    if ((SECTIONS[g] || []).includes(normalized)) return true;
+  }
+  // Last resort: known Grade 12 ABM-style names
+  const known = ['Philip Crosby', 'Crosby', 'Luca Pacioli', 'Pacioli', 'McGregor', 'Mayo'];
+  return known.includes(normalized) || known.includes(String(section || '').trim());
 }
 
 /* ============== VISITS ============== */
