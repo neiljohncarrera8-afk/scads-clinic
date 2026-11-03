@@ -540,6 +540,26 @@
 .stock-item .si-badge.low{color:#ffb84d;}
 .stock-item .si-badge.out{color:#ff7a7a;}
 
+
+
+
+
+/* ===== Lighten staff tab nudge + stock effects only (do NOT hide personnel) ===== */
+.staff-tab{animation:none!important;}
+.staff-drawer.open .sd-avatar{animation:none!important;}
+/* Cards must be visible when drawer opens (no opacity:0 stuck) */
+.staff-drawer.open .sd-card{
+  opacity:1!important;
+  transform:none!important;
+  animation:none!important;
+}
+.kiosk-stocks .stock-item,
+.stock-chip,
+.stock-row{
+  animation:none!important;
+  transition:none!important;
+  filter:none!important;
+}
 </style>
 </head>
 <body>
@@ -791,12 +811,10 @@ function render() {
     startAutoReset();
     // Auto-print once — slightly delayed so receipt is complete
     lastPrintedRef = '';
-    /* Countdown starts immediately (wall-clock). Print is deferred so the timer
-       can paint at least once before Chrome's print() freezes the main thread.
-       While the print dialog is open, numbers pause; after OK they jump to real time left. */
+    /* Lite tablet: let success UI + countdown run first; print() still blocks JS while dialog is open */
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 600);
+    }, 2000);
     return;
   }
 
@@ -932,49 +950,27 @@ function printReceipt() {
   printBusy = true;
   if (ref) lastPrintedRef = ref;
   try {
-    var html = buildReceiptHTML(answers);
+    var htmlDoc = buildReceiptHTML(answers);
     var old = document.getElementById('printFrame');
     if (old && old.parentNode) old.parentNode.removeChild(old);
-
     var iframe = document.createElement('iframe');
     iframe.id = 'printFrame';
-    /* Keep a real layout size so slow tablets still compose print content */
-    iframe.setAttribute('aria-hidden', 'true');
-    iframe.style.cssText = 'position:fixed;left:0;top:0;width:58mm;height:1px;border:0;opacity:0.01;pointer-events:none;z-index:-1;';
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:58mm;height:80px;border:0;';
     document.body.appendChild(iframe);
-
     var idoc = iframe.contentWindow.document;
     idoc.open();
-    idoc.write(html);
+    idoc.write(htmlDoc);
     idoc.close();
-
-    var done = false;
-    function doPrint() {
-      if (done) return;
-      done = true;
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (e) {}
-      /* Slow Windows tablets: do NOT remove iframe while dialog is opening */
-      setTimeout(function () { printBusy = false; }, 2500);
+    setTimeout(function () {
+      try { iframe.contentWindow.print(); } catch (e) {}
+      setTimeout(function () { printBusy = false; }, 3000);
       setTimeout(function () {
         try {
           var f = document.getElementById('printFrame');
           if (f && f.parentNode) f.parentNode.removeChild(f);
         } catch (e2) {}
-      }, 12000);
-    }
-
-    /* Give laggy tablets time to layout receipt before opening print dialog */
-    setTimeout(function () {
-      try {
-        if (iframe.contentWindow.document.readyState === 'complete') doPrint();
-        else iframe.onload = doPrint;
-      } catch (e3) {
-        setTimeout(doPrint, 200);
-      }
-    }, 200);
+      }, 15000);
+    }, 300);
   } catch (e) {
     printBusy = false;
   }
@@ -1045,18 +1041,11 @@ document.addEventListener('pointerdown', function (e) {
 });
 
 function burst() {
-  var w = document.getElementById('burst');
-  if (!w) return;
-  var cols = ['#0f5c3d', '#2f9e68', '#9ad9b8', '#e8b93f'];
-  for (var i = 0; i < 16; i++) {
-    var a = (Math.PI * 2 / 16) * i + Math.random() * 0.3;
-    var dist = 48 + Math.random() * 30;
-    var sp = document.createElement('i');
-    sp.className = 'spark';
-    sp.style.cssText = '--x:' + Math.cos(a) * dist + 'px;--y:' + Math.sin(a) * dist + 'px;background:' + cols[i % 4] + ';animation-delay:' + (0.55 + Math.random() * 0.1) + 's';
-    w.appendChild(sp);
-  }
+  var wrap = document.getElementById('burst');
+  if (!wrap) return;
+  /* Lightweight check animation only — no spark particles (tablet-friendly) */
 }
+
 
 
 
@@ -1168,7 +1157,6 @@ function startAutoReset() {
     try { clearInterval(window._resetInterval); } catch (e) {}
     window._resetInterval = null;
   }
-  /* Wall-clock based: if Chrome print() freezes JS, when it resumes we jump to real remaining time */
   var endAt = Date.now() + 15000;
   function paint() {
     var left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
@@ -1178,13 +1166,12 @@ function startAutoReset() {
   }
   paint();
   window._resetInterval = setInterval(function () {
-    var left = paint();
-    if (left <= 0) {
+    if (paint() <= 0) {
       try { clearInterval(window._resetInterval); } catch (e1) {}
       window._resetInterval = null;
       showIdle();
     }
-  }, 250);
+  }, 200);
 }
 
 function showIdle() {
