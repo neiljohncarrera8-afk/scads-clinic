@@ -808,11 +808,12 @@ function render() {
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
     burst();
-    /* Auto-print after success UI paints. Countdown starts only when user presses Done. */
     lastPrintedRef = '';
+    /* Countdown starts immediately (wall-clock). Auto-print follows. */
+    try { startAutoReset(); } catch (e0) {}
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 500);
+    }, 400);
     return;
   }
 
@@ -1150,8 +1151,15 @@ function submitForm() {
 }
 
 function onDonePressed() {
-  /* Countdown only — auto-print already ran (or use Print slip). */
-  try { startAutoReset(); } catch (e2) {}
+  /* Skip remaining wait — back to start now */
+  try {
+    clearTimeout(resetTimer);
+    if (window._resetInterval) {
+      clearInterval(window._resetInterval);
+      window._resetInterval = null;
+    }
+  } catch (e0) {}
+  showIdle();
 }
 
 function startAutoReset() {
