@@ -258,6 +258,307 @@ tbody tr:hover{transform:translateX(4px);}
 .chart-card h2{
   text-shadow: 0 1px 0 rgba(255,255,255,.8);
 }
+
+/* ========== ADVISER MAX EFFECTS ========== */
+@keyframes dashReveal {
+  0% { opacity: 0; transform: translateY(28px) scale(.97); filter: blur(6px); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes shimmer {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes borderGlow {
+  0%, 100% { opacity: .35; }
+  50% { opacity: .85; }
+}
+@keyframes scalePop {
+  0% { transform: scale(.6); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes slideLeftIn {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes chartStageIn {
+  0% { opacity: 0; transform: perspective(900px) rotateX(12deg) translateY(20px); }
+  100% { opacity: 1; transform: perspective(900px) rotateX(4deg) translateY(0); }
+}
+
+#viewDash.fx-on .topbar {
+  animation: dashReveal .7s cubic-bezier(.22,1,.36,1) both;
+}
+#viewDash.fx-on .stat {
+  animation: scalePop .7s cubic-bezier(.22,1,.36,1) both;
+}
+#viewDash.fx-on .stat:nth-child(1) { animation-delay: .05s; }
+#viewDash.fx-on .stat:nth-child(2) { animation-delay: .12s; }
+#viewDash.fx-on .stat:nth-child(3) { animation-delay: .19s; }
+#viewDash.fx-on .stat:nth-child(4) { animation-delay: .26s; }
+#viewDash.fx-on .stat:nth-child(5) { animation-delay: .33s; }
+
+#viewDash.fx-on .charts .chart-card {
+  animation: chartStageIn .85s cubic-bezier(.22,1,.36,1) both;
+}
+#viewDash.fx-on .charts .chart-card:nth-child(1) { animation-delay: .2s; }
+#viewDash.fx-on .charts .chart-card:nth-child(2) { animation-delay: .32s; }
+
+#viewDash.fx-on .charts-row2 .chart-card {
+  animation: dashReveal .85s cubic-bezier(.22,1,.36,1) both;
+}
+#viewDash.fx-on .charts-row2 .chart-card:nth-child(1) { animation-delay: .4s; }
+#viewDash.fx-on .charts-row2 .chart-card:nth-child(2) { animation-delay: .5s; }
+
+#viewDash.fx-on .card:not(.chart-card):not(.login-box) {
+  animation: dashReveal .8s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: .55s;
+}
+
+.stat {
+  cursor: default;
+}
+.stat:hover b {
+  animation: floatSoft 1.2s ease-in-out infinite;
+}
+.stat b {
+  transition: transform .35s cubic-bezier(.22,1,.36,1);
+}
+
+.chart-card {
+  transition: transform .45s cubic-bezier(.22,1,.36,1), box-shadow .45s ease;
+}
+.chart-card:hover {
+  transform: translateY(-6px);
+}
+.chart-card .ring-glow {
+  animation: borderGlow 3s ease-in-out infinite;
+  opacity: .4;
+}
+.chart-card:hover .ring-glow {
+  opacity: 1;
+  animation: none;
+}
+
+/* Shimmer line under section titles */
+#viewDash h2 {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+}
+#viewDash h2::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #178a52, #e8a317, transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2.8s linear infinite;
+  opacity: .7;
+}
+
+.sec-btn.active {
+  animation: scalePop .45s cubic-bezier(.22,1,.36,1) both;
+}
+
+tbody tr:hover {
+  background: rgba(23,138,82,.06);
+  box-shadow: inset 3px 0 0 #178a52;
+}
+
+.pill {
+  animation: dashReveal .6s cubic-bezier(.22,1,.36,1) both;
+}
+.login-box {
+  position: relative;
+  overflow: hidden;
+}
+.login-box::after {
+  content: "";
+  position: absolute;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  right: -40px; top: -40px;
+  background: radial-gradient(circle, rgba(23,138,82,.15), transparent 70%);
+  pointer-events: none;
+  animation: floatSoft 4s ease-in-out infinite;
+}
+
+.badge {
+  transition: transform .25s cubic-bezier(.22,1,.36,1);
+}
+tr:hover .badge {
+  transform: scale(1.06);
+}
+
+#viewDash .toolbar input,
+#viewDash .toolbar select {
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s;
+}
+#viewDash .toolbar input:focus,
+#viewDash .toolbar select:focus {
+  transform: translateY(-2px);
+}
+
+/* Stagger table rows harder */
+#viewDash.fx-on tbody tr {
+  animation: slideLeftIn .5s cubic-bezier(.22,1,.36,1) both;
+}
+#viewDash.fx-on tbody tr:nth-child(1) { animation-delay: .02s; }
+#viewDash.fx-on tbody tr:nth-child(2) { animation-delay: .06s; }
+#viewDash.fx-on tbody tr:nth-child(3) { animation-delay: .1s; }
+#viewDash.fx-on tbody tr:nth-child(4) { animation-delay: .14s; }
+#viewDash.fx-on tbody tr:nth-child(5) { animation-delay: .18s; }
+#viewDash.fx-on tbody tr:nth-child(6) { animation-delay: .22s; }
+#viewDash.fx-on tbody tr:nth-child(7) { animation-delay: .26s; }
+#viewDash.fx-on tbody tr:nth-child(8) { animation-delay: .3s; }
+#viewDash.fx-on tbody tr:nth-child(9) { animation-delay: .34s; }
+#viewDash.fx-on tbody tr:nth-child(10) { animation-delay: .38s; }
+
+/* ========== BUTTON HOVER EFFECTS ========== */
+.btn {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform .28s cubic-bezier(.22,1,.36,1),
+    box-shadow .28s ease,
+    filter .25s ease,
+    background .25s ease,
+    border-color .25s ease !important;
+}
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.35), transparent 55%);
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.btn:hover::before { opacity: 1; }
+.btn > * { position: relative; z-index: 1; }
+
+.btn-primary {
+  background: linear-gradient(135deg, #1a9a5c 0%, #0c4f35 55%, #0a3d2a 100%) !important;
+  letter-spacing: .02em;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.3) inset,
+    0 12px 28px -8px rgba(12,79,53,.55),
+    0 0 0 0 rgba(23,138,82,.0) !important;
+  transition:
+    transform .35s cubic-bezier(.22,1,.36,1),
+    box-shadow .4s ease,
+    letter-spacing .35s ease,
+    filter .3s ease !important;
+}
+.btn-primary:hover {
+  transform: translateY(-4px);
+  letter-spacing: .06em;
+  filter: brightness(1.05);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.4) inset,
+    0 18px 40px -10px rgba(12,79,53,.7),
+    0 0 24px rgba(47,158,104,.35),
+    0 0 0 3px rgba(47,158,104,.2) !important;
+}
+.btn-primary:active {
+  transform: translateY(-1px) scale(.98);
+  letter-spacing: .02em;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.2) inset,
+    0 8px 18px -6px rgba(12,79,53,.5) !important;
+}
+/* Soft pulse ring on unlock button only when idle */
+.btn-ghost:hover {
+  transform: translateY(-3px) scale(1.03);
+  background: linear-gradient(165deg,#fff,#e0f5ea);
+  border-color: rgba(23,138,82,.35);
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 14px 28px -10px rgba(15,40,30,.22),
+    0 0 0 3px rgba(23,138,82,.1);
+  color: #0c4f35;
+}
+.btn-ghost:active {
+  transform: translateY(0) scale(.97);
+}
+
+.btn-danger {
+  transition: transform .25s cubic-bezier(.22,1,.36,1), background .25s, box-shadow .25s !important;
+}
+.btn-danger:hover {
+  transform: scale(1.12) rotate(-3deg);
+  background: linear-gradient(165deg,#ffe4e2,#f9c4c1);
+  box-shadow: 0 6px 16px rgba(194,61,57,.25);
+}
+.btn-danger:active {
+  transform: scale(.92);
+}
+
+.sec-btn {
+  transition:
+    transform .28s cubic-bezier(.22,1,.36,1),
+    background .25s,
+    box-shadow .28s,
+    border-color .25s !important;
+}
+.sec-btn:hover {
+  transform: translateX(8px) scale(1.02);
+  background: rgba(255,255,255,.14);
+  box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
+.sec-btn.active:hover {
+  transform: translateX(4px) scale(1.02);
+  box-shadow: 0 14px 32px rgba(30,58,138,.55), 0 1px 0 rgba(255,255,255,.2) inset;
+}
+
+.staff-tab-btn,
+.btn-primary,
+.btn-ghost {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Unlock button — NO sweep; soft glow breathe instead */
+#loginBtn.btn-primary::after,
+.btn-primary::after {
+  display: none !important;
+  animation: none !important;
+  background: none !important;
+}
+#loginBtn.btn-primary {
+  position: relative;
+  overflow: visible;
+  animation: unlockGlow 2.6s ease-in-out infinite;
+}
+@keyframes unlockGlow {
+  0%, 100% {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.28) inset,
+      0 12px 28px -8px rgba(12,79,53,.5),
+      0 0 0 0 rgba(47,158,104,0);
+  }
+  50% {
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.35) inset,
+      0 14px 34px -8px rgba(12,79,53,.65),
+      0 0 20px 2px rgba(47,158,104,.25);
+  }
+}
+#loginBtn.btn-primary:hover {
+  animation: none;
+  transform: translateY(-3px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.4) inset,
+    0 16px 36px -10px rgba(12,79,53,.7),
+    0 0 28px 4px rgba(47,158,104,.3);
+}
 </style>
 </head>
 <body>
@@ -543,7 +844,11 @@ tbody tr:hover{transform:translateX(4px);}
   function showDash() {
     setLoggedIn(true);
     document.getElementById('viewLogin').hidden = true;
-    document.getElementById('viewDash').hidden = false;
+    var dash = document.getElementById('viewDash');
+    dash.hidden = false;
+    dash.classList.remove('fx-on');
+    void dash.offsetWidth;
+    dash.classList.add('fx-on');
   }
 
   function destroyCharts() {
@@ -864,6 +1169,22 @@ tbody tr:hover{transform:translateX(4px);}
     return list;
   }
 
+  function animateCount(el, target, suffix) {
+    suffix = suffix || '';
+    var start = 0;
+    var dur = 700;
+    var t0 = null;
+    function frame(ts) {
+      if (!t0) t0 = ts;
+      var p = Math.min(1, (ts - t0) / dur);
+      var eased = 1 - Math.pow(1 - p, 3);
+      var val = Math.round(start + (target - start) * eased);
+      el.textContent = val + suffix;
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
   function renderStats(visits) {
     var feed = 0, cons = 0, sev = 0;
     visits.forEach(function (v) {
@@ -872,11 +1193,16 @@ tbody tr:hover{transform:translateX(4px);}
     });
     var rate = visits.length ? Math.round((sev / visits.length) * 100) : 0;
     document.getElementById('stats').innerHTML =
-      '<div class="stat"><span>Total visits</span><b>' + visits.length + '</b></div>' +
-      '<div class="stat"><span>Feeding</span><b>' + feed + '</b></div>' +
-      '<div class="stat"><span>Consultation</span><b>' + cons + '</b></div>' +
-      '<div class="stat"><span>Severe cases</span><b>' + sev + '</b></div>' +
-      '<div class="stat"><span>Severe rate</span><b>' + rate + '%</b></div>';
+      '<div class="stat"><span>Total visits</span><b data-count="' + visits.length + '">0</b></div>' +
+      '<div class="stat"><span>Feeding</span><b data-count="' + feed + '">0</b></div>' +
+      '<div class="stat"><span>Consultation</span><b data-count="' + cons + '">0</b></div>' +
+      '<div class="stat"><span>Severe cases</span><b data-count="' + sev + '">0</b></div>' +
+      '<div class="stat"><span>Severe rate</span><b data-count="' + rate + '" data-suffix="%">0%</b></div>';
+    var nodes = document.querySelectorAll('#stats b[data-count]');
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      animateCount(n, parseInt(n.getAttribute('data-count'), 10) || 0, n.getAttribute('data-suffix') || '');
+    }
   }
 
   function renderTable() {
@@ -1030,6 +1356,15 @@ tbody tr:hover{transform:translateX(4px);}
       if (sessionSection) loadVisits();
     });
   } catch (e) {}
+
+
+  document.addEventListener('pointermove', function (e) {
+    var t = e.target.closest('.btn');
+    if (!t) return;
+    var r = t.getBoundingClientRect();
+    t.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+    t.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+  });
 
   renderSectionList();
   if (sessionSection) loadVisits();
