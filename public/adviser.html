@@ -244,12 +244,12 @@ tbody tr:hover{transform:translateX(4px);}
     inset 0 -12px 28px rgba(15,61,46,.06),
     0 18px 36px -12px rgba(15,61,46,.2);
   border: 1px solid rgba(15,61,46,.06);
-  transform: perspective(900px) rotateX(4deg);
+  transform: none;
   transform-origin: center bottom;
   transition: transform .45s cubic-bezier(.22,1,.36,1), box-shadow .45s ease, filter .4s ease;
 }
 .chart-card:hover .chart-wrap{
-  transform: perspective(900px) rotateX(0deg) translateY(-4px);
+  transform: none;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.95),
     0 24px 44px -14px rgba(15,61,46,.28);
@@ -286,8 +286,8 @@ tbody tr:hover{transform:translateX(4px);}
   to { opacity: 1; transform: none; }
 }
 @keyframes chartStageIn {
-  0% { opacity: 0; transform: perspective(900px) rotateX(12deg) translateY(20px); }
-  100% { opacity: 1; transform: perspective(900px) rotateX(4deg) translateY(0); }
+  0% { opacity: 0; transform: translateY(18px) scale(.98); }
+  100% { opacity: 1; transform: none; }
 }
 
 #viewDash.fx-on .topbar {
@@ -558,6 +558,70 @@ tr:hover .badge {
     0 1px 0 rgba(255,255,255,.4) inset,
     0 16px 36px -10px rgba(12,79,53,.7),
     0 0 28px 4px rgba(47,158,104,.3);
+}
+
+/* Flat charts — no 3D tilt */
+.chart-wrap {
+  transform: none !important;
+  transform-origin: center center !important;
+}
+.chart-card:hover .chart-wrap {
+  transform: translateY(-3px) !important;
+}
+.chart-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Toolbar filters — hover & focus effects */
+.toolbar select,
+.toolbar input[type=search],
+.toolbar input[type=text],
+#viewDash select,
+#viewDash input[type=search] {
+  cursor: pointer;
+  border-radius: 12px !important;
+  transition:
+    transform .28s cubic-bezier(.22,1,.36,1),
+    box-shadow .28s ease,
+    border-color .25s ease,
+    background .25s ease !important;
+}
+.toolbar select:hover,
+.toolbar input[type=search]:hover,
+#viewDash select:hover,
+#viewDash input[type=search]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(23,138,82,.4) !important;
+  background: linear-gradient(165deg,#fff,#f0faf4) !important;
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 8px 18px -8px rgba(15,40,30,.18),
+    0 0 0 3px rgba(23,138,82,.1) !important;
+}
+.toolbar select:focus,
+.toolbar input[type=search]:focus,
+#viewDash select:focus,
+#viewDash input[type=search]:focus {
+  transform: translateY(-2px) scale(1.02);
+  border-color: #178a52 !important;
+  box-shadow:
+    0 0 0 4px rgba(23,138,82,.15),
+    0 10px 22px -8px rgba(15,40,30,.2) !important;
+  outline: none;
+}
+.toolbar select:active {
+  transform: translateY(0) scale(.98);
+}
+/* Form selects on add visit */
+.form-grid select:hover,
+.form-grid input:hover {
+  transform: translateY(-2px);
+  border-color: rgba(23,138,82,.35);
+  box-shadow: 0 6px 16px -6px rgba(15,40,30,.15);
+}
+.form-grid select,
+.form-grid input {
+  transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s, border-color .25s !important;
 }
 </style>
 </head>
