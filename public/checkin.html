@@ -804,17 +804,15 @@ function render() {
       '<div class="refcode">' + esc(r.ref) + '</div>' +
       '<div class="actions">' +
         '<button class="btn btn-ghost" onclick="printReceipt()">🖨 Print slip</button>' +
-        '<button class="btn btn-primary" onclick="clearTimeout(resetTimer); showIdle();">Done</button>' +
+        '<button class="btn btn-primary" onclick="onDonePressed()">Done</button>' +
       '</div>' +
       '<div class="drain"><i></i></div><p class="timer" id="timerText"></p>';
     burst();
-    startAutoReset();
-    // Auto-print once — slightly delayed so receipt is complete
+    /* Auto-print after success UI paints. Countdown starts only when user presses Done. */
     lastPrintedRef = '';
-    /* Lite tablet: let success UI + countdown run first; print() still blocks JS while dialog is open */
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 2000);
+    }, 500);
     return;
   }
 
@@ -1149,6 +1147,11 @@ function submitForm() {
       '<div class="actions" style="width:100%;"><button class="btn btn-ghost" onclick="showIdle()">Cancel</button><button class="btn btn-primary" onclick="submitForm()">Try again</button></div>' +
       '<p class="privacy">No receipt will be printed until the server confirms the record.</p></div>';
   });
+}
+
+function onDonePressed() {
+  /* Countdown only — auto-print already ran (or use Print slip). */
+  try { startAutoReset(); } catch (e2) {}
 }
 
 function startAutoReset() {
