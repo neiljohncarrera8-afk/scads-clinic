@@ -1152,12 +1152,12 @@ function printViaIframe(htmlDoc, thenFn) {
             if (f && f.parentNode) f.parentNode.removeChild(f);
           } catch (e1) {}
           if (typeof thenFn === 'function') thenFn();
-        }, 200);
+        }, 300);
       }
       try { iframe.contentWindow.onafterprint = after; } catch (e2) {}
       try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e3) {}
-      setTimeout(after, 2500);
-    }, 80);
+      setTimeout(after, 3000);
+    }, 100);
   } catch (e) {
     if (typeof thenFn === 'function') thenFn();
   }
@@ -1169,13 +1169,17 @@ function printReceipt() {
   if (ref && ref === lastPrintedRef) return;
   printBusy = true;
   if (ref) lastPrintedRef = ref;
-  /* Feeding: visit slip only. Consultation: visit slip + parent form. */
-  var text = buildReceiptText(answers);
-  if (answers.purpose !== 'Feeding') {
-    text = text + String.fromCharCode(10) + buildParentSlipText();
-  }
-  printViaIframe(buildPrintDoc(text), function () {
-    printBusy = false;
+  var isFeeding = answers && answers.purpose === 'Feeding';
+  /* 1) Always print visit slip first */
+  printViaIframe(buildPrintDoc(buildReceiptText(answers)), function () {
+    if (isFeeding) {
+      printBusy = false;
+      return;
+    }
+    /* 2) Consultation only: second print = blank parent form */
+    printViaIframe(buildPrintDoc(buildParentSlipText()), function () {
+      printBusy = false;
+    });
   });
 }
 
