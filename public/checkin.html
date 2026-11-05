@@ -544,22 +544,105 @@
 
 
 
-/* ===== Lighten staff tab nudge + stock effects only (do NOT hide personnel) ===== */
-.staff-tab{animation:none!important;}
-.staff-drawer.open .sd-avatar{animation:none!important;}
-/* Cards must be visible when drawer opens (no opacity:0 stuck) */
+
+/* ===== SIDE TAB / DRAWER — low GPU for laggy tablets ===== */
+.staff-tab{
+  animation:none!important;
+  transition:left .2s ease!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.25)!important;
+  filter:none!important;
+  backdrop-filter:none!important;
+}
+.staff-tab:active{transform:translateY(-50%) scale(.98)!important;}
+.staff-backdrop{
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:rgba(0,0,0,.35)!important;
+  transition:opacity .2s ease!important;
+}
+.staff-drawer{
+  transition:transform .22s ease!important;
+  box-shadow:4px 0 20px rgba(0,0,0,.3)!important;
+  filter:none!important;
+  backdrop-filter:none!important;
+}
 .staff-drawer.open .sd-card{
   opacity:1!important;
   transform:none!important;
   animation:none!important;
+  transition:none!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.08)!important;
 }
-.kiosk-stocks .stock-item,
-.stock-chip,
-.stock-row{
+.staff-drawer.open .sd-avatar{
   animation:none!important;
+  box-shadow:none!important;
   transition:none!important;
   filter:none!important;
 }
+.sd-card:hover,
+.sd-card:active{
+  transform:none!important;
+  background:rgba(255,255,255,.1)!important;
+  box-shadow:none!important;
+}
+.sd-close{transition:none!important;}
+.staff-tab-btn{transition:background .15s,color .15s!important;}
+/* Stocks panel — no fancy motion */
+.kiosk-stocks,
+.kiosk-stocks *,
+#stockPanel,
+#stockPanel *{
+  animation:none!important;
+}
+.kiosk-stocks .stock-item,
+.stock-chip,
+.stock-row,
+.stock-bar-fill{
+  transition:none!important;
+  filter:none!important;
+  box-shadow:none!important;
+}
+
+/* ===== FILL-UP STEPS — lighter for laggy tablets ===== */
+.stage.enter{
+  animation:none!important;
+  opacity:1!important;
+  transform:none!important;
+}
+.opt{
+  animation:none!important;
+  transition:background .12s,border-color .12s!important;
+}
+.opt.picked{
+  animation:none!important;
+  transition:none!important;
+}
+.opt:active{
+  transform:none!important;
+  filter:none!important;
+}
+.opt .ripple,
+.ripple{
+  display:none!important;
+  animation:none!important;
+}
+.dot.now{animation:none!important;}
+.spark{display:none!important;animation:none!important;}
+.ticket,.trow,.refcode{
+  animation:none!important;
+  opacity:1!important;
+  transform:none!important;
+  clip-path:none!important;
+}
+.check circle,.check path{
+  animation:none!important;
+  stroke-dashoffset:0!important;
+}
+.btn{
+  transition:background .12s,border-color .12s!important;
+}
+.btn:active{transform:none!important;}
 </style>
 </head>
 <body>
