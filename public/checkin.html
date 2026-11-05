@@ -927,8 +927,102 @@ function buildReceiptText(r) {
   return lines.join('\n') + '\n';
 }
 
-function buildReceiptHTML(r) {
-  var text = buildReceiptText(r);
+
+function buildParentSlipText() {
+  /* Blank parent form for handwriting — 32 cols for XP-58 (58mm) */
+  var W = 32;
+  function S(s) { return String(s || ''); }
+  function center(s) {
+    s = S(s);
+    if (s.length > W) s = s.slice(0, W);
+    var p = Math.max(0, Math.floor((W - s.length) / 2));
+    return Array(p + 1).join(' ') + s;
+  }
+  function line() { return Array(W + 1).join('_'); }
+  function dash() { return Array(W + 1).join('-'); }
+  var L = [];
+  L.push('');
+  L.push(dash());
+  L.push(center('ALANGILAN SENIOR HIGH'));
+  L.push(center('SCHOOL CLINIC'));
+  L.push('');
+  L.push(center('PARENT NOTIFICATION'));
+  L.push(center('AND ACKNOWLEDGMENT'));
+  L.push(center('SLIP'));
+  L.push(dash());
+  L.push('');
+  L.push('Date: ____________________');
+  L.push('');
+  L.push('Dear Parent/Guardian,');
+  L.push('');
+  L.push('This is to inform you that');
+  L.push('your child visited the');
+  L.push('school clinic.');
+  L.push('');
+  L.push('Student Name:');
+  L.push(line());
+  L.push('');
+  L.push('Grade & Section:');
+  L.push(line());
+  L.push('');
+  L.push('Date of visit:');
+  L.push(line());
+  L.push('');
+  L.push('Time:');
+  L.push(line());
+  L.push('');
+  L.push('Concern / Reason:');
+  L.push(line());
+  L.push(line());
+  L.push('');
+  L.push('Services provided:');
+  L.push('[ ] Rest/Observation');
+  L.push('[ ] First Aid Treatment');
+  L.push('[ ] Vital Signs Monitor');
+  L.push('[ ] Medication');
+  L.push('[ ] Other: ____________');
+  L.push('');
+  L.push('Additional Remarks:');
+  L.push(line());
+  L.push(line());
+  L.push('');
+  L.push('Please sign to acknowledge');
+  L.push('you were informed of this');
+  L.push('clinic visit.');
+  L.push('');
+  L.push('Parent/Guardian Name:');
+  L.push(line());
+  L.push('');
+  L.push('Relationship:');
+  L.push(line());
+  L.push('');
+  L.push('Signature:');
+  L.push(line());
+  L.push('');
+  L.push('Date Signed:');
+  L.push(line());
+  L.push('');
+  L.push('Contact Number:');
+  L.push(line());
+  L.push('');
+  L.push('Thank you for your');
+  L.push('cooperation.');
+  L.push('');
+  L.push('Sincerely,');
+  L.push('');
+  L.push(line());
+  L.push(center('School Nurse /'));
+  L.push(center('Clinic Personnel'));
+  L.push('');
+  L.push(dash());
+  L.push(center('ASHSC CLINIC'));
+  L.push('');
+  L.push('');
+  L.push('');
+  return L.join('\n') + '\n';
+}
+
+function buildPrintDoc(text) {
   return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>R</title>' +
     '<style>' +
     '@page{size:58mm auto;margin:0;}' +
@@ -939,17 +1033,20 @@ function buildReceiptHTML(r) {
     '</style></head><body><pre>' + esc(text) + '</pre></body></html>';
 }
 
+function buildReceiptHTML(r) {
+  return buildPrintDoc(buildReceiptText(r));
+}
+
+function buildParentHTML() {
+  return buildPrintDoc(buildParentSlipText());
+}
+
+
 var printBusy = false;
 var lastPrintedRef = '';
 
-function printReceipt() {
-  var ref = (answers && answers.ref) ? String(answers.ref) : '';
-  if (printBusy) return;
-  if (ref && ref === lastPrintedRef) return;
-  printBusy = true;
-  if (ref) lastPrintedRef = ref;
+function printViaIframe(htmlDoc, thenFn) {
   try {
-    var htmlDoc = buildReceiptHTML(answers);
     var old = document.getElementById('printFrame');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var iframe = document.createElement('iframe');
@@ -961,18 +1058,43 @@ function printReceipt() {
     idoc.write(htmlDoc);
     idoc.close();
     setTimeout(function () {
-      try { iframe.contentWindow.print(); } catch (e) {}
-      setTimeout(function () { printBusy = false; }, 3000);
-      setTimeout(function () {
-        try {
-          var f = document.getElementById('printFrame');
-          if (f && f.parentNode) f.parentNode.removeChild(f);
-        } catch (e2) {}
-      }, 15000);
+      var finished = false;
+      function after() {
+        if (finished) return;
+        finished = true;
+        try { iframe.contentWindow.onafterprint = null; } catch (e0) {}
+        setTimeout(function () {
+          try {
+            var f = document.getElementById('printFrame');
+            if (f && f.parentNode) f.parentNode.removeChild(f);
+          } catch (e1) {}
+          if (typeof thenFn === 'function') thenFn();
+        }, 400);
+      }
+      try {
+        iframe.contentWindow.onafterprint = after;
+      } catch (e2) {}
+      try { iframe.contentWindow.print(); } catch (e3) {}
+      /* Fallback if afterprint never fires (some Windows/kiosk setups) */
+      setTimeout(after, 4000);
     }, 300);
   } catch (e) {
-    printBusy = false;
+    if (typeof thenFn === 'function') thenFn();
   }
+}
+
+function printReceipt() {
+  var ref = (answers && answers.ref) ? String(answers.ref) : '';
+  if (printBusy) return;
+  if (ref && ref === lastPrintedRef) return;
+  printBusy = true;
+  if (ref) lastPrintedRef = ref;
+  /* 1) Check-in slip  2) Parent blank form — two separate receipts */
+  printViaIframe(buildReceiptHTML(answers), function () {
+    printViaIframe(buildParentHTML(), function () {
+      printBusy = false;
+    });
+  });
 }
 
 
