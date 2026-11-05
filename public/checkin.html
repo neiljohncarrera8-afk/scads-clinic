@@ -896,7 +896,7 @@ function render() {
     try { startAutoReset(); } catch (e0) {}
     setTimeout(function () {
       try { printReceipt(); } catch (e) {}
-    }, 400);
+    }, 150);
     return;
   }
 
@@ -1134,7 +1134,7 @@ function printViaIframe(htmlDoc, thenFn) {
     if (old && old.parentNode) old.parentNode.removeChild(old);
     var iframe = document.createElement('iframe');
     iframe.id = 'printFrame';
-    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:58mm;height:80px;border:0;';
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:58mm;height:40px;border:0;';
     document.body.appendChild(iframe);
     var idoc = iframe.contentWindow.document;
     idoc.open();
@@ -1152,15 +1152,12 @@ function printViaIframe(htmlDoc, thenFn) {
             if (f && f.parentNode) f.parentNode.removeChild(f);
           } catch (e1) {}
           if (typeof thenFn === 'function') thenFn();
-        }, 400);
+        }, 200);
       }
-      try {
-        iframe.contentWindow.onafterprint = after;
-      } catch (e2) {}
-      try { iframe.contentWindow.print(); } catch (e3) {}
-      /* Fallback if afterprint never fires (some Windows/kiosk setups) */
-      setTimeout(after, 4000);
-    }, 300);
+      try { iframe.contentWindow.onafterprint = after; } catch (e2) {}
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e3) {}
+      setTimeout(after, 2500);
+    }, 80);
   } catch (e) {
     if (typeof thenFn === 'function') thenFn();
   }
@@ -1172,11 +1169,13 @@ function printReceipt() {
   if (ref && ref === lastPrintedRef) return;
   printBusy = true;
   if (ref) lastPrintedRef = ref;
-  /* 1) Check-in slip  2) Parent blank form — two separate receipts */
-  printViaIframe(buildReceiptHTML(answers), function () {
-    printViaIframe(buildParentHTML(), function () {
-      printBusy = false;
-    });
+  /* Feeding: visit slip only. Consultation: visit slip + parent form. */
+  var text = buildReceiptText(answers);
+  if (answers.purpose !== 'Feeding') {
+    text = text + String.fromCharCode(10) + buildParentSlipText();
+  }
+  printViaIframe(buildPrintDoc(text), function () {
+    printBusy = false;
   });
 }
 
