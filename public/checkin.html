@@ -1176,10 +1176,12 @@ function printReceipt() {
       printBusy = false;
       return;
     }
-    /* 2) Consultation only: second print = blank parent form */
-    printViaIframe(buildPrintDoc(buildParentSlipText()), function () {
-      printBusy = false;
-    });
+    /* Short pause after visit slip — then parent print dialog (~2s) */
+    setTimeout(function () {
+      printViaIframe(buildPrintDoc(buildParentSlipText()), function () {
+        printBusy = false;
+      });
+    }, 2000);
   });
 }
 
