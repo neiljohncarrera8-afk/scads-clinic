@@ -623,6 +623,118 @@ tr:hover .badge {
 .form-grid input {
   transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s, border-color .25s !important;
 }
+
+/* After first entrance, suppress re-animation on data refresh */
+#viewDash.fx-settled .topbar,
+#viewDash.fx-settled .stat,
+#viewDash.fx-settled .chart-card,
+#viewDash.fx-settled .card:not(.login-box),
+#viewDash.fx-settled tbody tr {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* ========== ADVISER V2 polish ========== */
+@keyframes softFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes chipIn {
+  from { opacity: 0; transform: scale(.85); }
+  to { opacity: 1; transform: none; }
+}
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 0 0 rgba(52,211,153,.5);
+  animation: livePulse 1.8s ease-in-out infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.insight-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+.insight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  background: linear-gradient(165deg,#fff,#eef8f2);
+  border: 1px solid rgba(23,138,82,.14);
+  box-shadow: 0 1px 0 #fff inset, 0 6px 16px -10px rgba(15,40,30,.15);
+  color: #0e1c17;
+  animation: chipIn .45s cubic-bezier(.22,1,.36,1) both;
+}
+.insight-chip em {
+  font-style: normal;
+  color: #178a52;
+  font-weight: 800;
+}
+.insight-chip.warn em { color: #b45309; }
+.insight-chip.danger em { color: #b91c1c; }
+.empty-illus {
+  text-align: center;
+  padding: 36px 16px;
+  color: #66766d;
+  animation: softFade .5s ease both;
+}
+.empty-illus .big {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  opacity: .7;
+}
+#viewDash .card {
+  transition: box-shadow .35s ease, border-color .3s ease;
+}
+#viewDash.fx-settled .card:hover {
+  box-shadow: 0 1px 0 #fff inset, 0 16px 36px -14px rgba(15,40,30,.2);
+  border-color: rgba(23,138,82,.18);
+}
+.scroll-top-btn {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 40;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(145deg,#1a9a5c,#0c4f35);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(12,79,53,.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .3s, transform .3s;
+}
+.scroll-top-btn.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+.scroll-top-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.kbd-hint {
+  font-size: .72rem;
+  color: #8a9a92;
+  margin-top: 8px;
+}
+.last-sync {
+  font-size: .75rem;
+  color: #8a9a92;
+  font-weight: 600;
+}
 </style>
 </head>
 <body>
@@ -655,12 +767,14 @@ tr:hover .badge {
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <span class="pill"><span class="dot"></span> Live section feed</span>
+          <span class="last-sync" id="lastSync"></span>
           <button class="btn btn-ghost" type="button" id="refreshBtn">Refresh</button>
           <button class="btn btn-ghost" type="button" id="logoutBtn">Log out</button>
         </div>
       </div>
 
       <div class="stats" id="stats"></div>
+        <div id="insightStrip" class="insight-strip" aria-live="polite"></div>
 
       <div class="charts">
         <div class="card chart-card">
@@ -901,18 +1015,31 @@ tr:hover .badge {
     document.getElementById('app').classList.toggle('logged-in', !!on);
   }
   function showLogin() {
+    dashFxPlayed = false;
+    window._statsPainted = false;
+    var dash = document.getElementById('viewDash');
+    if (dash) { dash.classList.remove('fx-on'); dash.classList.remove('fx-settled'); }
+
     setLoggedIn(false);
     document.getElementById('viewLogin').hidden = false;
     document.getElementById('viewDash').hidden = true;
   }
+  var dashFxPlayed = false;
   function showDash() {
     setLoggedIn(true);
     document.getElementById('viewLogin').hidden = true;
     var dash = document.getElementById('viewDash');
     dash.hidden = false;
-    dash.classList.remove('fx-on');
-    void dash.offsetWidth;
-    dash.classList.add('fx-on');
+    if (!dashFxPlayed) {
+      dashFxPlayed = true;
+      dash.classList.remove('fx-settled');
+      dash.classList.remove('fx-on');
+      void dash.offsetWidth;
+      dash.classList.add('fx-on');
+      setTimeout(function () {
+        dash.classList.add('fx-settled');
+      }, 1200);
+    }
   }
 
   function destroyCharts() {
@@ -1263,9 +1390,14 @@ tr:hover .badge {
       '<div class="stat"><span>Severe cases</span><b data-count="' + sev + '">0</b></div>' +
       '<div class="stat"><span>Severe rate</span><b data-count="' + rate + '" data-suffix="%">0%</b></div>';
     var nodes = document.querySelectorAll('#stats b[data-count]');
+    var firstPaint = !window._statsPainted;
+    window._statsPainted = true;
     for (var i = 0; i < nodes.length; i++) {
       var n = nodes[i];
-      animateCount(n, parseInt(n.getAttribute('data-count'), 10) || 0, n.getAttribute('data-suffix') || '');
+      var target = parseInt(n.getAttribute('data-count'), 10) || 0;
+      var suffix = n.getAttribute('data-suffix') || '';
+      if (firstPaint) animateCount(n, target, suffix);
+      else n.textContent = target + suffix;
     }
   }
 
@@ -1294,8 +1426,42 @@ tr:hover .badge {
     tb.innerHTML = rows;
   }
 
-  function renderAll(visits) {
+  
+  function renderInsights(visits) {
+    var el = document.getElementById('insightStrip');
+    if (!el) return;
+    var feed = 0, cons = 0, sev = 0, mild = 0, mod = 0;
+    var topIll = {};
+    visits.forEach(function (v) {
+      if (v.purpose === 'Feeding') feed++;
+      else {
+        cons++;
+        var ill = v.illness || 'Others';
+        topIll[ill] = (topIll[ill] || 0) + 1;
+      }
+      if (v.severity === 'severe') sev++;
+      else if (v.severity === 'moderate') mod++;
+      else if (v.severity === 'mild') mild++;
+    });
+    var top = Object.keys(topIll).sort(function (a, b) { return topIll[b] - topIll[a]; })[0];
+    var chips = [];
+    chips.push('<span class="insight-chip">Visits <em>' + visits.length + '</em></span>');
+    chips.push('<span class="insight-chip">Feeding <em>' + feed + '</em></span>');
+    chips.push('<span class="insight-chip">Consultation <em>' + cons + '</em></span>');
+    if (sev) chips.push('<span class="insight-chip danger">Severe <em>' + sev + '</em></span>');
+    else chips.push('<span class="insight-chip">Severe <em>0</em></span>');
+    if (top) chips.push('<span class="insight-chip warn">Top concern <em>' + top + '</em></span>');
+    el.innerHTML = chips.join('');
+    var sync = document.getElementById('lastSync');
+    if (sync) {
+      var d = new Date();
+      sync.textContent = 'Updated ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  }
+
+function renderAll(visits) {
     allVisits = visits || [];
+    try { renderInsights(allVisits); } catch (e0) {}
     document.getElementById('dashTitle').textContent = sessionSection + ' command center';
     document.getElementById('dashSub').textContent = (sessionGrade || '') + ' · Section-scoped clinic intelligence';
     renderStats(allVisits);
@@ -1430,10 +1596,23 @@ tr:hover .badge {
     t.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
   });
 
+
+  var scrollBtn = document.getElementById('scrollTopBtn');
+  if (scrollBtn) {
+    window.addEventListener('scroll', function () {
+      if (window.scrollY > 280) scrollBtn.classList.add('show');
+      else scrollBtn.classList.remove('show');
+    }, { passive: true });
+    scrollBtn.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
   renderSectionList();
   if (sessionSection) loadVisits();
   else showLogin();
 })();
 </script>
+<button type="button" class="scroll-top-btn" id="scrollTopBtn" title="Back to top">↑</button>
 </body>
 </html>
